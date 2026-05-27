@@ -1,0 +1,93 @@
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-100 px-4 py-10">
+
+  <!-- Header -->
+  <div class="max-w-4xl mx-auto mb-8 text-center">
+    <div class="inline-flex items-center gap-2 bg-indigo-100 text-indigo-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
+      🤖 Recommandations IA
+    </div>
+    <h1 class="text-3xl font-bold text-slate-800">Projets recommandés pour vous</h1>
+    <p class="text-slate-500 mt-2">Trouvez des projets adaptés à votre domaine et votre budget cible grâce à l'IA.</p>
+  </div>
+
+  <!-- Search Form -->
+  <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-md p-6 mb-10 border border-slate-100">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+      <div class="sm:col-span-1">
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Catégorie</label>
+        <select [(ngModel)]="category"
+          class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+          <option value="" disabled selected>Choisir...</option>
+          <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1">Budget cible ($)</label>
+        <input [(ngModel)]="targetBudget" type="number" min="0"
+          class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+          placeholder="500" />
+      </div>
+
+      <div class="flex items-end">
+        <button (click)="search()" [disabled]="loading || !category"
+          class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 disabled:opacity-50 transition">
+          {{ loading ? '⏳ Recherche...' : '🔍 Trouver des projets' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="max-w-2xl mx-auto bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-6 text-sm">
+    {{ error }}
+  </div>
+
+  <!-- Results -->
+  <div *ngIf="results.length > 0" class="max-w-4xl mx-auto">
+    <p class="text-sm text-slate-500 mb-4">{{ results.length }} projet(s) trouvé(s) pour <strong>{{ category }}</strong> · budget cible <strong>${{ targetBudget }}</strong></p>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      <div *ngFor="let p of results"
+        class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 hover:shadow-md transition">
+
+        <!-- Score bar -->
+        <div class="flex items-center gap-2 mb-3">
+          <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+            <div class="h-2 rounded-full transition-all"
+              [style.width.%]="scorePercent(p.score)"
+              [style.background]="scoreColor(p.score)">
+            </div>
+          </div>
+          <span class="text-xs font-bold" [style.color]="scoreColor(p.score)">
+            {{ scorePercent(p.score) }}%
+          </span>
+        </div>
+
+        <h3 class="font-bold text-slate-800 text-sm mb-1 line-clamp-2">{{ p.job_title }}</h3>
+
+        <div class="flex items-center gap-2 mb-3">
+          <span class="text-lg font-bold text-indigo-600">${{ p.avg_price | number:'1.0-0' }}</span>
+          <span class="text-xs text-slate-400">{{ p.rate_type }}</span>
+          <span *ngIf="p.client_country" class="ml-auto text-xs text-slate-400">📍 {{ p.client_country }}</span>
+        </div>
+
+        <!-- Tags -->
+        <div class="flex flex-wrap gap-1">
+          <span *ngFor="let tag of p.tags.slice(0, 5)"
+            class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-600 text-xs font-medium">
+            {{ tag }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state after search -->
+  <div *ngIf="!loading && results.length === 0 && !error && category"
+    class="max-w-2xl mx-auto text-center text-slate-400 py-16">
+    <div class="text-5xl mb-4">🔍</div>
+    <p>Aucun projet trouvé. Essayez une autre catégorie ou ajustez le budget.</p>
+  </div>
+
+</div>

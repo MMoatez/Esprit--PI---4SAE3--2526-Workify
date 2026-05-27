@@ -1,0 +1,305 @@
+<div class="fb-card" *ngIf="!feedback.deleted">
+
+  <!-- ── MODE LECTURE ─────────────────────────────── -->
+  <ng-container *ngIf="!isEditMode">
+
+    <!-- Header + actions client -->
+    <div class="fb-card-header">
+      <div class="fb-global-rating">
+        <app-star-rating [value]="computedGlobal" [readonly]="true"></app-star-rating>
+        <span class="fb-global-val">{{ computedGlobal }}/5</span>
+      </div>
+      <div class="fb-meta">
+        <span *ngIf="feedback.projectTitle" class="fb-project">{{ feedback.projectTitle }}</span>
+        <span class="fb-date">{{ feedback.createdAt | date:'dd/MM/yyyy' }}</span>
+        <!-- Boutons client -->
+        <div *ngIf="isClient" class="fb-client-actions">
+          <button *ngIf="canEdit" class="fb-btn-edit" (click)="startEdit()">✏️ Edit</button>
+          <button *ngIf="canDelete && !confirmingDelete" class="fb-btn-delete" (click)="requestDelete()">🗑 Delete</button>
+          <span *ngIf="!canEdit && !canDelete && feedback.locked" class="fb-locked-hint">🔒 Locked</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm delete -->
+    <div *ngIf="confirmingDelete" class="fb-confirm-delete">
+      <span>Permanently delete this feedback?</span>
+      <button class="fb-btn-confirm-del" [disabled]="submittingDelete" (click)="submitDelete()">
+        {{ submittingDelete ? 'Deleting...' : 'Confirm' }}
+      </button>
+      <button class="fb-btn-cancel-del" (click)="cancelDelete()">Cancel</button>
+    </div>
+
+    <!-- Sub-ratings -->
+    <div class="fb-subcriteria">
+      <div class="fb-sub" *ngFor="let c of subCriteria">
+        <span class="fb-sub-label">{{ c.label }}</span>
+        <div class="fb-bar-bg">
+          <div class="fb-bar" [style.width]="getBarWidth(getRating(c.key))"></div>
+        </div>
+        <span class="fb-sub-val">{{ getRating(c.key) }}</span>
+      </div>
+    </div>
+
+    <!-- Comment + Translation -->
+    <p class="fb-comment">{{ displayedComment }}</p>
+
+    <!-- Translation controls -->
+    <div class="fb-translate-bar" *ngIf="canTranslate">
+
+      <!-- Language selector + translate button -->
+      <select class="fb-lang-select" [(ngModel)]="selectedLang"
+              (change)="showingTranslation = false; translatedComment = null">
+        <option *ngFor="let l of availableLanguages" [value]="l.code">{{ l.label }}</option>
+      </select>
+
+      <button class="fb-translate-btn" (click)="translate()" [disabled]="translating">
+        <span *ngIf="!translating">🌐 Translate</span>
+        <span *ngIf="translating">Translating...</span>
+      </button>
+
+      <!-- Badge + show original when translation active -->
+      <ng-container *ngIf="showingTranslation">
+        <span class="fb-translated-badge">
+          🌐 Translated from {{ translationService.langLabel(feedback.sourceLang!) }}
+        </span>
+        <button class="fb-translate-btn fb-translate-btn--original" (click)="showOriginal()">
+          Show original
+        </button>
+      </ng-container>
+
+      <span *ngIf="translationError" class="fb-translate-error">{{ translationError }}</span>
+    </div>
+
+    <!-- Attachments -->
+    <div *ngIf="feedback.attachments?.length" class="fb-attachments">
+      <div class="fb-attach-label">📎 Attachments</div>
+      <div class="fb-attach-grid">
+        <ng-container *ngFor="let url of feedback.attachments">
+          <a *ngIf="isImage(url)" [href]="getAttachmentUrl(url)" target="_blank" class="fb-attach-link">
+            <img [src]="getAttachmentUrl(url)" class="fb-attach-img" alt="attachment">
+          </a>
+          <a *ngIf="isVideo(url)" [href]="getAttachmentUrl(url)" target="_blank" class="fb-attach-link">
+            <video [src]="getAttachmentUrl(url)" class="fb-attach-video" controls muted></video>
+          </a>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- AI analyzing spinner (freelancer only) -->
+    <div *ngIf="isFreelancer && aiAnalyzing && !feedback.aiSentiment" class="fb-ai-analyzing">
+      <span class="fb-ai-spinner"></span>
+      <span>AI is analyzing this feedback...</span>
+    </div>
+
+    <!-- AI Analysis panel (freelancer only) -->
+    <div *ngIf="isFreelancer && feedback.aiSentiment" class="fb-ai-panel">
+      <div class="fb-ai-header">🤖 AI Analysis</div>
+      <div class="fb-ai-badges">
+        <!-- Sentiment badge -->
+        <span class="fb-ai-badge"
+              [class.fb-sentiment-positive]="feedback.aiSentiment === 'POSITIVE'"
+              [class.fb-sentiment-neutral]="feedback.aiSentiment === 'NEUTRAL'"
+              [class.fb-sentiment-negative]="feedback.aiSentiment === 'NEGATIVE'"
+              [class.fb-sentiment-apologetic]="feedback.aiSentiment === 'APOLOGETIC'"
+              [class.fb-sentiment-constructive]="feedback.aiSentiment === 'CONSTRUCTIVE'">
+          <span *ngIf="feedback.aiSentiment === 'POSITIVE'">😊 Positive</span>
+          <span *ngIf="feedback.aiSentiment === 'NEUTRAL'">😐 Neutral</span>
+          <span *ngIf="feedback.aiSentiment === 'NEGATIVE'">😟 Negative</span>
+          <span *ngIf="feedback.aiSentiment === 'APOLOGETIC'">🙏 Apologetic</span>
+          <span *ngIf="feedback.aiSentiment === 'CONSTRUCTIVE'">🔨 Constructive</span>
+        </span>
+        <!-- Tone badge -->
+        <span *ngIf="feedback.aiTone" class="fb-ai-badge fb-ai-tone">
+          🎭 {{ feedback.aiTone | titlecase }}
+        </span>
+      </div>
+      <!-- Key themes -->
+      <div *ngIf="feedback.aiThemes" class="fb-ai-themes">
+        <span class="fb-ai-theme-label">Key themes:</span>
+        <span *ngFor="let theme of feedback.aiThemes.split(',')" class="fb-ai-theme-pill">
+          {{ theme }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Recommend badge -->
+    <div class="fb-recommend-badge" [class.yes]="feedback.recommend" [class.no]="!feedback.recommend">
+      <span *ngIf="feedback.recommend">✓ Recommends this freelancer</span>
+      <span *ngIf="!feedback.recommend">✗ Does not recommend</span>
+    </div>
+
+    <!-- Locked indicator -->
+    <div *ngIf="feedback.locked" class="fb-locked">
+      🔒 This feedback is locked (freelancer has replied)
+    </div>
+
+    <!-- Response -->
+    <div *ngIf="feedback.response && !feedback.response.deleted" class="fb-response-block">
+
+      <!-- Read mode — reply -->
+      <ng-container *ngIf="!isEditResponseMode">
+        <div class="fb-response-header">
+          ↩ Freelancer's reply
+          <!-- Freelancer action buttons on reply -->
+          <span *ngIf="isFreelancer" class="fb-resp-actions">
+            <button class="fb-btn-resp-edit" (click)="startEditResponse()">✏️</button>
+            <button class="fb-btn-resp-del"  (click)="requestDeleteResponse()"
+                    *ngIf="!confirmingDeleteResponse">🗑</button>
+          </span>
+        </div>
+
+        <!-- Confirm delete reply -->
+        <div *ngIf="confirmingDeleteResponse" class="fb-confirm-delete" style="margin: 8px 0 0;">
+          <span>Delete this reply?</span>
+          <button class="fb-btn-confirm-del" [disabled]="submittingDeleteResponse"
+                  (click)="submitDeleteResponse()">
+            {{ submittingDeleteResponse ? '...' : 'Confirm' }}
+          </button>
+          <button class="fb-btn-cancel-del" (click)="cancelDeleteResponse()">Cancel</button>
+          <div *ngIf="deleteResponseError" style="color:red;font-size:12px;margin-top:4px">
+            {{ deleteResponseError }}
+          </div>
+        </div>
+
+        <p class="fb-response-content">{{ feedback.response.content }}</p>
+
+        <!-- Response attachments -->
+        <div *ngIf="feedback.response.attachments?.length" class="fb-attachments fb-attachments--response">
+          <div class="fb-attach-label">📎 Attachments</div>
+          <div class="fb-attach-grid">
+            <ng-container *ngFor="let url of feedback.response.attachments">
+              <a *ngIf="isImage(url)" [href]="getAttachmentUrl(url)" target="_blank" class="fb-attach-link">
+                <img [src]="getAttachmentUrl(url)" class="fb-attach-img" alt="attachment">
+              </a>
+              <a *ngIf="isVideo(url)" [href]="getAttachmentUrl(url)" target="_blank" class="fb-attach-link">
+                <video [src]="getAttachmentUrl(url)" class="fb-attach-video" controls muted></video>
+              </a>
+            </ng-container>
+          </div>
+        </div>
+
+        <span class="fb-response-date">{{ feedback.response.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+
+        <!-- AI Analysis of freelancer's reply — visible to client only -->
+        <div *ngIf="isClient && feedback.response.aiSentiment" class="fb-ai-panel fb-ai-panel-response">
+          <div class="fb-ai-header">🤖 AI Analysis of Reply</div>
+          <div class="fb-ai-badges">
+            <span class="fb-ai-badge"
+                  [class.fb-sentiment-positive]="feedback.response.aiSentiment === 'POSITIVE'"
+                  [class.fb-sentiment-neutral]="feedback.response.aiSentiment === 'NEUTRAL'"
+                  [class.fb-sentiment-negative]="feedback.response.aiSentiment === 'NEGATIVE'"
+                  [class.fb-sentiment-apologetic]="feedback.response.aiSentiment === 'APOLOGETIC'"
+                  [class.fb-sentiment-constructive]="feedback.response.aiSentiment === 'CONSTRUCTIVE'">
+              <span *ngIf="feedback.response.aiSentiment === 'POSITIVE'">😊 Positive</span>
+              <span *ngIf="feedback.response.aiSentiment === 'NEUTRAL'">😐 Neutral</span>
+              <span *ngIf="feedback.response.aiSentiment === 'NEGATIVE'">😟 Negative</span>
+              <span *ngIf="feedback.response.aiSentiment === 'APOLOGETIC'">🙏 Apologetic</span>
+              <span *ngIf="feedback.response.aiSentiment === 'CONSTRUCTIVE'">🔨 Constructive</span>
+            </span>
+            <span *ngIf="feedback.response.aiTone" class="fb-ai-badge fb-ai-tone">
+              🎭 {{ feedback.response.aiTone | titlecase }}
+            </span>
+          </div>
+          <div *ngIf="feedback.response.aiThemes" class="fb-ai-themes">
+            <span class="fb-ai-theme-label">Key themes:</span>
+            <span *ngFor="let theme of feedback.response.aiThemes.split(',')" class="fb-ai-theme-pill">
+              {{ theme }}
+            </span>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Edit mode — reply -->
+      <div *ngIf="isEditResponseMode" class="fb-resp-edit">
+        <div class="fb-response-header">✏️ Edit reply</div>
+        <textarea [(ngModel)]="editResponseContent" rows="3" class="fb-edit-textarea"
+                  placeholder="Min. 10 characters..."></textarea>
+        <span class="fb-char-hint" [class.invalid]="editResponseContent.trim().length < 10">
+          {{ editResponseContent.trim().length }} / 1000
+        </span>
+        <div *ngIf="editResponseError" class="fb-edit-error" style="margin-top:6px">{{ editResponseError }}</div>
+        <div class="fb-edit-actions" style="margin-top:8px">
+          <button class="fb-btn-cancel-edit" (click)="cancelEditResponse()">Cancel</button>
+          <button class="fb-btn-save"
+                  [disabled]="editResponseContent.trim().length < 10 || submittingEditResponse"
+                  (click)="submitEditResponse()">
+            {{ submittingEditResponse ? 'Saving...' : '💾 Save' }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Response form (freelancer) — only if no reply yet -->
+    <div *ngIf="canRespond && !showResponseForm">
+      <button class="fb-btn-reply" (click)="showResponseForm = true">
+        ↩ Reply to this feedback
+      </button>
+    </div>
+
+    <app-response-form
+      *ngIf="showResponseForm"
+      [feedbackId]="feedback.id"
+      [freelancerId]="feedback.freelancerId"
+      [feedbackRatings]="{
+        ratingGlobal:          feedback.ratingGlobal,
+        ratingCommunication:   feedback.ratingCommunication,
+        ratingQuality:         feedback.ratingQuality,
+        ratingDeadline:        feedback.ratingDeadline,
+        ratingProfessionalism: feedback.ratingProfessionalism
+      }"
+      (submitted)="onResponseSubmitted()"
+      (cancelled)="showResponseForm = false">
+    </app-response-form>
+
+  </ng-container>
+
+  <!-- ── EDIT MODE ────────────────────────────────── -->
+  <div *ngIf="isEditMode" class="fb-edit-form">
+    <h4 class="fb-edit-title">✏️ Edit your feedback</h4>
+
+    <!-- Notes par critère -->
+    <div class="fb-edit-criteria">
+      <div class="fb-edit-criterion" *ngFor="let c of allCriteria">
+        <span class="fb-edit-label">{{ c.label }}</span>
+        <app-star-rating
+          [value]="editRatings[c.key] || 0"
+          (valueChange)="editRatings[c.key] = $event">
+        </app-star-rating>
+        <span class="fb-edit-val">{{ editRatings[c.key] || 0 }}/5</span>
+      </div>
+    </div>
+
+    <!-- Commentaire -->
+    <div class="fb-edit-field">
+      <label class="fb-edit-field-label">Comment</label>
+      <textarea [(ngModel)]="editComment" rows="4" class="fb-edit-textarea"
+                placeholder="Min. 20 characters..."></textarea>
+      <span class="fb-char-hint" [class.invalid]="editComment.trim().length < 20">
+        {{ editComment.trim().length }} / 2000
+      </span>
+    </div>
+
+    <!-- Recommandation -->
+    <div class="fb-edit-field">
+      <label class="fb-edit-field-label">Do you recommend this freelancer?</label>
+      <div class="fb-edit-recommend">
+        <button type="button" class="fb-btn-rec" [class.active-yes]="editRecommend === true"
+                (click)="editRecommend = true">👍 Yes</button>
+        <button type="button" class="fb-btn-rec" [class.active-no]="editRecommend === false"
+                (click)="editRecommend = false">👎 No</button>
+      </div>
+    </div>
+
+    <div *ngIf="editError" class="fb-edit-error">{{ editError }}</div>
+
+    <div class="fb-edit-actions">
+      <button class="fb-btn-cancel-edit" (click)="cancelEdit()">Cancel</button>
+      <button class="fb-btn-save" [disabled]="!editValid || submittingEdit" (click)="submitEdit()">
+        {{ submittingEdit ? 'Saving...' : '💾 Save' }}
+      </button>
+    </div>
+  </div>
+
+</div>

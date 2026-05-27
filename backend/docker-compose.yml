@@ -1,0 +1,268 @@
+# ==============================
+# Workify - Full Docker Compose
+# ==============================
+# Run: docker-compose up -d
+
+services:
+
+  # ==============================
+  # Infrastructure
+  # ==============================
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: workify-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: workify
+      POSTGRES_PASSWORD: workify
+      POSTGRES_DB: workify_users
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workify -d workify_users"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MySQL Database for microservices (feedback, project, event, communication, moatez)
+  mysql:
+    image: mysql:8.0
+    container_name: workify-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Keycloak Identity Provider
+  keycloak:
+    image: keycloak/keycloak:24.0.0
+    container_name: workify-keycloak
+    restart: unless-stopped
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/workify_users
+      KC_DB_USERNAME: workify
+      KC_DB_PASSWORD: workify
+      KC_LOG_LEVEL: DEBUG
+    command: start-dev --import-realm
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./keycloak/workify-realm.json:/opt/keycloak/data/import/realm.json
+      - ./keycloak/themes:/opt/keycloak/themes
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ==============================
+  # Microservices
+  # ==============================
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: workify-user-service
+    restart: unless-stopped
+    environment:
+      - KEYCLOAK_SERVER_URL=http://keycloak:8080
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/workify
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - DB_PASSWORD=workify
+      - USER_PROFILE_UPLOAD_DIR=/app/uploads
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./user-service/data:/app/data
+      - ./user-service/uploads:/app/uploads
+    depends_on:
+      keycloak:
+        condition: service_started
+
+  # Formation Service
+  formation-service:
+    build:
+      context: ./formation-service
+      dockerfile: Dockerfile
+    container_name: workify-formation-service
+    restart: unless-stopped
+    environment:
+      - KEYCLOAK_SERVER_URL=http://keycloak:8080
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/workify
+      - DB_URL=jdbc:postgresql://postgres:5432/workify_users
+      - DB_USERNAME=workify
+      - DB_PASSWORD=workify
+      - DB_DRIVER=org.postgresql.Driver
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./formation-service/data:/app/data
+    depends_on:
+      keycloak:
+        condition: service_started
+
+  # ApiGateway
+  apigateway:
+    build:
+      context: ./ApiGateway
+      dockerfile: Dockerfile
+    container_name: workify-apigateway
+    restart: unless-stopped
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    ports:
+      - "8888:8888"
+    depends_on:
+      eureka-server:
+        condition: service_started
+
+  # Eureka Server
+  eureka-server:
+    build:
+      context: ./Eureka Server
+      dockerfile: Dockerfile
+    container_name: workify-eureka-server
+    restart: unless-stopped
+    ports:
+      - "8761:8761"
+
+  # Communication Service
+  communication-service:
+    build:
+      context: ./communication-service
+      dockerfile: Dockerfile
+    container_name: workify-communication-service
+    restart: unless-stopped
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
+  # Event Service
+  event-service:
+    build:
+      context: ./event-service
+      dockerfile: Dockerfile
+    container_name: workify-event-service
+    restart: unless-stopped
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/workify_event_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&zeroDateTimeBehavior=convertToNull
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    ports:
+      - "8096:8096"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
+  # Feedback Service
+  feedback-service:
+    build:
+      context: ./feedback-service
+      dockerfile: Dockerfile
+    container_name: workify-feedback-service
+    restart: unless-stopped
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/workify_feedback_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&zeroDateTimeBehavior=convertToNull
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    ports:
+      - "8086:8086"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
+  # Moatez Service (Workify)
+  moatez-service:
+    build:
+      context: ./moatez-service
+      dockerfile: Dockerfile
+    container_name: workify-moatez-service
+    restart: unless-stopped
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/workifyMI?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    ports:
+      - "8089:8089"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
+  # Project Service
+  project-service:
+    build:
+      context: ./project-service
+      dockerfile: Dockerfile
+    container_name: workify-project-service
+    restart: unless-stopped
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/workify_project_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&zeroDateTimeBehavior=convertToNull
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    ports:
+      - "8083:8082" # Mapping host 8083 to container 8082 to avoid conflict with formation-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+
+  # RAG Service
+  rag-service:
+    build:
+      context: ./rag-service
+      dockerfile: Dockerfile
+    container_name: workify-rag-service
+    restart: unless-stopped
+    ports:
+      - "8097:8097"
+    depends_on:
+      eureka-server:
+        condition: service_started
+
+  # Receipt AI Service
+  receipt-ai-service:
+    build:
+      context: ./receipt-ai-service
+      dockerfile: Dockerfile
+    container_name: workify-receipt-ai-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+
+volumes:
+  postgres_data:
+  mysql_data:

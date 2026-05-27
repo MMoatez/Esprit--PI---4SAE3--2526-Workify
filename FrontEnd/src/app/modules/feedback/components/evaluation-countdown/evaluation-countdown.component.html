@@ -1,0 +1,9 @@
+<div *ngIf="status?.evaluationPending && secondsRemaining > 0"
+     class="eval-banner"
+     [class.urgent]="isUrgent">
+  <span class="eval-icon">⏱</span>
+  <span class="eval-msg">
+    Rate the project <strong>{{ status?.projectTitle }}</strong> — time remaining:
+  </span>
+  <span class="eval-timer">{{ displayTime }}</span>
+</div>

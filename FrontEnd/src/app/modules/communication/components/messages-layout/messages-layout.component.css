@@ -1,0 +1,59 @@
+/* ══════════════════════════════════════════════
+   MESSAGES LAYOUT — unified indigo/violet theme
+   ══════════════════════════════════════════════ */
+
+:host {
+  display: block;
+  height: 100vh;
+  overflow: hidden;
+}
+
+@media (max-width: 1024px) {
+  .mobile-view {
+    transition: transform 0.3s ease-in-out;
+  }
+}
+
+.messenger-shell {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f8f8fc;
+}
+
+/* Left panel — scroll handled internally by app-conversation-list */
+.messenger-shell .left-panel {
+  background: #ffffff;
+  border-right: 1px solid #ebebeb;
+  box-shadow: 2px 0 16px rgba(99,102,241,0.04);
+  overflow: hidden;
+}
+
+/*
+  Right panel — MUST be overflow:hidden
+  Any overflow value other than "visible" on this container creates a
+  new stacking/scrolling context, which causes position:absolute dropdowns
+  (menus, reaction pickers, etc.) to position relative to THIS panel
+  instead of their direct parent — making them appear at the bottom of the page.
+  The thread's internal .messages-container handles its own scrolling.
+*/
+.messenger-shell .right-panel {
+  background: #f8f8fc;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Empty state */
+.messenger-shell .empty-state,
+.messenger-shell .right-panel .h-full {
+  background: linear-gradient(160deg, #f8f8fc 0%, #eef2ff 100%);
+}
+
+/* Thread header — name ellipsis */
+.messenger-shell .right-panel .thread-header .header-name,
+.messenger-shell .right-panel .thread-header .title-text {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: calc(100% - 120px) !important;
+}

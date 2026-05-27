@@ -1,0 +1,124 @@
+/* ═══════════════════════════════════════════════════════════════
+   NOTIFICATION TOAST — Dynamic Priority reminders
+   ─────────────────────────────────────────────────────────────
+   Stack lives in the top-right corner, above all other content.
+   ═══════════════════════════════════════════════════════════════ */
+
+.nt-stack {
+  position: fixed;
+  top: 84px;          /* below the fixed app header (~80px) */
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;   /* stack itself is transparent to clicks */
+  max-width: 380px;
+  width: calc(100vw - 40px);
+}
+
+/* ── Individual toast ─────────────────────────────────────────── */
+.nt-toast {
+  pointer-events: all;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  background: #fff;
+  border-radius: 14px;
+  border-left: 4px solid #6366f1;    /* default (fallback) */
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.07);
+  cursor: pointer;
+  animation: nt-slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.nt-toast:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.18), 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* ── Priority colour variants ─────────────────────────────────── */
+/* HIGH  → red  */
+.nt-toast--high   { border-left-color: #ef4444; background: #fffafa; }
+/* MEDIUM → orange */
+.nt-toast--medium { border-left-color: #f97316; background: #fffcfa; }
+/* LOW   → yellow */
+.nt-toast--low    { border-left-color: #eab308; background: #fffef5; }
+
+/* ── Entrance animation ───────────────────────────────────────── */
+@keyframes nt-slide-in {
+  from { opacity: 0; transform: translateX(50px) scale(0.94); }
+  to   { opacity: 1; transform: translateX(0)    scale(1);    }
+}
+
+/* ── Priority icon ────────────────────────────────────────────── */
+.nt-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+/* ── Text body ────────────────────────────────────────────────── */
+.nt-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.nt-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+  margin: 0 0 4px;
+}
+
+.nt-toast--high   .nt-title { color: #dc2626; }
+.nt-toast--medium .nt-title { color: #ea580c; }
+.nt-toast--low    .nt-title { color: #ca8a04; }
+
+.nt-msg {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #1a1a2e;
+  line-height: 1.45;
+  margin: 0 0 4px;
+  /* Limit to 3 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nt-sub {
+  font-size: 11.5px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ── Dismiss button ───────────────────────────────────────────── */
+.nt-close {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #9ca3af;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+  margin-top: 1px;
+}
+.nt-close:hover { background: #e5e7eb; color: #374151; }
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .nt-stack { top: 70px; right: 10px; left: 10px; width: auto; }
+}

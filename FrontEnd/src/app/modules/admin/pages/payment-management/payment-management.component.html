@@ -1,0 +1,81 @@
+<div class="space-y-6">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-900">Payment Transactions</h2>
+      <p class="text-sm text-slate-500">Stripe payment history and statuses</p>
+    </div>
+    <button (click)="loadTransactions()"
+            class="px-4 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition">
+      Refresh
+    </button>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+    <input
+      type="text"
+      [(ngModel)]="searchTerm"
+      (input)="applyFilters()"
+      placeholder="Search by user, email, pack or intent id"
+      class="w-full md:w-96 border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+    />
+
+    <select
+      [(ngModel)]="selectedStatus"
+      (change)="applyFilters()"
+      class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+      <option value="ALL">All statuses</option>
+      <option [value]="PaymentStatus.PENDING">Pending</option>
+      <option [value]="PaymentStatus.SUCCESS">Success</option>
+      <option [value]="PaymentStatus.FAILED">Failed</option>
+    </select>
+  </div>
+
+  <div *ngIf="error" class="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+    {{ error }}
+  </div>
+
+  <div *ngIf="loading" class="bg-white border border-slate-200 rounded-2xl p-10 text-center text-slate-500">
+    Loading transactions...
+  </div>
+
+  <div *ngIf="!loading" class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs tracking-wide">
+        <tr>
+          <th class="text-left px-4 py-3">User</th>
+          <th class="text-left px-4 py-3">Pack</th>
+          <th class="text-left px-4 py-3">Amount</th>
+          <th class="text-left px-4 py-3">Status</th>
+          <th class="text-left px-4 py-3">Date</th>
+          <th class="text-left px-4 py-3">Intent ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of filtered" class="border-b border-slate-100 hover:bg-slate-50/70">
+          <td class="px-4 py-3">
+            <p class="font-semibold text-slate-800">{{ item.userFullName }}</p>
+            <p class="text-xs text-slate-500">{{ item.userEmail }}</p>
+          </td>
+          <td class="px-4 py-3 text-slate-700">{{ item.packName }} ({{ item.selectedDuration }})</td>
+          <td class="px-4 py-3 font-semibold text-slate-800">{{ formatAmount(item.amount, item.currency) }}</td>
+          <td class="px-4 py-3">
+            <span class="px-2.5 py-1 rounded-full text-xs font-semibold"
+                  [class.bg-amber-100]="item.status === PaymentStatus.PENDING"
+                  [class.text-amber-700]="item.status === PaymentStatus.PENDING"
+                  [class.bg-emerald-100]="item.status === PaymentStatus.SUCCESS"
+                  [class.text-emerald-700]="item.status === PaymentStatus.SUCCESS"
+                  [class.bg-red-100]="item.status === PaymentStatus.FAILED"
+                  [class.text-red-700]="item.status === PaymentStatus.FAILED">
+              {{ item.status }}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-slate-600">{{ formatDate(item.createdAt) }}</td>
+          <td class="px-4 py-3 text-xs text-slate-500 break-all">{{ item.stripePaymentIntentId }}</td>
+        </tr>
+        <tr *ngIf="filtered.length === 0">
+          <td colspan="6" class="px-4 py-10 text-center text-slate-500">No transactions found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

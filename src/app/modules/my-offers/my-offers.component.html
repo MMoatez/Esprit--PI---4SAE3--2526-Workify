@@ -1,0 +1,253 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-teal-50/50 p-10">
+
+  <!-- HEADER -->
+  <div class="max-w-7xl mx-auto mb-12 text-center">
+    <h1 class="text-5xl font-bold text-slate-900 mb-4">
+      Your <span class="text-teal-600">Freelance Offers</span>
+    </h1>
+    <p class="text-slate-600">
+      Manage your proposals and track project progress
+    </p>
+  </div>
+
+  <!-- OFFERS GRID -->
+  <div class="max-w-7xl mx-auto">
+
+    <!-- ERROR -->
+    <div *ngIf="error"
+         class="mb-6 p-4 bg-red-50 border border-red-300 rounded-xl text-red-600">
+      {{ error }}
+    </div>
+
+    <!-- LOADING -->
+    <div *ngIf="isLoading" class="text-center py-12 text-slate-500">
+      Loading offers...
+    </div>
+
+    <!-- EMPTY -->
+    <div *ngIf="!isLoading && filteredOffers.length === 0"
+         class="text-center py-12 text-slate-500">
+      No offers found
+    </div>
+
+    <!-- CARDS -->
+    <div *ngIf="!isLoading" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+      <div *ngFor="let offer of filteredOffers; let i = index"
+           class="animate-card bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative"
+           [style.animationDelay]="i * 100 + 'ms'">
+
+        <!-- NEW BADGE -->
+        <div *ngIf="offer.status === 'PENDING'"
+             class="absolute top-4 right-4 bg-gradient-to-r from-orange-400 to-pink-500 text-white text-xs px-3 py-1 rounded-full shadow-md">
+          New
+        </div>
+
+        <!-- CONTRACT SUCCESS BADGE -->
+        <div *ngIf="contractSuccess === offer.id"
+             class="absolute top-4 right-4 bg-gradient-to-r from-emerald-400 to-teal-500 text-white text-xs px-3 py-1 rounded-full shadow-md">
+          ✅ Contrat généré !
+        </div>
+
+        <!-- HEADER -->
+        <div class="flex items-start gap-4 mb-4">
+
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
+            {{ offer.freelancer?.nom?.charAt(0) }}
+          </div>
+
+          <div class="flex-1">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-lg font-bold text-slate-900">
+                  {{ offer.project?.title ?? ('Project #' + (offer.project?.id ?? offer.id ?? 'N/A')) }}
+                </h3>
+                <p class="text-sm text-slate-500">{{ offer.freelancer?.nom }}</p>
+                <p class="text-xs text-slate-400">{{ formatDate(offer.createdAt) }}</p>
+              </div>
+
+              <!-- STATUS -->
+              <div>
+                <span *ngIf="offer.status === 'ACCEPTED'"
+                      class="text-green-600 font-semibold text-sm flex items-center gap-1">
+                  ✅ Accepted
+                </span>
+                <span *ngIf="offer.status === 'REJECTED'"
+                      class="text-red-600 font-semibold text-sm flex items-center gap-1">
+                  ❌ Rejected
+                </span>
+                <span *ngIf="offer.status === 'PENDING'"
+                      class="text-cyan-600 font-semibold text-sm flex items-center gap-1">
+                  ⏳ Pending
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MESSAGE -->
+        <p class="text-slate-600 text-sm mb-5 leading-relaxed">
+          {{ offer.message }}
+        </p>
+
+        <!-- PRICE & DURATION -->
+        <div class="flex justify-between items-center mb-5">
+          <div class="flex gap-3">
+            <span *ngIf="offer.duration"
+                  class="bg-slate-100 text-slate-700 px-3 py-1 text-xs rounded-full font-medium">
+              ⏳ {{ offer.duration }} days
+            </span>
+            <span *ngIf="offer.price"
+                  class="bg-teal-50 text-teal-700 px-3 py-1 text-xs rounded-full font-semibold">
+              💰 ${{ offer.price | number:'1.0-0' }}
+            </span>
+          </div>
+          <div *ngIf="offer.price" class="text-2xl font-bold text-teal-600">
+            ${{ offer.price | number:'1.0-0' }}
+          </div>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div *ngIf="offer.status === 'ACCEPTED'" class="mb-5">
+          <div class="text-xs text-slate-500 mb-2">Project In Progress</div>
+          <div class="w-full bg-slate-200 rounded-full overflow-hidden">
+            <div class="progress-bar"></div>
+          </div>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="flex flex-col gap-3">
+
+          <!-- Accept / Reject (PENDING) -->
+          <div class="flex gap-3">
+            <button *ngIf="offer.status === 'PENDING'"
+                    (click)="rejectOffer(offer.id)"
+                    class="flex-1 py-2 rounded-xl border border-red-400 text-red-600 hover:bg-red-50 transition font-medium">
+              Reject
+            </button>
+
+            <button *ngIf="offer.status === 'PENDING'"
+                    (click)="acceptOffer(offer.id)"
+                    class="flex-1 py-2 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:shadow-lg transition font-medium">
+              Accept
+            </button>
+
+            <button *ngIf="offer.status !== 'PENDING'"
+                    disabled
+                    class="flex-1 py-2 rounded-xl bg-slate-100 text-slate-400 font-medium">
+              {{ offer.status }}
+            </button>
+          </div>
+
+          <!-- ═══ BOUTON CONTRAT PDF (ACCEPTED seulement) ═══ -->
+          <button *ngIf="offer.status === 'ACCEPTED'"
+                  (click)="downloadContract(offer)"
+                  [disabled]="generatingContractId === offer.id"
+                  class="w-full py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                  [ngClass]="generatingContractId === offer.id
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:shadow-lg'">
+
+            <!-- Spinner -->
+            <svg *ngIf="generatingContractId === offer.id"
+                 class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10"
+                      stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+
+            <!-- Icône PDF -->
+            <svg *ngIf="generatingContractId !== offer.id"
+                 class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+            </svg>
+
+            <span>
+              {{ generatingContractId === offer.id ? 'Génération...' : '📄 Télécharger le contrat' }}
+            </span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL CONFIRM Accept / Reject
+════════════════════════════════════════════════════ -->
+<div *ngIf="isModalOpen"
+     class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+     (click)="closeModal()">
+
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6"
+       (click)="$event.stopPropagation()">
+
+    <!-- Icon -->
+    <div class="flex items-center justify-center mb-4">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center text-3xl"
+           [ngClass]="modalAction === 'accept' ? 'bg-green-100' : 'bg-red-100'">
+        {{ modalAction === 'accept' ? '✅' : '❌' }}
+      </div>
+    </div>
+
+    <!-- Title -->
+    <h2 class="text-xl font-bold text-slate-900 text-center mb-2">
+      {{ modalAction === 'accept' ? 'Accept this offer?' : 'Reject this offer?' }}
+    </h2>
+
+    <!-- Info -->
+    <p class="text-slate-500 text-center text-sm mb-2">
+      <b>{{ selectedOffer?.freelancer?.nom }}</b> —
+      {{ selectedOffer?.project?.title ?? ('Project #' + selectedOffer?.id) }}
+    </p>
+
+    <!-- Note contrat automatique -->
+    <div *ngIf="modalAction === 'accept'"
+         class="mt-3 mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start gap-3">
+      <span class="text-indigo-500 text-lg flex-shrink-0">📄</span>
+      <p class="text-indigo-700 text-xs leading-relaxed">
+        En acceptant cette offre, un <b>contrat PDF</b> sera automatiquement
+        généré et téléchargé sur votre ordinateur.
+      </p>
+    </div>
+
+    <!-- Price -->
+    <div *ngIf="selectedOffer?.price"
+         class="text-center text-2xl font-bold text-teal-600 mb-6">
+      ${{ selectedOffer!.price! | number:'1.0-0' }}
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-3">
+      <button (click)="closeModal()"
+              class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium transition">
+        Cancel
+      </button>
+      <button (click)="confirmAction()"
+              [disabled]="isConfirming"
+              class="flex-1 py-2.5 rounded-xl text-white font-semibold transition"
+              [ngClass]="modalAction === 'accept'
+                ? 'bg-gradient-to-r from-teal-600 to-cyan-600 hover:shadow-lg'
+                : 'bg-gradient-to-r from-red-500 to-pink-600 hover:shadow-lg'">
+
+        <span *ngIf="!isConfirming">
+          {{ modalAction === 'accept' ? '✅ Confirm Accept' : '❌ Confirm Reject' }}
+        </span>
+        <span *ngIf="isConfirming" class="flex items-center justify-center gap-2">
+          <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10"
+                    stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Processing...
+        </span>
+      </button>
+    </div>
+
+  </div>
+</div>

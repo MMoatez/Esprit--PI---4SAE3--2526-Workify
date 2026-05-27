@@ -1,0 +1,198 @@
+// Ambient Floating Lighting Blobs
+.ambient-wrapper {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ambient-blob-1 {
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 45vw;
+  height: 45vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.15) 0%, rgba(20, 184, 166, 0.05) 50%, transparent 100%);
+  filter: blur(60px);
+  animation: ambient-drift-one 25s ease-in-out infinite;
+}
+
+.ambient-blob-2 {
+  position: absolute;
+  bottom: -15%;
+  right: -10%;
+  width: 50vw;
+  height: 50vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.12) 0%, rgba(13, 148, 136, 0.04) 60%, transparent 100%);
+  filter: blur(70px);
+  animation: ambient-drift-two 30s ease-in-out infinite;
+}
+
+.ambient-blob-3 {
+  position: absolute;
+  top: 40%;
+  right: -15%;
+  width: 40vw;
+  height: 40vw;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(15, 118, 110, 0.08) 0%, rgba(20, 184, 166, 0.03) 50%, transparent 100%);
+  filter: blur(50px);
+  animation: ambient-drift-one 28s ease-in-out infinite reverse;
+}
+
+@keyframes ambient-drift-one {
+  0% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(4vw, 5vh) scale(1.05); }
+  66% { transform: translate(-3vw, 8vh) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes ambient-drift-two {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-5vw, -6vh) scale(1.08); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+// 3D Isometric Card Stacking (Hero)
+.hero-visual-stack {
+  position: relative;
+  transform-style: preserve-3d;
+  perspective: 1200px;
+}
+
+.hero-main-card {
+  transform: perspective(1200px) rotateX(6deg) rotateY(-8deg) rotateZ(1deg);
+  box-shadow: 0 35px 70px -15px rgba(15, 23, 42, 0.35),
+              0 0 50px rgba(13, 148, 136, 0.05);
+  transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+
+  &:hover {
+    transform: perspective(1200px) rotateX(2deg) rotateY(-2deg) rotateZ(0deg) scale(1.02);
+    box-shadow: 0 45px 85px -15px rgba(15, 23, 42, 0.45),
+                0 0 70px rgba(13, 148, 136, 0.1);
+  }
+}
+
+.hero-floating-stat {
+  transform: translateZ(30px);
+  animation: float-slow 6s ease-in-out infinite;
+  box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.15),
+              0 0 30px rgba(13, 148, 136, 0.1);
+}
+
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) translateZ(30px); }
+  50% { transform: translateY(-10px) translateZ(45px); }
+}
+
+// Interactive Premium Hover-Tilt Effect
+.premium-card-tilt {
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+              box-shadow 0.5s cubic-bezier(0.165, 0.84, 0.44, 1),
+              border-color 0.5s ease;
+
+  .tilt-child {
+    transform: translateZ(0px);
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  
+  &:hover {
+    transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-8px) translateZ(12px);
+    box-shadow: 0 30px 60px -15px rgba(13, 148, 136, 0.15), 
+                0 0 40px -5px rgba(20, 184, 166, 0.08);
+    border-color: rgba(13, 148, 136, 0.25) !important;
+
+    .tilt-child {
+      transform: translateZ(25px) scale(1.05);
+    }
+  }
+}
+
+// Glowing Shine Beam Effect on Hover
+.animated-border-shine {
+  position: relative;
+  overflow: hidden;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent 45%,
+      rgba(255, 255, 255, 0.2) 48%,
+      rgba(13, 148, 136, 0.15) 50%,
+      rgba(255, 255, 255, 0.2) 52%,
+      transparent 55%
+    );
+    transform: rotate(45deg) translate(-50%, -50%);
+    transition: none;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+  }
+  
+  &:hover::after {
+    opacity: 1;
+    transform: rotate(45deg) translate(50%, 50%);
+    transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+}
+
+// Sleek Path Connectors for Steps
+.step-connector-path {
+  stroke-dasharray: 8 6;
+  animation: connector-dash 25s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(13, 148, 136, 0.3));
+}
+
+@keyframes connector-dash {
+  to {
+    stroke-dashoffset: -1000;
+  }
+}
+
+// Magnetic Button Interaction
+.magnetic-btn {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: linear-gradient(90deg, #0d9488, #14b8a6, #0f766e);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0;
+    filter: blur(8px);
+    transition: opacity 0.3s ease;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -10px rgba(13, 148, 136, 0.5);
+
+    &::before {
+      opacity: 0.65;
+    }
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+}
+
+// Micro-spring transitions for standard layout shifts
+.spring-transition {
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}

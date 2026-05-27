@@ -1,0 +1,202 @@
+<div class="min-h-screen bg-slate-50">
+  <!-- Header -->
+  <div class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <h1 class="text-3xl font-bold text-slate-900 mb-2">Browse Projects</h1>
+      <p class="text-slate-600">
+        Discover opportunities that match your skills and expertise
+      </p>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <!-- Filters Sidebar -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl border border-slate-200 p-6 sticky top-24">
+          <div class="flex items-center gap-2 mb-6">
+            <svg class="size-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <h2 class="font-semibold text-slate-900">Filters</h2>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-slate-700 mb-3">
+              Category
+            </label>
+            <div class="space-y-2">
+              <button
+                *ngFor="let category of categories"
+                (click)="onCategoryChange(category)"
+                [class]="'w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ' + (selectedCategory === category ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:shadow-md')"
+              >
+                <div class="flex items-center justify-between">
+                  <span>{{ category }}</span>
+                  <svg *ngIf="selectedCategory === category" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Budget Range -->
+          <div class="mb-6">
+            <label class="block text-sm font-medium text-slate-700 mb-3">
+              Budget Range
+            </label>
+            <div class="space-y-3">
+              <input
+                type="range"
+                min="0"
+                max="20000"
+                step="1000"
+                [value]="budgetRange[1]"
+                (input)="onBudgetChange(+$any($event.target).value)"
+                class="w-full"
+              />
+              <div class="flex justify-between text-sm text-slate-600">
+                <span>${{ budgetRange[0].toLocaleString() }}</span>
+                <span>${{ budgetRange[1].toLocaleString() }}+</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sort By -->
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-3">
+              Sort By
+            </label>
+            <select
+              [(ngModel)]="sortBy"
+              (change)="onSortChange()"
+              class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="recent">Most Recent</option>
+              <option value="budget">Highest Budget</option>
+              <option value="proposals">Fewest Proposals</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Projects List -->
+      <div class="lg:col-span-3">
+        <!-- Search Bar -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 mb-6">
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search projects by title, description, or skills..."
+              [(ngModel)]="searchTerm"
+              (input)="onSearchChange()"
+              class="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        <!-- Results Count -->
+        <div class="mb-4">
+          <p class="text-slate-600">
+            {{ filteredProjects.length }} project{{ filteredProjects.length !== 1 ? 's' : '' }} found
+          </p>
+        </div>
+
+        <!-- Project Cards -->
+        <div class="space-y-4">
+          <a
+            *ngFor="let project of filteredProjects"
+            [routerLink]="['/projects', project.id]"
+            class="block bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-shadow"
+          >
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+              <div class="flex-1">
+                <div class="flex items-start gap-3 mb-2">
+                  <h3 class="text-xl font-semibold text-slate-900 hover:text-blue-600 transition-colors">
+                    {{ project.title }}
+                  </h3>
+                  <span *ngIf="project.matchScore && project.matchScore >= 85" class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full font-medium">
+                    {{ project.matchScore }}% Match
+                  </span>
+                </div>
+                <p class="text-slate-600 mb-4">{{ project.description }}</p>
+
+                <!-- Skills -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <span
+                    *ngFor="let skill of project.skills"
+                    class="px-3 py-1 bg-blue-50 text-blue-600 text-sm rounded-full"
+                  >
+                    {{ skill }}
+                  </span>
+                </div>
+
+                <!-- Project Meta -->
+                <div class="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                  <div class="flex items-center gap-1">
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>
+                      ${{ project.budget.min.toLocaleString() }} - ${{ project.budget.max.toLocaleString() }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{{ project.duration }}</span>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    <span>{{ project.proposals }} proposals</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Client Info -->
+            <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+              <div class="flex items-center gap-3">
+                <div class="size-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold">
+                  {{ project.client.name[0] }}
+                </div>
+                <div>
+                  <div class="font-medium text-slate-900">{{ project.client.name }}</div>
+                  <div class="flex items-center gap-2 text-sm text-slate-600">
+                    <div class="flex items-center gap-1">
+                      <svg class="size-3 fill-yellow-400 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
+                      <span>{{ project.client.rating }}</span>
+                    </div>
+                    <span>•</span>
+                    <span>{{ project.client.projectsPosted }} projects posted</span>
+                  </div>
+                </div>
+              </div>
+              <div class="text-sm text-slate-500">{{ formatDate(project.postedDate) }}</div>
+            </div>
+          </a>
+
+          <div *ngIf="filteredProjects.length === 0" class="bg-white rounded-xl border border-slate-200 p-12 text-center">
+            <svg class="size-12 text-slate-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <h3 class="text-xl font-semibold text-slate-900 mb-2">No projects found</h3>
+            <p class="text-slate-600">
+              Try adjusting your filters or search terms to find more projects.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

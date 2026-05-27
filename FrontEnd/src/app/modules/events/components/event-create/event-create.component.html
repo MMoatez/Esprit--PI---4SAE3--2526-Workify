@@ -1,0 +1,94 @@
+<div class="create-container">
+  <div class="card">
+    <div class="card-header">
+      <h2>{{ isEditMode ? '✏️ Modifier l\'événement' : '🎯 Créer un événement' }}</h2>
+    </div>
+
+    <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Titre *</label>
+          <input type="text" formControlName="title" placeholder="Titre de l'événement" />
+          <span class="error" *ngIf="form.get('title')?.invalid && form.get('title')?.touched">
+            Titre requis (min 3 caractères)
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label>Catégorie *</label>
+          <select formControlName="category">
+            <option value="">-- Choisir --</option>
+            <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+          </select>
+          <span class="error" *ngIf="form.get('category')?.invalid && form.get('category')?.touched">
+            Catégorie requise
+          </span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Description *</label>
+        <textarea formControlName="description" rows="4"
+          placeholder="Description de l'événement"></textarea>
+        <span class="error" *ngIf="form.get('description')?.invalid && form.get('description')?.touched">
+          Description requise
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label>Sujet / Topic *</label>
+        <input type="text" formControlName="topic"
+          placeholder="Ex: Intelligence Artificielle et Freelancing" />
+        <span class="error" *ngIf="form.get('topic')?.invalid && form.get('topic')?.touched">
+          Topic requis
+        </span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date et heure *</label>
+          <input type="datetime-local" formControlName="eventDate" />
+          <span class="error" *ngIf="form.get('eventDate')?.invalid && form.get('eventDate')?.touched">
+            Date requise
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label>Capacité *</label>
+          <input type="number" formControlName="capacity"
+            placeholder="Nombre max de participants" min="1" />
+          <span class="error" *ngIf="form.get('capacity')?.invalid && form.get('capacity')?.touched">
+            Capacité requise (min 1)
+          </span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Lieu *</label>
+        <div class="location-input-row">
+          <input type="text" formControlName="location"
+            placeholder="Ex: Tunis, Tunisia"
+            (blur)="geocodeLocation()" />
+          <button type="button" class="btn-geocode" (click)="geocodeLocation()" [disabled]="geocoding">
+            {{ geocoding ? '⏳' : '📍 Géocoder' }}
+          </button>
+        </div>
+        <span class="error" *ngIf="form.get('location')?.invalid && form.get('location')?.touched">
+          Lieu requis
+        </span>
+        <span class="geocode-status" *ngIf="geocodeStatus">{{ geocodeStatus }}</span>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="cancel()">Annuler</button>
+        <button type="submit" class="btn-submit" [disabled]="loading || form.invalid">
+          {{ loading ? 'Enregistrement...' : (isEditMode ? 'Modifier' : 'Créer') }}
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

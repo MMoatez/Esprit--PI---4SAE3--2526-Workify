@@ -1,0 +1,65 @@
+.flip-container {
+    perspective: 1000px;
+    width: 4rem;
+    /* 16 mapped from Tailwind size-16 */
+    height: 4rem;
+}
+
+.flipper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+/* Only apply animation if we want it to flip automatically */
+.flip-container .flipper.auto-flip {
+    animation: idleFlip 3s infinite ease-in-out;
+}
+
+.flip-container:hover .flipper.auto-flip {
+    animation: fullFlip 1.6s infinite linear;
+}
+
+@keyframes idleFlip {
+
+    0%,
+    100% {
+        transform: rotateY(0deg);
+    }
+
+    50% {
+        transform: rotateY(90deg);
+    }
+}
+
+@keyframes fullFlip {
+    0% {
+        transform: rotateY(0deg);
+    }
+
+    100% {
+        transform: rotateY(360deg);
+    }
+}
+
+.front,
+.back {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    backface-visibility: hidden;
+    border-radius: 9999px;
+    /* rounded-full */
+}
+
+.front {
+    transform: rotateY(0deg);
+}
+
+.back {
+    transform: rotateY(180deg);
+}

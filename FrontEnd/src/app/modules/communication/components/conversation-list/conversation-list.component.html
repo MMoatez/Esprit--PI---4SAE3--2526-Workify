@@ -1,0 +1,388 @@
+<div class="cl-root" (click)="closeMenus()">
+
+  <!-- ══ HEADER ════════════════════════════════════════════════ -->
+  <div class="cl-header">
+    <div class="cl-header-top">
+      <span class="cl-title">Messages</span>
+      <div class="cl-hdr-btns">
+        <!-- Dark / Light mode toggle -->
+        <button class="cl-btn-icon cl-btn-theme"
+                (click)="theme.toggle(); $event.stopPropagation()"
+                [title]="theme.isDark ? 'Switch to Light mode' : 'Switch to Dark mode'"
+                [attr.aria-label]="theme.isDark ? 'Switch to Light mode' : 'Switch to Dark mode'">
+          <!-- Moon — light mode -->
+          <svg *ngIf="!theme.isDark" width="16" height="16" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <!-- Sun — dark mode -->
+          <svg *ngIf="theme.isDark" width="16" height="16" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+
+        <button class="cl-btn-icon" (click)="refresh(); $event.stopPropagation()"
+                title="Refresh" aria-label="Refresh conversations">
+          <lucide-icon [img]="RefreshIcon" class="w-4 h-4"></lucide-icon>
+        </button>
+        <button class="cl-btn-new" (click)="goFreelancers(); $event.stopPropagation()"
+                aria-label="New conversation">
+          <lucide-icon [img]="PlusIcon" class="w-4 h-4"></lucide-icon>
+          New
+        </button>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="cl-search">
+      <lucide-icon [img]="SearchIcon" class="cl-search-ico"></lucide-icon>
+      <input class="cl-search-inp"
+             type="text"
+             [(ngModel)]="searchTerm"
+             (ngModelChange)="onSearch($event)"
+             placeholder="Search conversations..."
+             aria-label="Search conversations"/>
+      <button *ngIf="searchTerm" class="cl-search-clr"
+              (click)="onSearch(''); $event.stopPropagation()"
+              aria-label="Clear search">
+        <lucide-icon [img]="XIcon" class="w-3 h-3"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- Filter tabs: All | Active | Favorites | Archived | Blocked -->
+    <div class="cl-tabs" role="tablist">
+      <button *ngFor="let t of tabs"
+              class="cl-tab"
+              role="tab"
+              [attr.aria-selected]="filterStatus === t.key"
+              [class.cl-tab-active]="filterStatus === t.key"
+              [class.cl-tab-blocked]="t.key === 'blocked' && filterStatus === 'blocked'"
+              (click)="changeFilter($any(t.key))">
+        {{ t.label }}
+        <!-- Live badge for Blocked tab -->
+        <span *ngIf="t.key === 'blocked' && blockedCount() > 0 && filterStatus !== 'blocked'"
+              class="cl-tab-count cl-count-blocked">{{ blockedCount() }}</span>
+        <!-- Dot badges for other tabs -->
+        <span *ngIf="t.key==='favorite' && filterStatus!=='favorite'"
+              class="cl-tab-dot cl-dot-star"></span>
+        <span *ngIf="t.key==='archived' && filterStatus!=='archived'"
+              class="cl-tab-dot cl-dot-arch"></span>
+      </button>
+    </div>
+
+    <!-- Sort (hidden on Blocked tab — no point sorting blocked list) -->
+    <div class="cl-sort" *ngIf="filterStatus !== 'blocked'">
+      <span>Sort:</span>
+      <button class="cl-sort-btn" [class.cl-sort-on]="sortBy==='date'"
+              (click)="changeSort('date')">Date</button>
+      <span class="cl-sort-sep">·</span>
+      <button class="cl-sort-btn" [class.cl-sort-on]="sortBy==='priority'"
+              (click)="changeSort('priority')">Priority</button>
+    </div>
+  </div>
+
+  <!-- ══ LIST ══════════════════════════════════════════════════ -->
+  <div class="cl-body">
+
+    <!-- Loading skeleton -->
+    <div *ngIf="isLoading" class="cl-skeletons" aria-live="polite" aria-busy="true">
+      <div *ngFor="let s of [1,2,3,4,5]" class="sk-row">
+        <div class="sk-av"></div>
+        <div class="sk-lines">
+          <div class="sk-line sk-l60"></div>
+          <div class="sk-line sk-l40"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="!isLoading && filteredConversations.length===0" class="cl-empty">
+      <div class="cl-empty-bubble" [class.cl-empty-bubble-blocked]="filterStatus==='blocked'">
+        <ng-container *ngIf="filterStatus==='blocked'; else defaultIcon">
+          <!-- Shield icon for blocked empty state -->
+          <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </ng-container>
+        <ng-template #defaultIcon>
+          <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+        </ng-template>
+      </div>
+
+      <p class="cl-empty-h">
+        <ng-container [ngSwitch]="filterStatus">
+          <ng-container *ngSwitchCase="'favorite'">No favorites yet</ng-container>
+          <ng-container *ngSwitchCase="'archived'">No archived chats</ng-container>
+          <ng-container *ngSwitchCase="'blocked'">No blocked contacts</ng-container>
+          <ng-container *ngSwitchDefault>No conversations</ng-container>
+        </ng-container>
+      </p>
+      <p class="cl-empty-sub">
+        <ng-container *ngIf="searchTerm">No results for "{{ searchTerm }}"</ng-container>
+        <ng-container *ngIf="!searchTerm && filterStatus==='favorite'">Star a conversation to find it here ⭐</ng-container>
+        <ng-container *ngIf="!searchTerm && filterStatus==='archived'">Archive chats to declutter your inbox</ng-container>
+        <ng-container *ngIf="!searchTerm && filterStatus==='blocked'">Blocked contacts won't be able to message you</ng-container>
+        <ng-container *ngIf="!searchTerm && (filterStatus==='all'||filterStatus==='active')">Start a new conversation to collaborate</ng-container>
+      </p>
+      <button *ngIf="!searchTerm && (filterStatus==='all'||filterStatus==='active')"
+              class="cl-btn-browse" (click)="goFreelancers()">
+        Browse freelancers
+      </button>
+    </div>
+
+    <!-- ── Conversation rows ──────────────────────────────────── -->
+    <div class="cl-items" *ngIf="!isLoading && filteredConversations.length>0" role="list">
+
+      <div *ngFor="let c of filteredConversations"
+           class="cl-row"
+           role="listitem"
+           [class.cl-row-selected]="isSelected(c)"
+           [class.cl-row-unread]="unread(c)>0"
+           [class.cl-row-blocked]="isBlockedByMe(c)"
+           [class.cl-row-blocked-by-other]="isBlockedByOther(c)"
+           [class.cl-row-priority-high]="c.priorityLevel==='HIGH'   && !isBlockedStatus(c) && !c.isArchived"
+           [class.cl-row-priority-medium]="c.priorityLevel==='MEDIUM' && !isBlockedStatus(c) && !c.isArchived"
+           [class.cl-row-priority-low]="c.priorityLevel==='LOW'    && !isBlockedStatus(c)"
+           (click)="open(c)"
+           [attr.aria-label]="(isBlockedByMe(c) ? 'Blocked: ' : isBlockedByOther(c) ? 'You are blocked by: ' : 'Conversation with ') + name(c)">
+
+        <!-- Avatar -->
+        <div class="cl-av-wrap">
+          <div class="cl-av cl-initials" [class.cl-initials-blocked]="isBlockedStatus(c)">{{ getInitials(c) }}</div>
+          <img *ngIf="avatar(c)"
+               class="cl-av cl-av-photo" [class.cl-av-blocked]="isBlockedStatus(c)"
+               [src]="avatar(c)"
+               [alt]="'Profile photo of ' + name(c)"
+               onerror="this.remove()"
+               loading="lazy"/>
+          <span class="cl-online" *ngIf="isActive(c)"
+                [class.pulse]="(c.unreadCount||0)>0" aria-label="Online"></span>
+          <!-- Blocker badge -->
+          <span class="cl-blocked-badge" *ngIf="isBlockedByMe(c)" aria-label="Blocked">🚫</span>
+          <!-- Blocked-by-other badge -->
+          <span class="cl-blocked-badge" *ngIf="isBlockedByOther(c)" aria-label="Blocked by them">⛔</span>
+        </div>
+
+        <!-- Text content -->
+        <div class="cl-info">
+          <div class="cl-row-top">
+            <span class="cl-name" [class.cl-name-blocked]="isBlockedStatus(c)">
+              <span *ngIf="isPinned(c)" class="cl-badge" title="Pinned">📌</span>
+              {{ name(c) }}
+              <span *ngIf="c.emojiIcon && !isBlockedStatus(c)" class="cl-emoji">{{ c.emojiIcon }}</span>
+            </span>
+            <div class="cl-meta">
+              <span *ngIf="c.isFavorite && !isBlockedByMe(c)" class="cl-badge" title="Favorite">⭐</span>
+              <span *ngIf="c.isArchived && !isBlockedStatus(c)" class="cl-arch-tag">Archived</span>
+              <span *ngIf="isBlockedByMe(c)" class="cl-blocked-tag">Blocked</span>
+              <span *ngIf="isBlockedByOther(c)" class="cl-blocked-tag cl-blocked-tag--other">Blocked by them</span>
+              <span *ngIf="c.priorityLevel && !isBlockedStatus(c)"
+                    class="cl-priority-dot"
+                    [class.cl-priority-dot--high]="c.priorityLevel==='HIGH'"
+                    [class.cl-priority-dot--medium]="c.priorityLevel==='MEDIUM'"
+                    [class.cl-priority-dot--low]="c.priorityLevel==='LOW'"
+                    [title]="c.priorityLevel + ' priority'"
+                    aria-hidden="true"></span>
+              <span class="cl-time" *ngIf="!isBlockedStatus(c)">{{ timeLabel(c.lastMessageAt) }}</span>
+            </div>
+          </div>
+          <div class="cl-row-bot">
+            <span class="cl-preview" [class.cl-preview-blocked]="isBlockedStatus(c)">{{ preview(c) }}</span>
+            <span *ngIf="unread(c)>0" class="cl-unread">
+              {{ unread(c)>99 ? '99+' : unread(c) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- ── Hover actions pill ─────────────────────────────── -->
+        <div class="cl-actions" (click)="$event.stopPropagation()">
+          <!-- View Profile button — always visible when otherUserId is known -->
+          <button *ngIf="c.otherUserId"
+                  class="cl-act-btn cl-act-btn--profile"
+                  (click)="viewProfile($event, c)"
+                  title="View profile"
+                  aria-label="View profile">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </button>
+          <!-- Star — only for non-blocked-by-me -->
+          <button *ngIf="!isBlockedByMe(c)"
+                  class="cl-act-btn cl-act-btn--star"
+                  [class.is-active]="c.isFavorite"
+                  (click)="toggleFav($event, c)"
+                  [title]="c.isFavorite ? 'Remove from favorites' : 'Add to favorites'">
+            <lucide-icon [img]="StarIcon" class="w-4 h-4"></lucide-icon>
+          </button>
+          <!-- Three-dot menu trigger — not shown for blocked-by-other -->
+          <button *ngIf="!isBlockedByOther(c)"
+                  class="cl-act-btn cl-act-btn--menu"
+                  (click)="toggleMenu($event, c.id)"
+                  title="More options"
+                  aria-label="More options"
+                  [attr.aria-expanded]="activeMenuId===c.id">
+            <lucide-icon [img]="MoreHorizontalIcon" class="w-4 h-4"></lucide-icon>
+          </button>
+        </div>
+
+        <!-- ── Dropdown ────────────────────────────────────────── -->
+        <div *ngIf="activeMenuId===c.id"
+             class="cl-dropdown"
+             (click)="$event.stopPropagation()"
+             role="menu">
+
+          <!-- Normal conversation options (not blocked at all) -->
+          <ng-container *ngIf="!isBlockedStatus(c)">
+            <button class="dd-item dd-item--rename" (click)="openRename($event, c)" role="menuitem">
+              <lucide-icon [img]="EditIcon" class="w-4 h-4"></lucide-icon>
+              Rename
+            </button>
+            <button class="dd-item dd-item--pin" (click)="togglePin($event, c)" role="menuitem">
+              <lucide-icon [img]="PinIcon" class="w-4 h-4"></lucide-icon>
+              {{ isPinned(c) ? 'Unpin' : 'Pin' }}
+            </button>
+            <button class="dd-item dd-item--star" (click)="toggleFav($event, c)" role="menuitem">
+              <lucide-icon [img]="StarIcon" class="w-4 h-4"></lucide-icon>
+              {{ c.isFavorite ? 'Remove from favorites' : 'Add to favorites' }}
+            </button>
+            <button class="dd-item dd-item--archive" (click)="toggleArchive($event, c)" role="menuitem">
+              <lucide-icon [img]="ArchiveIcon" class="w-4 h-4"></lucide-icon>
+              {{ c.isArchived ? 'Unarchive' : 'Archive' }}
+            </button>
+            <div class="dd-sep"></div>
+            <button class="dd-item dd-item--block" (click)="openBlock($event, c)" role="menuitem">
+              <lucide-icon [img]="BlockIcon" class="w-4 h-4"></lucide-icon>
+              Block user
+            </button>
+            <button class="dd-item dd-item--delete" (click)="openDelete($event, c)" role="menuitem">
+              <lucide-icon [img]="Trash2Icon" class="w-4 h-4"></lucide-icon>
+              Delete
+            </button>
+          </ng-container>
+
+          <!-- BLOCKER: can Unblock + Delete -->
+          <ng-container *ngIf="isBlockedByMe(c)">
+            <button class="dd-item dd-item--unblock" (click)="unblock($event, c)" role="menuitem">
+              <lucide-icon [img]="UnblockIcon" class="w-4 h-4"></lucide-icon>
+              Unblock user
+            </button>
+            <div class="dd-sep"></div>
+            <button class="dd-item dd-item--delete" (click)="openDelete($event, c)" role="menuitem">
+              <lucide-icon [img]="Trash2Icon" class="w-4 h-4"></lucide-icon>
+              Delete
+            </button>
+          </ng-container>
+
+          <!-- BLOCKED BY OTHER: no actions — dropdown not shown (three-dot hidden above) -->
+        </div>
+
+      </div><!-- /.cl-row -->
+    </div><!-- /.cl-items -->
+
+  </div><!-- /.cl-body -->
+</div><!-- /.cl-root -->
+
+<!-- ══ BLOCK CONFIRMATION MODAL ══════════════════════════════ -->
+<div *ngIf="showBlockModal"
+     class="modal-bg"
+     (click)="cancelBlock()"
+     role="dialog" aria-modal="true" aria-labelledby="block-modal-title">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-ico">🚫</div>
+    <h3 class="modal-h" id="block-modal-title">Block user</h3>
+    <p class="modal-p">
+      Block <strong>{{ target ? name(target) : '' }}</strong>?<br>
+      This conversation will move to your <strong>Blocked</strong> list.
+      They won't be able to send you messages.
+    </p>
+    <div class="modal-btns">
+      <button class="modal-cancel" (click)="cancelBlock()">Cancel</button>
+      <button class="modal-block" (click)="confirmBlock()">
+        <lucide-icon [img]="BlockIcon" class="w-4 h-4"></lucide-icon>
+        Block
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DELETE MODAL ══════════════════════════════════════════ -->
+<div *ngIf="showDeleteModal"
+     class="modal-bg"
+     (click)="cancelDelete()"
+     role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-ico">🗑️</div>
+    <h3 class="modal-h" id="delete-modal-title">Delete conversation</h3>
+    <p class="modal-p">
+      Permanently delete the conversation with
+      <strong>{{ target ? name(target) : '' }}</strong>?
+      This action <strong>cannot be undone</strong>.
+    </p>
+    <div class="modal-btns">
+      <button class="modal-cancel" (click)="cancelDelete()">Cancel</button>
+      <button class="modal-danger" (click)="confirmDelete()">
+        <lucide-icon [img]="Trash2Icon" class="w-4 h-4"></lucide-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RENAME / CUSTOMISE MODAL ══════════════════════════════ -->
+<div *ngIf="showRenameModal"
+     class="modal-bg"
+     (click)="cancelRename()"
+     role="dialog" aria-modal="true" aria-labelledby="rename-modal-title">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+    <div class="modal-ico">✏️</div>
+    <h3 class="modal-h" id="rename-modal-title">Edit conversation</h3>
+
+    <p class="modal-label">Icon</p>
+    <div class="emoji-row" role="radiogroup" aria-label="Select an icon">
+      <button *ngFor="let e of quickEmojis"
+              class="emoji-btn"
+              role="radio"
+              [class.emoji-sel]="renameEmoji===e"
+              [attr.aria-checked]="renameEmoji===e"
+              (click)="renameEmoji = (renameEmoji===e ? '' : e)"
+              [attr.aria-label]="'Icon ' + e">
+        {{ e }}
+      </button>
+    </div>
+
+    <p class="modal-label">Conversation name</p>
+    <input class="modal-input"
+           type="text"
+           [(ngModel)]="renameValue"
+           placeholder="Enter a name..."
+           maxlength="60"
+           (keydown.enter)="confirmRename()"
+           (keydown.escape)="cancelRename()"
+           aria-label="Conversation name"/>
+
+    <div class="modal-btns">
+      <button class="modal-cancel" (click)="cancelRename()">Cancel</button>
+      <button class="modal-primary" (click)="confirmRename()" [disabled]="!renameValue.trim()">
+        <lucide-icon [img]="CheckIcon" class="w-4 h-4"></lucide-icon>
+        Save
+      </button>
+    </div>
+  </div>
+</div>

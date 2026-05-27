@@ -1,0 +1,300 @@
+<div class="messenger-root" [class.inline]="inline">
+
+  <!-- ══ FLOATING BUTTON ══════════════════════════════════════════ -->
+  <button *ngIf="!inline" class="messenger-btn" [class.glow]="glow" (click)="toggle()" aria-label="Open Messenger">
+    <span class="badge" *ngIf="unreadTotal > 0">
+      <span class="badge-content">{{ unreadTotal }}</span>
+      <span class="badge-pulse"></span>
+    </span>
+    <svg class="icon" viewBox="0 0 60 60" width="30" height="30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="msgr-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   style="stop-color:#0099FF;stop-opacity:1">
+            <animate attributeName="stop-color" values="#0099FF;#5F5DFF;#0099FF" dur="3s" repeatCount="indefinite"/>
+          </stop>
+          <stop offset="100%" style="stop-color:#5F5DFF;stop-opacity:1">
+            <animate attributeName="stop-color" values="#5F5DFF;#00E5FF;#5F5DFF" dur="3s" repeatCount="indefinite"/>
+          </stop>
+        </linearGradient>
+        <filter id="glow-filter">
+          <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      <path d="M30,10 C18.954,10 10,18.318 10,28.5 C10,33.982 12.477,38.891 16.364,42.409 L16.364,50 L23.636,46.045 C25.682,46.655 27.841,47 30,47 C41.046,47 50,38.682 50,28.5 C50,18.318 41.046,10 30,10 Z M33.182,33.182 L26.364,25.682 L13.636,33.182 L27.273,18.636 L34.318,26.136 L46.818,18.636 L33.182,33.182 Z"
+            fill="url(#msgr-gradient)" filter="url(#glow-filter)"/>
+    </svg>
+    <span class="floating-circle circle-1"></span>
+    <span class="floating-circle circle-2"></span>
+    <span class="floating-circle circle-3"></span>
+  </button>
+
+  <!-- Inline variant -->
+  <button *ngIf="inline" class="messenger-inline-btn" [class.glow]="glow" (click)="toggle()" aria-label="Open Messenger">
+    <svg width="22" height="22" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M30,10 C18.954,10 10,18.318 10,28.5 C10,33.982 12.477,38.891 16.364,42.409 L16.364,50 L23.636,46.045 C25.682,46.655 27.841,47 30,47 C41.046,47 50,38.682 50,28.5 C50,18.318 41.046,10 30,10 Z M33.182,33.182 L26.364,25.682 L13.636,33.182 L27.273,18.636 L34.318,26.136 L46.818,18.636 L33.182,33.182 Z"
+            fill="currentColor"/>
+    </svg>
+    <span class="badge-mini" *ngIf="unreadTotal > 0">{{ unreadTotal }}</span>
+  </button>
+
+  <!-- ══ PANEL ════════════════════════════════════════════════════ -->
+  <div class="messenger-panel"
+       [class.open]="isOpen"
+       [class.fullscreen]="fullScreen"
+       (click)="$event.stopPropagation()">
+
+    <!-- ── Header ─────────────────────────────────────────────── -->
+    <div class="panel-header">
+      <div class="header-title">
+        <div class="header-icon">
+          <svg width="22" height="22" viewBox="0 0 60 60" fill="none">
+            <defs>
+              <linearGradient id="hdr-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%"   style="stop-color:#0099FF"/>
+                <stop offset="100%" style="stop-color:#5F5DFF"/>
+              </linearGradient>
+            </defs>
+            <path d="M30,10 C18.954,10 10,18.318 10,28.5 C10,33.982 12.477,38.891 16.364,42.409 L16.364,50 L23.636,46.045 C25.682,46.655 27.841,47 30,47 C41.046,47 50,38.682 50,28.5 C50,18.318 41.046,10 30,10 Z M33.182,33.182 L26.364,25.682 L13.636,33.182 L27.273,18.636 L34.318,26.136 L46.818,18.636 L33.182,33.182 Z"
+                  fill="url(#hdr-grad)"/>
+          </svg>
+        </div>
+        <span class="header-text">Messages</span>
+        <span class="header-badge" *ngIf="unreadTotal > 0">{{ unreadTotal }}</span>
+      </div>
+      <div class="header-controls">
+        <button class="ctrl-btn" (click)="toggleFullScreen()" [title]="fullScreen ? 'Minimize' : 'Expand'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <path *ngIf="!fullScreen" d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+            <path *ngIf="fullScreen"  d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>
+          </svg>
+        </button>
+        <button class="ctrl-btn ctrl-btn--close" (click)="isOpen=false; fullScreen=false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Search ─────────────────────────────────────────────── -->
+    <div class="panel-search">
+      <div class="search-wrap">
+        <svg class="search-ico" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" [value]="searchTerm" (input)="onSearch($any($event.target).value)"
+               placeholder="Search people or messages…" class="search-inp"/>
+      </div>
+    </div>
+
+    <!-- ── Body (scrollable) ──────────────────────────────────── -->
+    <div class="panel-body">
+      <aside class="left-col">
+
+        <!-- ═══════════════════════════════════
+             SECTION 1 — PEOPLE
+             ═══════════════════════════════════ -->
+        <div class="people-section">
+
+          <!-- Sub-tabs: Freelancers / Clients -->
+          <div class="ptabs">
+            <button class="ptab" [class.ptab--active]="activePeopleTab === 'freelancers'"
+                    (click)="activePeopleTab = 'freelancers'">
+              <span class="ptab-dot ptab-dot--sky"></span>
+              <span class="ptab-label">Freelancers</span>
+              <span class="ptab-count">{{ peopleFreelancers.length }}</span>
+            </button>
+            <button class="ptab" [class.ptab--active]="activePeopleTab === 'clients'"
+                    (click)="activePeopleTab = 'clients'">
+              <span class="ptab-dot ptab-dot--violet"></span>
+              <span class="ptab-label">Clients</span>
+              <span class="ptab-count">{{ peopleClients.length }}</span>
+            </button>
+          </div>
+
+          <!-- Loading skeletons -->
+          <div class="skeleton-list" *ngIf="isLoadingPeople">
+            <div class="skeleton-row" *ngFor="let _ of [1,2,3]">
+              <div class="sk-av"></div>
+              <div class="sk-lines">
+                <div class="sk-line sk-line--name"></div>
+                <div class="sk-line sk-line--sub"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- People list -->
+          <div class="people-list" *ngIf="!isLoadingPeople">
+            <div *ngFor="let p of activePeopleList" class="person-row"
+                 (click)="openPersonConversation(p)"
+                 [title]="(p.firstName || '') + ' ' + (p.lastName || '')">
+              <img class="person-av" [src]="personAvatarUrl(p)" [alt]="p.firstName || 'User'" loading="lazy"/>
+              <div class="person-info">
+                <span class="person-name">{{ ((p.firstName || '') + ' ' + (p.lastName || '')).trim() | slice:0:22 }}</span>
+                <span class="person-sub">{{ (p.title || p.email) | slice:0:26 }}</span>
+              </div>
+              <button class="person-chat-btn"
+                      (click)="openPersonConversation(p); $event.stopPropagation()"
+                      title="Start conversation">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Empty state -->
+            <div *ngIf="activePeopleList.length === 0" class="people-empty">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.3">
+                <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              </svg>
+              <span *ngIf="!searchTerm">No {{ activePeopleTab }} available</span>
+              <span *ngIf="searchTerm">No results for "{{ searchTerm }}"</span>
+            </div>
+          </div>
+
+          <!-- View all link -->
+          <button class="view-all-btn" (click)="viewAllPeople()">
+            <span>View {{ viewAllPeopleLabel }}</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- ═══════════════════════════════════
+             SECTION SEPARATOR
+             ═══════════════════════════════════ -->
+        <div class="sep">
+          <span class="sep-line"></span>
+          <span class="sep-label">RECENT CONVERSATIONS</span>
+          <span class="sep-line"></span>
+        </div>
+
+        <!-- ═══════════════════════════════════
+             SECTION 2 — CONVERSATIONS
+             ═══════════════════════════════════ -->
+        <div class="conv-section">
+
+          <!-- All / Unread filter pills -->
+          <div class="conv-filters">
+            <button class="cfil" [class.cfil--active]="activeConvFilter === 'all'" (click)="setConvFilter('all')">
+              All
+              <span class="cfil-n">{{ conversations.length }}</span>
+            </button>
+            <button class="cfil" [class.cfil--active]="activeConvFilter === 'unread'" (click)="setConvFilter('unread')">
+              Unread
+              <span class="cfil-n cfil-n--badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+            </button>
+          </div>
+
+          <!-- Conversation rows -->
+          <div class="conv-list">
+            <div *ngFor="let c of filteredConversations"
+                 class="conv-row"
+                 [class.conv-row--unread]="(c.unreadCount || 0) > 0"
+                 [class.conv-row--blocked]="isBlocked(c)"
+                 (click)="openConversation(c)">
+              <div class="conv-av-wrap">
+                <!-- Initials always as base; photo overlay removes itself on error -->
+                <div class="conv-av conv-av-initials" [class.conv-av--blocked]="isBlocked(c)">
+                  {{ convInitials(c) }}
+                </div>
+                <img *ngIf="avatarUrl(c)"
+                     class="conv-av conv-av-photo" [class.conv-av--blocked]="isBlocked(c)"
+                     [src]="avatarUrl(c)"
+                     [alt]="contactName(c) || 'User'"
+                     loading="lazy"
+                     onerror="this.remove()"/>
+                <span class="conv-av-ring" *ngIf="!isBlocked(c)"></span>
+                <span class="conv-blocked-ico" *ngIf="isBlocked(c)">🚫</span>
+              </div>
+              <div class="conv-meta">
+                <div class="conv-name" [class.conv-name--blocked]="isBlocked(c)">
+                  {{ contactName(c) }}
+                  <span *ngIf="isBlocked(c)" class="blocked-tag">Blocked</span>
+                </div>
+                <div class="conv-preview" [class.conv-preview--blocked]="isBlocked(c)">
+                  {{ preview(c) }}
+                </div>
+              </div>
+              <div class="conv-right">
+                <span class="conv-time" *ngIf="!isBlocked(c)">{{ timeLabel(c.lastMessageAt || c.createdAt) }}</span>
+                <span class="conv-unread-badge" *ngIf="(c.unreadCount || 0) > 0 && !isBlocked(c)">
+                  {{ c.unreadCount }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Blocked notice -->
+            <div *ngIf="blockedNoticeConvId !== null" class="blocked-notice">
+              <span>🚫 This contact is blocked.</span>
+              <button class="blocked-notice__btn" (click)="goToBlockedTab()">
+                Go to Blocked tab →
+              </button>
+            </div>
+
+            <!-- Empty: no conversations yet -->
+            <div *ngIf="filteredConversations.length === 0 && !searchTerm && activeConvFilter === 'all'"
+                 class="conv-empty">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span>No conversations yet</span>
+              <span class="conv-empty-hint">Pick someone above to start chatting</span>
+            </div>
+
+            <!-- Empty: no unread -->
+            <div *ngIf="filteredConversations.length === 0 && activeConvFilter === 'unread'"
+                 class="conv-empty">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity="0.2">
+                <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/>
+              </svg>
+              <span>All caught up ✨</span>
+              <span class="conv-empty-hint">No unread messages</span>
+            </div>
+
+            <!-- Empty: search -->
+            <div *ngIf="filteredConversations.length === 0 && searchTerm" class="conv-empty">
+              <span>No results for "{{ searchTerm }}"</span>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Right column — fullscreen mode only -->
+      <section class="right-col">
+        <div class="chat-placeholder">
+          <div class="placeholder-icon">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.1">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <h3 class="placeholder-title">Select a conversation</h3>
+          <p class="placeholder-text">Choose a discussion from the left panel</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── Footer ─────────────────────────────────────────────── -->
+    <div class="panel-footer">
+      <div *ngIf="isSendingBanned" class="global-suspension-banner popup-suspension">
+        <span class="gsb-icon">🚫</span>
+        <span class="gsb-text">Sending suspended.</span>
+        <span *ngIf="banCountdown" class="gsb-countdown">{{ banCountdown }}</span>
+      </div>
+      <button class="footer-btn" (click)="goToMessenger()">
+        <svg width="16" height="16" viewBox="0 0 60 60" fill="none">
+          <path d="M30,10 C18.954,10 10,18.318 10,28.5 C10,33.982 12.477,38.891 16.364,42.409 L16.364,50 L23.636,46.045 C25.682,46.655 27.841,47 30,47 C41.046,47 50,38.682 50,28.5 C50,18.318 41.046,10 30,10 Z"
+                fill="currentColor" opacity="0.7"/>
+        </svg>
+        <span>View all in Messenger</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+
+  </div><!-- /panel -->
+</div><!-- /root -->

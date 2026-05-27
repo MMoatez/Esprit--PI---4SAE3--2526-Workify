@@ -1,0 +1,258 @@
+<div class="cal-root">
+
+  <!-- ====== SIDEBAR mini-calendar + stats ====== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="18" rx="3" stroke="currentColor" stroke-width="2"/><line x1="3" y1="9" x2="21" y2="9" stroke="currentColor" stroke-width="2"/><line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Calendrier Admin
+    </div>
+
+    <button class="btn-create" (click)="goCreate()">+ Nouvel événement</button>
+
+    <!-- Mini calendar -->
+    <div class="mini-cal">
+      <div class="mini-hdr">
+        <button (click)="prev()">‹</button>
+        <span>{{ months[currentDate.getMonth()].slice(0,3) }} {{ currentDate.getFullYear() }}</span>
+        <button (click)="next()">›</button>
+      </div>
+      <div class="mini-grid">
+        <span class="mini-wday" *ngFor="let d of weekDays">{{ d.slice(0,1) }}</span>
+        <span *ngFor="let c of cells"
+          class="mini-day"
+          [class.mini-other]="!c.isCurrentMonth"
+          [class.mini-today]="c.isToday"
+          [class.mini-has]="c.events.length > 0"
+          (click)="currentDate = c.date; viewMode='day'">
+          {{ c.date.getDate() }}
+          <span class="mini-dot" *ngIf="c.events.length > 0"></span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-section">
+      <div class="stat-title">Ce mois</div>
+      <div class="stat-row"><span class="stat-label">Total</span><span class="stat-num">{{ statsThisMonth }}</span></div>
+      <div class="stat-row"><span class="stat-label">Aujourd'hui</span><span class="stat-num accent">{{ statsToday }}</span></div>
+      <div class="stat-row"><span class="stat-label">À venir</span><span class="stat-num green">{{ statsUpcoming }}</span></div>
+      <div class="stat-row"><span class="stat-label">Brouillons</span><span class="stat-num muted">{{ statsDraft }}</span></div>
+    </div>
+
+    <!-- Status legend -->
+    <div class="stat-section">
+      <div class="stat-title">Statuts</div>
+      <div class="leg-row" *ngFor="let s of ['DRAFT','PENDING_PARTNERS','ENRICHED','PUBLISHED','ARCHIVED']"
+        (click)="filterStatus = filterStatus === s ? '' : s"
+        [class.leg-active]="filterStatus === s">
+        <span class="leg-dot" [style.background]="statusColor(s)"></span>
+        <span>{{ statusLabel(s) }}</span>
+        <span class="leg-count">{{ countByStatus(s) }}</span>
+      </div>
+    </div>
+
+    <button class="btn-back-link" (click)="goBack()">← Retour admin</button>
+  </aside>
+
+  <!-- ====== MAIN ====== -->
+  <main class="cal-main">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="nav-group">
+          <button class="btn-nav" (click)="prev()">&#8249;</button>
+          <button class="btn-nav" (click)="next()">&#8250;</button>
+          <button class="btn-today" (click)="toToday()">Aujourd'hui</button>
+        </div>
+        <h2 class="nav-label">{{ navLabel }}</h2>
+      </div>
+      <div class="topbar-right">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="#94a3b8" stroke-width="1.5"/><path d="M13 13l3 3" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input class="search-input" [(ngModel)]="searchQuery" placeholder="Rechercher..." />
+        </div>
+        <div class="view-tabs">
+          <button [class.active]="viewMode==='month'"  (click)="setView('month')">Mois</button>
+          <button [class.active]="viewMode==='week'"   (click)="setView('week')">Semaine</button>
+          <button [class.active]="viewMode==='day'"    (click)="setView('day')">Jour</button>
+          <button [class.active]="viewMode==='agenda'" (click)="setView('agenda')">Agenda</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-bar" *ngIf="loading"><div class="loading-fill"></div></div>
+
+    <!-- ====== MONTH VIEW ====== -->
+    <div class="month-view" *ngIf="!loading && viewMode==='month'">
+      <div class="month-grid">
+        <div class="day-hdr" *ngFor="let d of weekDays">{{ d }}</div>
+        <div class="mcell"
+          *ngFor="let c of cells"
+          [class.other-month]="!c.isCurrentMonth"
+          [class.is-today]="c.isToday"
+          [class.has-events]="c.events.length > 0"
+          (click)="c.events.length ? openPanel(c.events[0]) : null">
+
+          <div class="mcell-num" [class.today-circle]="c.isToday">{{ c.date.getDate() }}</div>
+
+          <div class="mcell-pills">
+            <div class="mpill"
+              *ngFor="let e of c.events.slice(0, 3)"
+              [style.background]="color(e.category)"
+              (click)="$event.stopPropagation(); openPanel(e)"
+              [title]="e.title + ' — ' + statusLabel(e.status)">
+              <span class="mpill-dot" [style.background]="statusColor(e.status)"></span>
+              {{ e.title }}
+            </div>
+            <span class="mpill-more" *ngIf="c.events.length > 3">+{{ c.events.length - 3 }} autres</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== WEEK VIEW ====== -->
+    <div class="week-view" *ngIf="!loading && viewMode==='week'">
+      <div class="week-grid">
+        <!-- Header -->
+        <div class="wk-corner"></div>
+        <div class="wk-col-hdr" *ngFor="let d of weekDates" [class.wk-today]="isWeekToday(d)">
+          <span class="wk-dayname">{{ weekDays[(d.getDay() + 6) % 7] }}</span>
+          <span class="wk-daynum" [class.wk-today-num]="isWeekToday(d)">{{ d.getDate() }}</span>
+        </div>
+
+        <!-- Time rows -->
+        <ng-container *ngFor="let h of hours">
+          <div class="wk-hour-lbl">{{ h | number:'2.0' }}:00</div>
+          <div class="wk-slot" *ngFor="let d of weekDates" [class.wk-slot-today]="isWeekToday(d)">
+            <div class="wk-event"
+              *ngFor="let e of eventsForWeekDay(d, h)"
+              [style.background]="color(e.category) + '22'"
+              [style.border-left]="'3px solid ' + color(e.category)"
+              (click)="openPanel(e)">
+              <span class="wke-time">{{ e.eventDate | date:'HH:mm' }}</span>
+              <span class="wke-title">{{ e.title }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- ====== DAY VIEW ====== -->
+    <div class="day-view" *ngIf="!loading && viewMode==='day'">
+      <div class="day-empty" *ngIf="dayEvents.length === 0">
+        <svg viewBox="0 0 64 64" fill="none"><rect x="8" y="12" width="48" height="44" rx="4" stroke="#e2e8f0" stroke-width="3"/><line x1="8" y1="22" x2="56" y2="22" stroke="#e2e8f0" stroke-width="3"/><line x1="22" y1="8" x2="22" y2="16" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round"/><line x1="42" y1="8" x2="42" y2="16" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round"/></svg>
+        <p>Aucun événement ce jour</p>
+        <button class="btn-create-sm" (click)="goCreate()">+ Créer un événement</button>
+      </div>
+      <div class="day-timeline">
+        <div class="day-slot" *ngFor="let h of hours">
+          <div class="day-hour-lbl">{{ h | number:'2.0' }}:00</div>
+          <div class="day-slot-inner">
+            <div class="day-event"
+              *ngFor="let e of eventsForDayHour(h)"
+              [style.border-left]="'4px solid ' + color(e.category)"
+              (click)="openPanel(e)">
+              <div class="de-left">
+                <span class="de-time">{{ e.eventDate | date:'HH:mm' }}</span>
+                <span class="de-cat" [style.color]="color(e.category)">{{ e.category }}</span>
+              </div>
+              <div class="de-right">
+                <span class="de-title">{{ e.title }}</span>
+                <span class="de-loc">📍 {{ e.location }}</span>
+                <span class="de-status-pill" [style.color]="statusColor(e.status)" [style.background]="statusBg(e.status)">{{ statusLabel(e.status) }}</span>
+              </div>
+              <div class="de-meta">
+                <span>👥 {{ e.totalRegistrations }}<ng-container *ngIf="e.capacity">/{{ e.capacity }}</ng-container></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== AGENDA VIEW ====== -->
+    <div class="agenda-view" *ngIf="!loading && viewMode==='agenda'">
+      <div class="agenda-empty" *ngIf="agendaGroups.length === 0">
+        <p>Aucun événement trouvé</p>
+      </div>
+      <div class="agenda-group" *ngFor="let g of agendaGroups">
+        <div class="ag-date-label">
+          <span class="ag-date-badge">{{ g.label }}</span>
+        </div>
+        <div class="ag-card" *ngFor="let e of g.events" (click)="openPanel(e)">
+          <div class="ag-color-bar" [style.background]="color(e.category)"></div>
+          <div class="ag-time">
+            <span class="ag-h">{{ e.eventDate | date:'HH:mm' }}</span>
+          </div>
+          <div class="ag-body">
+            <div class="ag-title">{{ e.title }}</div>
+            <div class="ag-sub">
+              <span>📍 {{ e.location }}</span>
+              <span class="ag-sep">·</span>
+              <span>🏷️ {{ e.category }}</span>
+            </div>
+          </div>
+          <div class="ag-right">
+            <span class="ag-status-pill" [style.color]="statusColor(e.status)" [style.background]="statusBg(e.status)">{{ statusLabel(e.status) }}</span>
+            <div class="ag-fill" *ngIf="e.capacity">
+              <div class="ag-fill-bar"><div class="ag-fill-inner" [style.width.%]="fillRate(e)" [style.background]="color(e.category)"></div></div>
+              <span class="ag-fill-lbl">{{ e.totalRegistrations }}/{{ e.capacity }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ====== DETAIL PANEL ====== -->
+  <div class="panel-backdrop" [class.open]="panelOpen" (click)="closePanel()"></div>
+  <aside class="detail-panel" [class.open]="panelOpen">
+    <ng-container *ngIf="selectedEvent">
+      <div class="dp-head" [style.background]="color(selectedEvent.category)">
+        <button class="dp-close" (click)="closePanel()">✕</button>
+        <div class="dp-category">{{ selectedEvent.category }}</div>
+        <h3 class="dp-title">{{ selectedEvent.title }}</h3>
+        <span class="dp-status-pill" [style.color]="statusColor(selectedEvent.status)" [style.background]="statusBg(selectedEvent.status)">
+          {{ statusLabel(selectedEvent.status) }}
+        </span>
+      </div>
+      <div class="dp-body">
+        <div class="dp-row"><span class="dp-icon">📅</span><div><div class="dp-lbl">Date</div><div class="dp-val">{{ selectedEvent.eventDate | date:'EEEE dd MMMM yyyy' }}</div></div></div>
+        <div class="dp-row"><span class="dp-icon">🕐</span><div><div class="dp-lbl">Heure</div><div class="dp-val">{{ selectedEvent.eventDate | date:'HH:mm' }}</div></div></div>
+        <div class="dp-row"><span class="dp-icon">📍</span><div><div class="dp-lbl">Lieu</div><div class="dp-val">{{ selectedEvent.location }}</div></div></div>
+        <div class="dp-row" *ngIf="selectedEvent.topic"><span class="dp-icon">💡</span><div><div class="dp-lbl">Sujet</div><div class="dp-val">{{ selectedEvent.topic }}</div></div></div>
+
+        <!-- Capacity bar -->
+        <div class="dp-capacity" *ngIf="selectedEvent.capacity">
+          <div class="dp-cap-hdr">
+            <span>Inscriptions</span>
+            <strong>{{ selectedEvent.totalRegistrations }} / {{ selectedEvent.capacity }}</strong>
+          </div>
+          <div class="dp-cap-bar">
+            <div class="dp-cap-fill"
+              [style.width.%]="fillRate(selectedEvent)"
+              [style.background]="fillRate(selectedEvent) >= 90 ? '#ef4444' : fillRate(selectedEvent) >= 70 ? '#f59e0b' : '#10b981'">
+            </div>
+          </div>
+          <span class="dp-cap-pct">{{ fillRate(selectedEvent) }}% rempli</span>
+        </div>
+
+        <div class="dp-capacity" *ngIf="selectedEvent.totalPartners">
+          <div class="dp-cap-hdr"><span>Partenaires</span><strong>{{ selectedEvent.totalPartners }}</strong></div>
+        </div>
+
+        <div class="dp-description" *ngIf="selectedEvent.description">
+          <div class="dp-lbl">Description</div>
+          <p>{{ selectedEvent.description }}</p>
+        </div>
+      </div>
+      <div class="dp-actions">
+        <button class="dp-btn-primary" (click)="goToEvent(selectedEvent.id)">Gérer l'événement →</button>
+        <button class="dp-btn-ical" (click)="downloadIcal(selectedEvent, $event)">📅 Export iCal</button>
+      </div>
+    </ng-container>
+  </aside>
+
+</div>

@@ -1,0 +1,54 @@
+<div class="registrations-container">
+  <div class="page-header">
+    <button class="btn-back" (click)="goBack()">← Retour aux événements</button>
+    <div class="header-info">
+      <h1>👥 Gestion des Inscriptions</h1>
+      <p class="subtitle">Gérez les demandes et marquez les présences</p>
+    </div>
+  </div>
+
+  <div class="stats-bar" *ngIf="!loading && registrations.length > 0">
+    <div class="stat-chip stat-pending"><span>⏳ En attente</span><strong>{{ pendingCount }}</strong></div>
+    <div class="stat-chip stat-confirmed"><span>✅ Confirmés</span><strong>{{ confirmedCount }}</strong></div>
+    <div class="stat-chip stat-attended"><span>🎉 Présents</span><strong>{{ attendedCount }}</strong></div>
+    <div class="stat-chip stat-cancelled"><span>❌ Refusés</span><strong>{{ cancelledCount }}</strong></div>
+  </div>
+
+  <div class="error-msg" *ngIf="error">{{ error }}</div>
+  <div class="success-msg" *ngIf="successMsg">{{ successMsg }}</div>
+  <div class="loading" *ngIf="loading">Chargement...</div>
+
+  <div class="table-container" *ngIf="!loading">
+    <table>
+      <thead>
+        <tr>
+          <th>Participant</th><th>Email</th><th>Type</th>
+          <th>Date d'inscription</th><th>Statut</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let reg of registrations" [class.row-pending]="reg.status === RegistrationStatus.PENDING">
+          <td class="user-name">{{ reg.userName || '—' }}</td>
+          <td>{{ reg.userEmail }}</td>
+          <td><span class="type-badge">{{ reg.userType }}</span></td>
+          <td>{{ reg.registeredAt | date:'dd/MM/yyyy HH:mm' }}</td>
+          <td><span [class]="'status-badge ' + getStatusClass(reg.status)">{{ getStatusLabel(reg.status) }}</span></td>
+          <td class="actions-cell">
+            <ng-container *ngIf="reg.status === RegistrationStatus.PENDING">
+              <button class="btn-accept" (click)="acceptRegistration(reg.id)">✅ Accepter</button>
+              <button class="btn-reject" (click)="rejectRegistration(reg.id)">❌ Refuser</button>
+            </ng-container>
+            <ng-container *ngIf="reg.status === RegistrationStatus.CONFIRMED">
+              <button class="btn-attend" (click)="markAttended(reg.id)">🎉 Présent</button>
+              <button class="btn-reject" (click)="rejectRegistration(reg.id)">❌ Refuser</button>
+            </ng-container>
+            <span *ngIf="reg.status === RegistrationStatus.ATTENDED || reg.status === RegistrationStatus.CANCELLED" class="no-action">—</span>
+          </td>
+        </tr>
+        <tr *ngIf="registrations.length === 0">
+          <td colspan="6" class="no-data">📭 Aucune inscription</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

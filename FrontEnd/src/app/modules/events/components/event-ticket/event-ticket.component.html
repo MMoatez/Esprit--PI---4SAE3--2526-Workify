@@ -1,0 +1,76 @@
+<div class="ticket-page">
+  <div class="topbar no-print">
+    <button class="btn-back" (click)="goBack()">← Retour</button>
+    <div class="topbar-actions">
+      <button class="btn-pdf" (click)="downloadPdf()" [disabled]="downloading || loading">
+        {{ downloading ? '⏳ Export...' : '⬇️ Télécharger PDF' }}
+      </button>
+      <button class="btn-print" (click)="print()">🖨️ Imprimer</button>
+      <button class="btn-ical" (click)="downloadIcal()">📅 Calendrier</button>
+    </div>
+  </div>
+
+  <div class="loading" *ngIf="loading">Chargement du ticket...</div>
+  <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+  <div class="ticket-wrap" *ngIf="!loading && event && registration">
+    <div class="ticket" #ticketEl>
+      <!-- Header gradient -->
+      <div class="tk-head">
+        <div class="tk-brand">🎟️ <strong>Workify Events</strong></div>
+        <div class="tk-status" [class.confirmed]="registration.status === RegistrationStatus.CONFIRMED">
+          {{ registration.status === RegistrationStatus.CONFIRMED ? '✅ CONFIRMÉ' : registration.status }}
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="tk-body">
+        <div class="tk-info">
+          <h1>{{ event.title }}</h1>
+          <p class="tk-topic">{{ event.topic }}</p>
+          <div class="info-grid">
+            <div class="info-row"><span class="lbl">📅 Date</span><span class="val">{{ event.eventDate | date:'EEEE dd MMMM yyyy, HH:mm' }}</span></div>
+            <div class="info-row"><span class="lbl">📍 Lieu</span><span class="val">{{ event.location }}</span></div>
+            <div class="info-row"><span class="lbl">🏷️ Catégorie</span><span class="val">{{ event.category }}</span></div>
+            <div class="info-row"><span class="lbl">👤 Participant</span><span class="val">{{ registration.userName || registration.userEmail }}</span></div>
+            <div class="info-row"><span class="lbl">🎯 Profil</span><span class="val">{{ registration.userType }}</span></div>
+            <div class="info-row"><span class="lbl">🗓️ Inscrit le</span><span class="val">{{ registration.registeredAt | date:'dd/MM/yyyy HH:mm' }}</span></div>
+          </div>
+          <div class="tk-id-box">
+            <span class="tk-id-lbl">N° Ticket</span>
+            <span class="tk-id-val">{{ ticketId }}</span>
+          </div>
+        </div>
+
+        <div class="tk-qr">
+          <div class="qr-frame">
+            <img *ngIf="qrUrl" [src]="qrUrl" alt="QR Code" />
+            <div *ngIf="!qrUrl" class="qr-loader">⏳</div>
+          </div>
+          <p class="qr-hint">Présentez ce code à l'entrée</p>
+        </div>
+      </div>
+
+      <!-- Tear -->
+      <div class="tear">
+        <div class="hole left"></div>
+        <div class="dash-line"></div>
+        <div class="hole right"></div>
+      </div>
+
+      <!-- Stub -->
+      <div class="tk-stub">{{ event.title }} · {{ event.eventDate | date:'dd/MM/yyyy' }} · {{ ticketId }}</div>
+    </div>
+  </div>
+
+  <!-- Navigation map (outside the printable ticket) -->
+  <div class="map-section no-print" *ngIf="!loading && event">
+    <h3>🗺️ Accéder à l'événement</h3>
+    <app-event-map
+      [latitude]="event.latitude"
+      [longitude]="event.longitude"
+      [locationName]="event.location"
+      [showRoute]="true">
+    </app-event-map>
+  </div>
+</div>

@@ -1,0 +1,73 @@
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Glass Card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(14px);
+  border-radius: 24px;
+  box-shadow: 0 15px 40px rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Primary Button */
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #06b6d4);
+  color: white;
+  font-weight: 600;
+  border-radius: 12px;
+  transition: all 0.35s ease;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.25);
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(99, 102, 241, 0.35);
+}
+
+/* Project Cards */
+.project-card {
+  background: white;
+  border-radius: 22px;
+  padding: 24px;
+  transition: all 0.35s ease;
+  border: 1px solid rgba(99, 102, 241, 0.08);
+  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.08);
+  cursor: pointer;
+}
+
+.project-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 25px 60px rgba(99, 102, 241, 0.18);
+}
+
+/* Smooth inputs */
+input,
+select,
+textarea {
+  transition: all 0.3s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  transform: scale(1.02);
+}
+
+/* Modal animation */
+.fixed.inset-0 {
+  animation: fadeIn 0.3s ease;
+}

@@ -1,0 +1,61 @@
+<div class="fb-list-container">
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="fb-loading">Loading reviews...</div>
+
+  <ng-container *ngIf="!loading && summary">
+
+    <!-- Stats summary + PDF button -->
+    <div class="fb-summary">
+      <div class="fb-summary-main">
+        <span class="fb-avg">★ {{ summary.avgGlobal | number:'1.1-1' }}</span>
+        <span class="fb-total">{{ summary.totalFeedbacks }} review(s)</span>
+      </div>
+      <div class="fb-recommend-rate">
+        <span class="fb-rec-pct">{{ summary.recommendationRate | number:'1.0-0' }}%</span>
+        <span class="fb-rec-label">recommend</span>
+      </div>
+      <button
+        class="fb-pdf-btn"
+        (click)="downloadReport()"
+        [disabled]="downloadingReport"
+        title="Download reputation report as PDF">
+        <span *ngIf="!downloadingReport">⬇ Download PDF Report</span>
+        <span *ngIf="downloadingReport">Generating...</span>
+      </button>
+    </div>
+
+    <!-- Filtres par note -->
+    <div class="fb-filters">
+      <button
+        *ngFor="let r of ratingFilters"
+        class="fb-filter-btn"
+        [class.active]="filterRating === r"
+        (click)="setFilter(r)">
+        {{ r === null ? 'All' : r + '★' }}
+      </button>
+      <div class="fb-sort-btns">
+        <button class="fb-sort-btn" [class.active]="sortField === 'date'" (click)="toggleSort('date')">
+          Date {{ sortField === 'date' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
+        </button>
+        <button class="fb-sort-btn" [class.active]="sortField === 'rating'" (click)="toggleSort('rating')">
+          Rating {{ sortField === 'rating' ? (sortOrder === 'desc' ? '↓' : '↑') : '' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Liste -->
+    <div *ngIf="summary.feedbacks.length === 0" class="fb-empty">
+      No reviews match the selected criteria.
+    </div>
+
+    <app-feedback-card
+      *ngFor="let fb of summary.feedbacks"
+      [feedback]="fb"
+      [freelancerId]="fb.freelancerId"
+      (feedbackUpdated)="onFeedbackUpdated($event)">
+    </app-feedback-card>
+
+  </ng-container>
+
+</div>

@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workify — Call Simulation</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+
+    /* ── Thin top bar ─────────────────────────────────────── */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 14px;
+      background: #0a0f1e;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+      z-index: 200;
+    }
+    .top-brand { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:#6366f1; }
+    .top-ids   { display:flex; align-items:center; gap:8px; font-size:11px; color:#475569; }
+    .av-sm {
+      width:24px; height:24px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:700; color:#fff;
+    }
+    .av-me   { background: linear-gradient(135deg,#6366f1,#8b5cf6); }
+    .av-peer { background: linear-gradient(135deg,#ec4899,#f97316); }
+    .stats-toggle {
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      color: #a5b4fc;
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    /* ── Layout ───────────────────────────────────────────── */
+    .layout { display:flex; flex:1; overflow:hidden; }
+
+    /* ═══════════════════════════════════════════════════════
+       CALL AREA — exact copy of .call-overlay from real app
+       ═══════════════════════════════════════════════════════ */
+    .call-area {
+      flex: 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      animation: callFadeIn 0.25s ease both;
+      overflow: hidden;
+    }
+    @keyframes callFadeIn {
+      from { opacity:0; transform:scale(0.97); }
+      to   { opacity:1; transform:scale(1); }
+    }
+
+    /* Screen backgrounds — exact values from real app */
+    .bg-calling  { background: linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%); }
+    .bg-incoming { background: linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%); }
+    .bg-idle     { background: linear-gradient(160deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%); }
+    .bg-active   { background: #111827; }
+
+    /* ── Avatar ───────────────────────────────────────────── */
+    .call-avatar-wrap {
+      position: relative;
+      width: 96px; height: 96px;
+      margin-bottom: 4px;
+    }
+    .call-avatar {
+      width: 96px; height: 96px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.3);
+      display: flex; align-items:center; justify-content:center;
+      font-size: 34px; font-weight: 800; color: #fff;
+      background: linear-gradient(135deg,#6366f1,#8b5cf6);
+    }
+    .call-avatar-ring {
+      position: absolute;
+      inset: -10px;
+      border-radius: 50%;
+      border: 2px solid rgba(34,197,94,0.5);
+      animation: ringPulse 1.6s ease-in-out infinite;
+    }
+    .incoming-ring {
+      border-color: rgba(99,102,241,0.6);
+      animation: ringPulse 0.8s ease-in-out infinite;
+    }
+    @keyframes ringPulse {
+      0%,100% { transform:scale(1);    opacity:1;   }
+      50%      { transform:scale(1.12); opacity:0.4; }
+    }
+
+    /* ── Labels (exact from real app) ──────────────────────── */
+    .call-label {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      letter-spacing: 0.04em;
+      margin: 0;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .call-name {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+      letter-spacing: -0.4px;
+      text-align: center;
+    }
+
+    /* ── Calling layout — push info toward bottom ───────────── */
+    .calling-layout { justify-content: flex-end; }
+    .calling-info {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      margin-bottom: 12px; position: relative; z-index:1;
+    }
+
+    /* ── Action buttons (exact sizes from real app) ─────────── */
+    .call-actions-row {
+      display: flex;
+      gap: 32px;
+      margin-top: 16px;
+    }
+    .active-call-bar {
+      position: absolute;
+      bottom: 30px;
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      z-index: 5;
+    }
+    .call-action-btn {
+      width: 62px; height: 62px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex; align-items:center; justify-content:center;
+      transition: transform 0.15s, opacity 0.15s;
+      color: #fff;
+      font-size: 24px;
+    }
+    .call-action-btn:hover { transform: scale(1.08); }
+    .call-action-btn:active { transform: scale(0.95); }
+    .accept-btn { background:#22c55e; box-shadow:0 4px 18px rgba(34,197,94,0.5); }
+    .reject-btn { background:#ef4444; box-shadow:0 4px 18px rgba(239,68,68,0.5); }
+    .hangup-btn { background:#ef4444; box-shadow:0 4px 18px rgba(239,68,68,0.5); margin-top:8px; }
+    .mute-btn   { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2)!important; }
+    .cam-btn    { background:rgba(255,255,255,0.15); border:1px solid rgba(255,255,255,0.2)!important; }
+    .mute-btn.off, .cam-btn.off { background:rgba(239,68,68,0.2); border-color:#ef4444!important; }
+
+    /* Btn label */
+    .btn-lbl {
+      font-size: 10px; color: rgba(255,255,255,0.4);
+      text-align: center; margin-top: 6px;
+    }
+    .btn-wrap { display:flex; flex-direction:column; align-items:center; }
+
+    /* ── Idle — type selector ──────────────────────────────── */
+    .idle-extra {
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+      margin-top: 8px;
+    }
+    .type-row { display:flex; gap:10px; }
+    .type-btn {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.55);
+      border-radius: 10px; padding: 7px 18px; font-size: 13px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .type-btn.sel {
+      background: rgba(99,102,241,0.25);
+      border-color: rgba(99,102,241,0.6);
+      color: #a5b4fc;
+    }
+    .idle-btns { display:flex; gap:20px; }
+    .idle-call-btn {
+      width:62px; height:62px; border-radius:50%; border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; font-size:24px;
+      color:#fff; transition: transform 0.15s;
+    }
+    .idle-call-btn:hover { transform:scale(1.08); }
+    .ib-audio { background:#22c55e; box-shadow:0 4px 18px rgba(34,197,94,0.4); }
+    .ib-video { background:#3b82f6; box-shadow:0 4px 18px rgba(59,130,246,0.4); }
+
+    /* ── Video elements ────────────────────────────────────── */
+    #remoteVideo {
+      position:absolute; inset:0; width:100%; height:100%;
+      object-fit:cover; display:none; z-index:1;
+    }
+    #remoteVideo.on { display:block; }
+    #localVideo {
+      position:absolute; bottom:96px; right:16px;
+      width:140px; height:100px; object-fit:cover;
+      border-radius:10px; border:2px solid rgba(99,102,241,0.6);
+      background:#111; display:none; z-index:4;
+      box-shadow:0 4px 20px rgba(0,0,0,0.6);
+    }
+    #localVideo.on { display:block; }
+
+    /* ── Timer ─────────────────────────────────────────────── */
+    .timer-pill {
+      position:absolute; top:14px; left:50%; transform:translateX(-50%);
+      background:rgba(0,0,0,0.55); backdrop-filter:blur(6px);
+      border:1px solid rgba(255,255,255,0.1); border-radius:20px;
+      padding:5px 14px; display:none; align-items:center; gap:6px; z-index:10;
+    }
+    .timer-pill.on { display:flex; }
+    .t-dot { width:7px;height:7px;border-radius:50%;background:#22c55e;animation:tblink 1s infinite; }
+    @keyframes tblink { 0%,100%{opacity:1;}50%{opacity:0.3;} }
+    #timerTxt { font-family:monospace; font-size:14px; font-weight:700; color:#a5b4fc; }
+
+    /* ═══════════════════════════════════════════════════════
+       STATS PANEL (right sidebar, toggleable)
+       ═══════════════════════════════════════════════════════ */
+    .sidebar {
+      width: 280px;
+      display: flex; flex-direction: column;
+      background: #0a0f1e;
+      border-left: 1px solid rgba(255,255,255,0.05);
+      transition: width 0.3s ease;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .sidebar.collapsed { width: 0; }
+    .ptitle {
+      padding:10px 14px; font-size:10px; font-weight:700; text-transform:uppercase;
+      letter-spacing:0.12em; color:#334155;
+      border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    .sgrid {
+      display:grid; grid-template-columns:1fr 1fr; gap:1px;
+      background:rgba(255,255,255,0.03);
+      border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    .sc { background:#0a0f1e; padding:10px 12px; }
+    .sl { font-size:9px; text-transform:uppercase; letter-spacing:0.08em; color:#1e3a5f; margin-bottom:3px; }
+    .sv { font-size:18px; font-weight:700; font-family:monospace; color:#6366f1; }
+    .sv.g { color:#22c55e; } .sv.m { color:#1e3a5f; font-size:13px; }
+    .logw { flex:1; overflow-y:auto; }
+    .logw::-webkit-scrollbar { width:2px; }
+    .logw::-webkit-scrollbar-thumb { background:#1e293b; }
+    .le {
+      display:flex; align-items:flex-start; gap:6px;
+      padding:6px 10px; border-bottom:1px solid rgba(255,255,255,0.02);
+      font-size:10px; animation:lein 0.2s ease;
+    }
+    @keyframes lein { from{opacity:0;transform:translateY(-3px);}to{opacity:1;} }
+    .lt { color:#1e3a5f; font-family:monospace; font-size:9px; white-space:nowrap; padding-top:1px; flex-shrink:0; }
+    .lb {
+      border-radius:3px; padding:1px 4px; font-size:9px; font-weight:700;
+      text-transform:uppercase; white-space:nowrap; flex-shrink:0;
+    }
+    .bOFFER {background:#1e3a8a;color:#93c5fd;}
+    .bANSWER{background:#064e3b;color:#6ee7b7;}
+    .bICE   {background:#451a03;color:#fed7aa;}
+    .bREJECT{background:#7f1d1d;color:#fca5a5;}
+    .bHANGUP{background:#3b0764;color:#d8b4fe;}
+    .bSYS   {background:#0f172a;color:#334155;border:1px solid #1e293b;}
+    .lm { flex:1; color:#334155; line-height:1.4; }
+    .lm strong { color:#64748b; }
+  </style>
+</head>
+<body>
+
+<!-- ── Top bar ────────────────────────────────────────── -->
+<div class="top-bar">
+  <div class="top-brand">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" stroke="#6366f1" stroke-width="2" fill="rgba(99,102,241,0.15)"/>
+    </svg>
+    Workify &nbsp;<span style="color:#334155;font-weight:400">|</span>&nbsp;
+    <span style="color:#334155;font-weight:400;font-size:11px">Call Simulation</span>
+  </div>
+  <div class="top-ids">
+    <div class="av-sm av-me" id="avMe">?</div>
+    <strong style="color:#94a3b8" id="nameMe">Me</strong>
+    <span>ID:<span id="idMe">?</span></span>
+    <span style="color:#1e293b">→</span>
+    <div class="av-sm av-peer" id="avPeer">?</div>
+    <strong style="color:#94a3b8" id="namePeer">Peer</strong>
+    <span>ID:<span id="idPeer">?</span></span>
+  </div>
+  <button class="stats-toggle" onclick="toggleStats()">📊 Stats</button>
+</div>
+
+<div class="layout">
+
+  <!-- ═══ CALL AREA ════════════════════════════════════ -->
+  <div class="call-area bg-idle" id="callArea">
+
+    <video id="remoteVideo" autoplay playsinline></video>
+    <video id="localVideo"  autoplay muted playsinline></video>
+
+    <!-- Timer pill -->
+    <div class="timer-pill" id="timerPill">
+      <div class="t-dot"></div>
+      <span id="timerTxt">00:00</span>
+    </div>
+
+    <!-- ── IDLE ── -->
+    <div id="scrIdle">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+        <div class="call-avatar-wrap">
+          <div class="call-avatar" id="avIdleCirc">N</div>
+          <div class="call-avatar-ring incoming-ring"></div>
+        </div>
+        <p class="call-label">Ready to call</p>
+        <h2 class="call-name" id="nameIdleLbl">Peer</h2>
+      </div>
+      <div class="idle-extra">
+        <div class="type-row">
+          <button class="type-btn sel" id="btnTA" onclick="selType('audio')">🎙 Audio</button>
+          <button class="type-btn"     id="btnTV" onclick="selType('video')">📹 Video</button>
+        </div>
+        <div class="idle-btns">
+          <div class="btn-wrap">
+            <button class="idle-call-btn ib-audio" onclick="startCall('audio')">🎙</button>
+            <div class="btn-lbl">Audio</div>
+          </div>
+          <div class="btn-wrap">
+            <button class="idle-call-btn ib-video" onclick="startCall('video')">📹</button>
+            <div class="btn-lbl">Video</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CALLING ── -->
+    <div id="scrCalling" style="display:none;width:100%;height:100%;position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:flex-end">
+      <div class="calling-info">
+        <div class="call-avatar-wrap">
+          <div class="call-avatar" id="avCallingCirc">N</div>
+          <div class="call-avatar-ring"></div>
+        </div>
+        <p class="call-label" id="lblCalling">Calling...</p>
+        <h2 class="call-name" id="nameCallingLbl">Peer</h2>
+      </div>
+      <div class="active-call-bar" style="position:relative;bottom:auto;margin-bottom:30px">
+        <div class="btn-wrap">
+          <button class="call-action-btn hangup-btn" onclick="cancelCall()">📵</button>
+          <div class="btn-lbl">Cancel</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── INCOMING ── -->
+    <div id="scrIncoming" style="display:none;flex-direction:column;align-items:center;gap:12px">
+      <div class="call-avatar-wrap">
+        <div class="call-avatar" id="avIncomingCirc">N</div>
+        <div class="call-avatar-ring incoming-ring"></div>
+      </div>
+      <p class="call-label" id="lblIncoming">Incoming video call</p>
+      <h2 class="call-name" id="nameIncomingLbl">Peer</h2>
+      <div class="call-actions-row">
+        <div class="btn-wrap">
+          <button class="call-action-btn reject-btn" onclick="rejectCall()">📵</button>
+          <div class="btn-lbl">Decline</div>
+        </div>
+        <div class="btn-wrap">
+          <button class="call-action-btn accept-btn" onclick="acceptCall()">📞</button>
+          <div class="btn-lbl">Accept</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ACTIVE controls ── -->
+    <div class="active-call-bar" id="activeBar" style="display:none">
+      <div class="btn-wrap">
+        <button class="call-action-btn mute-btn" id="btnMute" onclick="toggleMute()">🎙</button>
+        <div class="btn-lbl">Mute</div>
+      </div>
+      <div class="btn-wrap">
+        <button class="call-action-btn hangup-btn" onclick="hangup()">📵</button>
+        <div class="btn-lbl">End Call</div>
+      </div>
+      <div class="btn-wrap">
+        <button class="call-action-btn cam-btn" id="btnCam" onclick="toggleCam()">📷</button>
+        <div class="btn-lbl">Camera</div>
+      </div>
+    </div>
+
+  </div><!-- /call-area -->
+
+  <!-- ═══ STATS SIDEBAR ════════════════════════════════ -->
+  <div class="sidebar" id="sidebar">
+    <div class="ptitle">📊 Session Statistics</div>
+    <div class="sgrid">
+      <div class="sc"><div class="sl">State</div><div class="sv m" id="stState">Idle</div></div>
+      <div class="sc"><div class="sl">Duration</div><div class="sv g" id="stDur">—</div></div>
+      <div class="sc"><div class="sl">Signals Sent</div><div class="sv" id="stSent">0</div></div>
+      <div class="sc"><div class="sl">Signals Recv</div><div class="sv" id="stRecv">0</div></div>
+      <div class="sc"><div class="sl">ICE Candidates</div><div class="sv" id="stIce">0</div></div>
+      <div class="sc"><div class="sl">Calls Total</div><div class="sv" id="stCalls">0</div></div>
+    </div>
+    <div class="ptitle" style="border-top:1px solid rgba(255,255,255,0.03)">📡 Signal Log</div>
+    <div class="logw" id="logW"></div>
+  </div>
+
+</div>
+
+<script>
+const P=new URLSearchParams(location.search);
+const MY_ID=parseInt(P.get('userId')||'1');
+const PEER_ID=parseInt(P.get('peerId')||'2');
+const MY_NAME=P.get('userName')||`User ${MY_ID}`;
+const PEER_NAME=P.get('peerName')||`User ${PEER_ID}`;
+const API='http://localhost:8084';
+const STUN={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+
+let state='idle',callId=null,callType='video',pc=null,localStream=null;
+let pendingOffer=null,callStart=null,timerIv=null;
+let muted=false,camOff=false,sSent=0,sRecv=0,sIce=0,sCalls=0;
+let statsOpen=true;
+
+/* ── Init ──────────────────────────────────────────────── */
+function initUI(){
+  const mi=MY_NAME.charAt(0).toUpperCase(),pi=PEER_NAME.charAt(0).toUpperCase();
+  document.getElementById('avMe').textContent=mi;
+  document.getElementById('nameMe').textContent=MY_NAME;
+  document.getElementById('idMe').textContent=MY_ID;
+  document.getElementById('avPeer').textContent=pi;
+  document.getElementById('namePeer').textContent=PEER_NAME;
+  document.getElementById('idPeer').textContent=PEER_ID;
+  ['avIdleCirc','avCallingCirc','avIncomingCirc'].forEach(id=>document.getElementById(id).textContent=pi);
+  ['nameIdleLbl','nameCallingLbl','nameIncomingLbl'].forEach(id=>document.getElementById(id).textContent=PEER_NAME);
+  document.title=`${MY_NAME} — Workify`;
+}
+
+function toggleStats(){
+  statsOpen=!statsOpen;
+  document.getElementById('sidebar').classList.toggle('collapsed',!statsOpen);
+}
+
+/* ── Type selector ─────────────────────────────────────── */
+function selType(t){
+  callType=t;
+  document.getElementById('btnTA').classList.toggle('sel',t==='audio');
+  document.getElementById('btnTV').classList.toggle('sel',t==='video');
+}
+
+/* ── API ───────────────────────────────────────────────── */
+async function apiPost(type,sdp=null){
+  const body={callId,type,callType,fromUserId:MY_ID,toUserId:PEER_ID,sdp:sdp?JSON.stringify(sdp):null};
+  const r=await fetch(`${API}/api/calls/signal`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok) throw new Error(`HTTP ${r.status}`);
+  sSent++;upStats();
+  log(type,`Sent <strong>${type}</strong>${sdp?' (SDP)':''}`);
+  return r.json();
+}
+
+async function pollPending(){
+  try{
+    const r=await fetch(`${API}/api/calls/pending?userId=${MY_ID}`);
+    if(!r.ok)return;
+    const sigs=await r.json();
+    for(const s of sigs){
+      sRecv++;upStats();
+      await handleSig(s);
+      await fetch(`${API}/api/calls/signal/${s.id}`,{method:'DELETE'}).catch(()=>{});
+    }
+  }catch(_){}
+}
+
+/* ── Signal handler ────────────────────────────────────── */
+async function handleSig(s){
+  log(s.type,`Recv <strong>${s.type}</strong> from User ${s.fromUserId}`);
+  if(s.type==='OFFER'&&state==='idle'){
+    callType=s.callType||'video';callId=s.callId;pendingOffer=s;
+    setState('incoming');
+    document.getElementById('lblIncoming').textContent=`Incoming ${callType} call`;
+  }else if(s.type==='ANSWER'&&state==='calling'&&pc){
+    await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(s.sdp)));
+    setState('active');
+    log('SYS','✅ Connected');
+  }else if(s.type==='ICE'&&pc){
+    await pc.addIceCandidate(new RTCIceCandidate(JSON.parse(s.sdp))).catch(()=>{});
+    sIce++;upStats();
+  }else if((s.type==='HANGUP'||s.type==='REJECT')&&state!=='idle'){
+    log('SYS',s.type==='REJECT'?'❌ Call declined':'📵 Call ended by peer');
+    cleanup();setState('idle');
+  }
+}
+
+/* ── Call flow ─────────────────────────────────────────── */
+async function startCall(type){
+  if(state!=='idle')return;
+  callType=type||callType;callId=uuid();sCalls++;upStats();
+  document.getElementById('lblCalling').textContent=callType==='video'?'Video calling...':'Calling...';
+  setState('calling');
+  localStream=await getMedia();showLocal(localStream);
+  pc=createPC();localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+  const offer=await pc.createOffer();await pc.setLocalDescription(offer);
+  await apiPost('OFFER',offer);
+}
+
+async function acceptCall(){
+  if(state!=='incoming'||!pendingOffer)return;
+  setState('active');
+  localStream=await getMedia();showLocal(localStream);
+  pc=createPC();localStream.getTracks().forEach(t=>pc.addTrack(t,localStream));
+  await pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(pendingOffer.sdp)));
+  const ans=await pc.createAnswer();await pc.setLocalDescription(ans);
+  await apiPost('ANSWER',ans);pendingOffer=null;
+}
+
+async function rejectCall(){
+  if(state!=='incoming')return;
+  await apiPost('REJECT').catch(()=>{});cleanup();setState('idle');pendingOffer=null;
+}
+async function cancelCall(){
+  if(state!=='calling')return;
+  await apiPost('HANGUP').catch(()=>{});cleanup();setState('idle');
+}
+async function hangup(){
+  if(state!=='active')return;
+  await apiPost('HANGUP').catch(()=>{});cleanup();setState('idle');
+}
+
+/* ── WebRTC ────────────────────────────────────────────── */
+function createPC(){
+  const c=new RTCPeerConnection(STUN);
+  c.onicecandidate=async e=>{
+    if(!e.candidate)return;
+    const b={callId,type:'ICE',callType,fromUserId:MY_ID,toUserId:PEER_ID,sdp:JSON.stringify(e.candidate)};
+    await fetch(`${API}/api/calls/signal`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).catch(()=>{});
+    sSent++;sIce++;upStats();log('ICE','Sent ICE candidate');
+  };
+  c.ontrack=e=>{
+    const rv=document.getElementById('remoteVideo');
+    if(!rv.srcObject)rv.srcObject=new MediaStream();
+    rv.srcObject.addTrack(e.track);rv.classList.add('on');
+    log('SYS','🎥 Remote stream received');
+  };
+  c.oniceconnectionstatechange=()=>{
+    if(c.iceConnectionState==='connected'||c.iceConnectionState==='completed')
+      log('SYS','✅ ICE connected — call is <strong>LIVE</strong>');
+  };
+  return c;
+}
+
+async function getMedia(){
+  try{return await navigator.mediaDevices.getUserMedia({audio:true,video:callType==='video'});}
+  catch(e){log('SYS','⚠️ Media denied — using fallback');return mkFallback();}
+}
+async function mkFallback(){
+  const ctx=new AudioContext();const dest=ctx.createMediaStreamDestination();
+  const o=ctx.createOscillator();o.frequency.value=0;o.connect(dest);o.start();
+  const tr=[dest.stream.getAudioTracks()[0]];
+  if(callType==='video'){
+    const cv=document.createElement('canvas');cv.width=320;cv.height=240;
+    cv.getContext('2d').fillRect(0,0,320,240);
+    tr.push(cv.captureStream(15).getVideoTracks()[0]);
+  }
+  return new MediaStream(tr);
+}
+function showLocal(s){const v=document.getElementById('localVideo');v.srcObject=s;v.classList.add('on');}
+function toggleMute(){
+  muted=!muted;localStream?.getAudioTracks().forEach(t=>t.enabled=!muted);
+  const b=document.getElementById('btnMute');b.classList.toggle('off',muted);b.textContent=muted?'🔇':'🎙';
+}
+function toggleCam(){
+  camOff=!camOff;localStream?.getVideoTracks().forEach(t=>t.enabled=!camOff);
+  const b=document.getElementById('btnCam');b.classList.toggle('off',camOff);b.textContent=camOff?'🚫':'📷';
+}
+
+/* ── State machine ─────────────────────────────────────── */
+const SCREENS=['scrIdle','scrCalling','scrIncoming'];
+function setState(s){
+  state=s;
+  // Background
+  const ca=document.getElementById('callArea');
+  ca.className='call-area '+({idle:'bg-idle',calling:'bg-calling',incoming:'bg-incoming',active:'bg-active'}[s]||'bg-idle');
+
+  // Screens
+  document.getElementById('scrIdle').style.display=s==='idle'?'flex':'none';
+  const sc=document.getElementById('scrCalling');
+  sc.style.display=s==='calling'?'flex':'none';
+  if(s==='calling'){sc.style.flexDirection='column';sc.style.alignItems='center';sc.style.justifyContent='flex-end';sc.style.width='100%';sc.style.height='100%';sc.style.position='absolute';sc.style.inset='0';}
+  const si=document.getElementById('scrIncoming');
+  si.style.display=s==='incoming'?'flex':'none';
+  if(s==='incoming'){si.style.flexDirection='column';si.style.alignItems='center';si.style.gap='12px';}
+  document.getElementById('activeBar').style.display=s==='active'?'flex':'none';
+  document.getElementById('timerPill').classList.toggle('on',s==='active');
+
+  document.getElementById('stState').textContent={idle:'Idle',calling:'Calling…',incoming:'Incoming',active:'Active'}[s]||s;
+  if(s==='active')startTimer();else stopTimer();
+}
+
+/* ── Timer ─────────────────────────────────────────────── */
+function startTimer(){
+  callStart=Date.now();clearInterval(timerIv);
+  timerIv=setInterval(()=>{
+    const sec=Math.floor((Date.now()-callStart)/1000);
+    const t=pad(Math.floor(sec/60))+':'+pad(sec%60);
+    document.getElementById('timerTxt').textContent=t;
+    document.getElementById('stDur').textContent=t;
+  },1000);
+}
+function stopTimer(){
+  if(timerIv&&callStart){
+    const sec=Math.floor((Date.now()-callStart)/1000);
+    if(sec>0)log('SYS',`📊 Duration: <strong>${pad(Math.floor(sec/60))}:${pad(sec%60)}</strong>`);
+  }
+  clearInterval(timerIv);timerIv=null;callStart=null;
+  document.getElementById('stDur').textContent='—';
+}
+function pad(n){return String(n).padStart(2,'0');}
+
+/* ── Cleanup ───────────────────────────────────────────── */
+function cleanup(){
+  if(pc){pc.close();pc=null;}
+  if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
+  const rv=document.getElementById('remoteVideo');rv.srcObject=null;rv.classList.remove('on');
+  document.getElementById('localVideo').classList.remove('on');
+  muted=false;camOff=false;callId=null;pendingOffer=null;
+  document.getElementById('btnMute').textContent='🎙';
+  document.getElementById('btnCam').textContent='📷';
+}
+
+/* ── Stats ─────────────────────────────────────────────── */
+function upStats(){
+  document.getElementById('stSent').textContent=sSent;
+  document.getElementById('stRecv').textContent=sRecv;
+  document.getElementById('stIce').textContent=sIce;
+  document.getElementById('stCalls').textContent=sCalls;
+}
+
+/* ── Log ───────────────────────────────────────────────── */
+function log(type,msg){
+  const w=document.getElementById('logW');
+  const n=new Date();
+  const t=pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds());
+  const e=document.createElement('div');e.className='le';
+  e.innerHTML=`<span class="lt">${t}</span><span class="lb b${type}">${type}</span><span class="lm">${msg}</span>`;
+  w.appendChild(e);w.scrollTop=w.scrollHeight;
+}
+
+/* ── UUID ──────────────────────────────────────────────── */
+function uuid(){return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16);});}
+
+/* ── Boot ──────────────────────────────────────────────── */
+initUI();setState('idle');upStats();
+setInterval(pollPending,2000);
+log('SYS',`<strong>${MY_NAME}</strong> (id=${MY_ID}) ↔ <strong>${PEER_NAME}</strong> (id=${PEER_ID})`);
+log('SYS','✅ Polling every 2s');
+</script>
+</body>
+</html>

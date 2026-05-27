@@ -1,0 +1,160 @@
+{
+    "realm": "workify",
+    "enabled": true,
+    "roles": {
+        "realm": [
+            {
+                "name": "freelancer"
+            },
+            {
+                "name": "client"
+            },
+            {
+                "name": "admin"
+            },
+            {
+                "name": "service_desk"
+            },
+            {
+                "name": "partner"
+            }
+        ]
+    },
+    "clients": [
+        {
+            "clientId": "workify-frontend",
+            "enabled": true,
+            "publicClient": true,
+            "directAccessGrantsEnabled": true,
+            "webOrigins": [
+                "http://localhost:4200",
+                "http://localhost:4201"
+            ],
+            "redirectUris": [
+                "http://localhost:4200/*",
+                "http://localhost:4201/*"
+            ],
+            "fullScopeAllowed": true
+        }
+    ],
+    "passwordPolicy": "length(8)"
+,
+    "accessTokenLifespan": 300,
+    "actionTokenGeneratedByUserLifespan": 300,
+    "resetPasswordAllowed": true,
+    "smtpServer": {
+        "host": "mailhog",
+        "port": "1025",
+        "from": "noreply@workify.com",
+        "fromDisplayName": "Workify Auth",
+        "ssl": "false",
+        "starttls": "false"
+    },
+    "loginTheme": "workify",
+    "accountTheme": "workify",
+    "emailTheme": "workify",
+    "users": [
+        {
+            "username": "freelancer1",
+            "enabled": true,
+            "email": "freelancer@workify.com",
+            "firstName": "John",
+            "lastName": "Freelancer",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "password123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "freelancer"
+            ]
+        },
+        {
+            "username": "client1",
+            "enabled": true,
+            "email": "client@workify.com",
+            "firstName": "Sarah",
+            "lastName": "Client",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "password123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "client"
+            ]
+        },
+        {
+            "username": "admin1",
+            "enabled": true,
+            "email": "admin@workify.com",
+            "firstName": "Admin",
+            "lastName": "User",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "password123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "admin"
+            ]
+        },
+        {
+            "username": "servicedesk1",
+            "enabled": true,
+            "email": "servicedesk@workify.com",
+            "firstName": "Support",
+            "lastName": "Desk",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "password123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "service_desk"
+            ]
+        },
+        {
+            "username": "partner1",
+            "enabled": true,
+            "email": "partner@workify.com",
+            "firstName": "Business",
+            "lastName": "Partner",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "password123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "partner"
+            ]
+        },
+        {
+            "username": "safa",
+            "enabled": true,
+            "email": "safa@gmail.com",
+            "firstName": "safa",
+            "lastName": "User",
+            "credentials": [
+                {
+                    "type": "password",
+                    "value": "password123",
+                    "temporary": false
+                }
+            ],
+            "realmRoles": [
+                "freelancer"
+            ]
+        }
+    ]
+}

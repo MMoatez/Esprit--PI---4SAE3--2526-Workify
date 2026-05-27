@@ -1,0 +1,478 @@
+<app-feedback-notification-toast></app-feedback-notification-toast>
+<div class="min-h-screen bg-slate-50/80" (click)="closeUserMenu()">
+  <!-- Header: glassmorphism, refined -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-sm">
+    <div class="w-full pl-3 pr-4 sm:pl-4 sm:pr-5 lg:pl-6 lg:pr-6">
+      <div class="flex justify-between items-center h-16 md:h-20">
+        <!-- Logo -->
+      <a routerLink="/" class="flex items-center gap-2 group min-w-[140px]">
+        <img 
+          src="/images/logo.png" 
+          alt="Workify Logo" 
+          class="h-10 w-10 object-cover object-center rounded-lg transition-transform group-hover:scale-105"
+        />
+        <span class="text-slate-900 font-semibold text-base tracking-tight">Workify</span>
+      </a>
+
+        <nav class="hidden md:flex items-center gap-1">
+
+          <!-- ── ALWAYS: Home ── -->
+          <a routerLink="/"
+            [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/') && currentPath === '/' ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+            </svg>
+            Home
+          </a>
+
+          <!-- ══════════════════════════════════════════ -->
+          <!-- ── CLIENT NAV ── -->
+          <!-- ══════════════════════════════════════════ -->
+          <ng-container *ngIf="auth.isLoggedIn() && auth.getRole() === 'CLIENT'">
+            <a routerLink="/my-projects" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/my-projects') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+              Projects
+            </a>
+             <a routerLink="/my-offers" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/my-offers') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              My Offers
+            </a>
+            <a routerLink="/freelancers"
+              [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/freelancers') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              Freelancers
+            </a>
+            <a routerLink="/recommendation" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/recommendation') ? 'text-purple-600 bg-purple-50' : 'text-purple-600 hover:bg-purple-50')">
+              <span class="font-bold">✦</span>
+              AI Recommendation
+            </a>
+            <a routerLink="/chatbot" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/chatbot') ? 'text-slate-900 bg-slate-100' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              Chatbot
+            </a>
+              <a routerLink="/freelancers/subscription" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/freelancers/subscription') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 3v2m10-2v2m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Subscription
+            </a>
+            <a routerLink="/events" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/events') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Événements
+            </a>
+          </ng-container>
+
+          <!-- ══════════════════════════════════════════ -->
+          <!-- ── FREELANCER NAV ── -->
+          <!-- ══════════════════════════════════════════ -->
+          <ng-container *ngIf="auth.isLoggedIn() && auth.getRole() === 'FREELANCER'">
+            <a routerLink="/projects/open" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/projects/open') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+              Projects
+            </a>
+            <a routerLink="/formation" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/formation') && !isActive('/formation/my-') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              Formations
+            </a>
+            <a routerLink="/events" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/events') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Événements
+            </a>
+            <a routerLink="/my-offers" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/my-offers') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              My Offers
+            </a>
+            <a routerLink="/ml-projects" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/ml-projects') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              Projets IA
+            </a>
+            <a routerLink="/freelancers/subscription" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/freelancers/subscription') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 3v2m10-2v2m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Subscription
+            </a>
+            <a routerLink="/profile/analytics"
+              [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/profile/analytics') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              My Analytics
+            </a>
+            <!-- My Learning dropdown -->
+           <div class="relative">
+              <button (click)="toggleLearningMenu()" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/formation/my-') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+                My Learning
+                <svg class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="learningMenuOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </button>
+              <div *ngIf="learningMenuOpen" class="absolute top-full left-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
+                <a routerLink="/formation/my-courses" (click)="learningMenuOpen = false" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-primary-50 transition-colors">My Courses</a>
+                <a routerLink="/formation/my-certificates" (click)="learningMenuOpen = false" class="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-600 hover:text-primary-600 hover:bg-primary-50 transition-colors">My Certificates</a>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- ===== NOT LOGGED IN / PUBLIC ===== -->
+          <ng-container *ngIf="!auth.isLoggedIn()">
+            <a routerLink="/projects" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/projects') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">Projects</a>
+            <a routerLink="/formation" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/formation') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">Formations</a>
+            <a routerLink="/freelancers" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/freelancers') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">Freelancers</a>
+            <a routerLink="/freelancers/subscription" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/freelancers/subscription') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">Subscription</a>
+          </ng-container>
+
+          <!-- ===== ADMIN ===== -->
+          <a *ngIf="userRole === 'ADMIN'" routerLink="/admin" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/admin') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            Backoffice
+          </a>
+
+          <!-- ===== PARTNER ===== -->
+          <ng-container *ngIf="userRole === 'PARTNER'">
+            <a routerLink="/admin/partner-dashboard" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/admin/partner') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">Dashboard</a>
+            <a routerLink="/events/partner/invitations" [class]="'flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ' + (isActive('/events/partner') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100')">📩 Mes Invitations</a>
+          </ng-container>
+
+        </nav>
+
+        <div class="hidden md:flex items-center gap-3">
+          <ng-container *ngIf="!auth.isLoggedIn()">
+            <a routerLink="/auth/login"
+              class="px-4 py-2.5 text-slate-600 hover:text-slate-900 font-medium rounded-xl hover:bg-slate-100 transition-colors duration-200">
+              Sign In
+            </a>
+            <a routerLink="/auth/register"
+              class="px-5 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl shadow-lg shadow-primary-500/25 hover:shadow-primary-500/35 hover:from-primary-600 hover:to-primary-700 transition-all duration-300">
+              Get Started
+              <span class="ml-1 inline-block">→</span>
+            </a>
+          </ng-container>
+          <ng-container *ngIf="auth.isLoggedIn()">
+            <div class="relative" (click)="$event.stopPropagation()">
+              <button type="button" (click)="toggleUserMenu()"
+                class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 hover:bg-slate-50 transition-colors">
+                <div class="h-8 w-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-semibold">
+                  {{ headerUserInitials }}
+                </div>
+                <div class="min-w-0 text-left">
+                  <p class="text-sm font-semibold text-slate-800 truncate max-w-[180px]">{{ headerUserName }}</p>
+                  <p *ngIf="activePackSummary" class="text-xs text-emerald-600 font-medium truncate max-w-[220px]">{{ activePackSummary }}</p>
+                </div>
+                <svg class="w-4 h-4 text-slate-500 transition-transform" [class.rotate-180]="userMenuOpen" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+
+              <div *ngIf="userMenuOpen" class="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-2 z-50">
+                <a routerLink="/profile" (click)="userMenuOpen = false"
+                  class="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors">
+                  Profile
+                </a>
+                <button type="button" (click)="logout()"
+                  class="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors">
+                  Logout
+                </button>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+        <button (click)="toggleMobileMenu()"
+          class="md:hidden p-2.5 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2">
+            <line x1="4" x2="20" y1="12" y2="12"></line>
+            <line x1="4" x2="20" y1="6" y2="6"></line>
+            <line x1="4" x2="20" y1="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Mobile menu -->
+      <div *ngIf="mobileMenuOpen" class="md:hidden py-4 border-t border-slate-200/60 animate-fade-in">
+        <nav class="flex flex-col gap-1">
+          <!-- Home : always visible -->
+          <a routerLink="/" (click)="mobileMenuOpen = false"
+            [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+            <span class="w-9 h-9 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+            </span>
+            Home
+          </a>
+
+          <!-- ===== CLIENT mobile ===== -->
+          <ng-container *ngIf="userRole === 'CLIENT'">
+          
+            <a routerLink="/events" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/events') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </span>
+              Événements
+            </a>
+            <a routerLink="/my-offers" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/my-offers') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </span>
+              My Offers
+            </a>
+            <a routerLink="/freelancers" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/freelancers') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-secondary-50 text-secondary-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </span>
+              Freelancers
+            </a>
+            <a routerLink="/my-projects" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/my-projects') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+              </span>
+              Projects
+            </a>
+            <a routerLink="/recommendation" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/recommendation') ? 'text-purple-600 bg-purple-50' : 'text-purple-600 hover:bg-purple-50')">
+              <span class="w-9 h-9 rounded-lg bg-purple-50 text-purple-500 flex items-center justify-center font-bold text-lg">✦</span>
+              AI Recommendation
+            </a>
+            <a routerLink="/chatbot" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/chatbot') ? 'text-slate-900 bg-slate-100' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+              </span>
+              Chatbot
+            </a>
+          </ng-container>
+
+          <!-- ===== FREELANCER mobile ===== -->
+          <ng-container *ngIf="userRole === 'FREELANCER'">
+            <a routerLink="/projects/open" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/projects/open') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+              </span>
+              Projects
+            </a>
+            <a routerLink="/formation" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/formation') && !isActive('/formation/my-') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              </span>
+              Formations
+            </a>
+            <a routerLink="/events" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/events') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </span>
+              Événements
+            </a>
+            <a routerLink="/formation/my-courses" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/formation/my-courses') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222"/></svg>
+              </span>
+              My Courses
+            </a>
+            <a routerLink="/formation/my-certificates" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/formation/my-certificates') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z"/></svg>
+              </span>
+              My Certificates
+            </a>
+            <a routerLink="/my-offers" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/my-offers') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              </span>
+              My Offers
+            </a>
+            <a routerLink="/ml-projects" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/ml-projects') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+              </span>
+              Projets IA
+            </a>
+            <a routerLink="/freelancers/subscription" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/freelancers/subscription') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-accent-50 text-accent-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 3v2m10-2v2m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </span>
+              Subscription
+            </a>
+          </ng-container>
+
+          <!-- ===== NOT LOGGED IN / PUBLIC mobile ===== -->
+          <ng-container *ngIf="!auth.isLoggedIn()">
+            <a routerLink="/projects" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/projects') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+              </span>
+              Projects
+            </a>
+            <a routerLink="/formation" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/formation') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              </span>
+              Formations
+            </a>
+            <a routerLink="/freelancers" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/freelancers') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-secondary-50 text-secondary-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </span>
+              Freelancers
+            </a>
+            <a routerLink="/freelancers/subscription" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/freelancers/subscription') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-accent-50 text-accent-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 3v2m10-2v2m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              </span>
+              Subscription
+            </a>
+          </ng-container>
+
+          <!-- ===== ADMIN mobile ===== -->
+          <a *ngIf="userRole === 'ADMIN'" routerLink="/admin" (click)="mobileMenuOpen = false"
+            [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/admin') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+            <span class="w-9 h-9 rounded-lg bg-slate-50 text-slate-600 flex items-center justify-center">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </span>
+            Backoffice
+          </a>
+
+          <!-- ===== PARTNER mobile ===== -->
+          <ng-container *ngIf="userRole === 'PARTNER'">
+            <a routerLink="/admin/partner-dashboard" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/admin/partner') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              </span>
+              Dashboard
+            </a>
+            <a routerLink="/events/partner/invitations" (click)="mobileMenuOpen = false"
+              [class]="'flex items-center gap-3 px-4 py-3 rounded-xl font-medium ' + (isActive('/events/partner') ? 'text-primary-600 bg-primary-50' : 'text-slate-600 hover:bg-slate-100')">
+              <span class="w-9 h-9 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">📩</span>
+              Mes Invitations
+            </a>
+          </ng-container>
+        </nav>
+        <div class="mt-4 pt-4 border-t border-slate-200/60 flex flex-col gap-2">
+          <ng-container *ngIf="!auth.isLoggedIn()">
+            <a routerLink="/auth/login" (click)="mobileMenuOpen = false"
+              class="w-full px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-xl text-left font-medium">Sign In</a>
+            <a routerLink="/auth/register" (click)="mobileMenuOpen = false"
+              class="w-full px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-medium shadow-lg shadow-primary-500/25 text-center">Get
+              Started →</a>
+          </ng-container>
+          <ng-container *ngIf="auth.isLoggedIn()">
+            <a routerLink="/profile" (click)="mobileMenuOpen = false"
+              class="w-full px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-xl text-left font-medium">Profile</a>
+            <button type="button" (click)="logout(); mobileMenuOpen = false"
+              class="w-full px-4 py-3 text-slate-700 hover:bg-slate-100 rounded-xl text-left font-medium">Logout</button>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="pt-16 md:pt-20 min-h-screen">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Floating messenger popup (bottom-right) -->
+  <app-messenger-popup *ngIf="auth.isLoggedIn()"></app-messenger-popup>
+
+  <!-- Priority notification toasts (always visible, top-right) -->
+  <app-notification-toast></app-notification-toast>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-300 border-t border-slate-800">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl py-16">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-12">
+        <div class="md:col-span-4">
+          <a routerLink="/" class="logo-container inline-flex mb-6">
+            <img 
+            src="images/logo.png" 
+            alt="Workify Logo" 
+            class="logo-image"
+            style="height: 100px;"
+            />
+            <span class="logo-text" style="font-size: 2rem;">Workify</span>
+        </a>
+          <p class="text-slate-400 mb-6 max-w-sm">
+            Connecting talented freelancers with amazing projects through smart matching and seamless collaboration.
+          </p>
+          <div class="flex gap-4">
+            <a href="#" class="text-slate-500 hover:text-primary-400 transition-colors" aria-label="Twitter"><svg
+                class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84">
+                </path>
+              </svg></a>
+            <a href="#" class="text-slate-500 hover:text-primary-400 transition-colors" aria-label="GitHub"><svg
+                class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd"
+                  d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.699 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+                  clip-rule="evenodd"></path>
+              </svg></a>
+            <a href="#" class="text-slate-500 hover:text-primary-400 transition-colors" aria-label="LinkedIn"><svg
+                class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+              </svg></a>
+          </div>
+        </div>
+        <div class="md:col-span-2">
+          <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">For Clients</h3>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Post a Project</a></li>
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Find Freelancers</a></li>
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">How It Works</a></li>
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Subscription</a></li>
+          </ul>
+        </div>
+        <div class="md:col-span-2">
+          <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">For Freelancers</h3>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Browse Projects</a></li>
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Create Profile</a></li>
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Success Stories</a></li>
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Resources</a></li>
+          </ul>
+        </div>
+        <div class="md:col-span-2">
+          <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h3>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">About</a></li>
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Careers</a></li>
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Contact</a></li>
+          </ul>
+        </div>
+        <div class="md:col-span-2">
+          <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Legal</h3>
+          <ul class="space-y-3">
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Privacy</a></li>
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Terms</a></li>
+            <li><a href="#" class="text-slate-400 hover:text-primary-400 transition-colors">Cookies</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-slate-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-slate-500 text-sm">© 2026 Workify. All rights reserved.</p>
+        <div class="flex gap-6 text-sm">
+          <a href="#" class="text-slate-500 hover:text-slate-400">Privacy</a>
+          <a href="#" class="text-slate-500 hover:text-slate-400">Terms</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,141 @@
+.flip-container {
+    perspective: 1000px;
+    width: 10rem;
+    /* 40 (160px) mapped from Tailwind w-40 */
+    height: 10rem;
+}
+
+.flipper {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+/* Only apply animation if we want it to flip automatically */
+.flip-container .flipper.auto-flip {
+    animation: idleFlip 3s infinite ease-in-out;
+}
+
+.flip-container:hover .flipper.auto-flip {
+    animation: fullFlip 1.6s infinite linear;
+}
+
+@keyframes idleFlip {
+
+    0%,
+    100% {
+        transform: rotateY(0deg);
+    }
+
+    50% {
+        transform: rotateY(90deg);
+    }
+}
+
+@keyframes fullFlip {
+    0% {
+        transform: rotateY(0deg);
+    }
+
+    100% {
+        transform: rotateY(360deg);
+    }
+}
+
+.front,
+.back {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    backface-visibility: hidden;
+    border-radius: 9999px;
+    /* rounded-full */
+}
+
+.front {
+    transform: rotateY(0deg);
+}
+
+.back {
+    transform: rotateY(180deg);
+}
+
+@media print {
+
+    /* Hide non-resume elements */
+    .bg-slate-50,
+    nav,
+    footer,
+    .container>div:first-child,
+    /* Hide Page Header if nested */
+    button,
+    .lg\:col-span-1:has(.sticky),
+    /* Hide Sidebar */
+    .bg-slate-900,
+    /* Hide Account Overview */
+    .h-48.bg-gradient-to-r,
+    /* Hide Header Cover */
+    .absolute {
+        display: none !important;
+    }
+
+    /* Reset background and layout */
+    body,
+    .min-h-screen {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .max-w-7xl {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+
+    .grid {
+        display: block !important;
+    }
+
+    .lg\:col-span-2 {
+        width: 100% !important;
+    }
+
+    /* Style CV Sections */
+    section {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin-bottom: 2rem !important;
+        page-break-inside: avoid;
+    }
+
+    h1 {
+        font-size: 2.5rem !important;
+        margin-top: 0 !important;
+    }
+
+    h2 {
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem !important;
+        color: #1e293b !important;
+    }
+
+    .shrink-0 img {
+        width: 80px !important;
+        height: 80px !important;
+    }
+
+    .whitespace-pre-line {
+        font-size: 11pt !important;
+        color: #334155 !important;
+    }
+
+    .border-l-2 {
+        border-left: 1px solid #cbd5e1 !important;
+    }
+}

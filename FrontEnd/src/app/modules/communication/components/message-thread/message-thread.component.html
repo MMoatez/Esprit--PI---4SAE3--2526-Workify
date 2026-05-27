@@ -1,0 +1,1258 @@
+<div class="flex flex-col h-screen bg-gray-50" *ngIf="conversation"
+     [ngStyle]="getThemeStyles()"
+     (click)="closeAllMenus(); showThemePicker = false">
+
+  <!-- ═══ HEADER ═══════════════════════════════════════ -->
+  <div class="thread-header">
+    <div class="header-left">
+      <!-- Back button (mobile) -->
+      <button (click)="goBack()" class="header-back-btn" aria-label="Back to list">
+        <lucide-icon [img]="ArrowLeftIcon" class="w-5 h-5"></lucide-icon>
+      </button>
+
+      <!-- Avatar -->
+      <div class="header-avatar-wrap">
+        <img [src]="getProfilePicture()"
+             [alt]="'Profile picture of ' + getParticipantName()"
+             class="header-avatar"
+             loading="lazy"/>
+        <span class="header-online" *ngIf="!conversation.isArchived" aria-label="Online"></span>
+      </div>
+
+      <!-- Info -->
+      <div class="header-info">
+        <h2 class="header-name">
+          {{ getHeaderName() }}
+          <span *ngIf="conversation.emojiIcon" class="header-emoji">{{ conversation.emojiIcon }}</span>
+        </h2>
+        <p class="header-status">Online</p>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="header-actions">
+
+      <!-- Notes button -->
+      <button (click)="toggleNotes(); $event.stopPropagation()"
+              class="header-btn notes-btn"
+              title="Conversation notes"
+              aria-label="Open notes"
+              [class.notes-btn--active]="showNotesPanel">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+
+      <!-- AI Summary button -->
+      <button (click)="generateSummary(); $event.stopPropagation()"
+              class="header-btn summary-btn"
+              title="Summarize conversation"
+              aria-label="Generate AI summary"
+              [class.summary-btn--loading]="summaryLoading">
+        <span *ngIf="summaryLoading" class="summary-spinner"></span>
+        <svg *ngIf="!summaryLoading" width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+      </button>
+
+      <!-- Audio call button -->
+      <button (click)="initiateCall('audio'); $event.stopPropagation()"
+              class="header-btn call-btn"
+              title="Audio call"
+              aria-label="Start audio call"
+              [disabled]="callState !== 'idle'">
+        <lucide-icon [img]="PhoneIcon" class="w-5 h-5"></lucide-icon>
+      </button>
+
+      <!-- Video call button -->
+      <button (click)="initiateCall('video'); $event.stopPropagation()"
+              class="header-btn video-btn"
+              title="Video call"
+              aria-label="Start video call"
+              [disabled]="callState !== 'idle'">
+        <lucide-icon [img]="VideoIcon" class="w-5 h-5"></lucide-icon>
+      </button>
+
+      <!-- Favorite star -->
+      <button (click)="toggleFavorite(); $event.stopPropagation()"
+              class="header-btn"
+              [class.favorite-active]="conversation.isFavorite"
+              [attr.aria-label]="conversation.isFavorite ? 'Remove from favorites' : 'Add to favorites'"
+              [title]="conversation.isFavorite ? 'Remove from favorites' : 'Add to favorites'">
+        <svg viewBox="0 0 24 24"
+             [attr.fill]="conversation.isFavorite ? '#f59e0b' : 'none'"
+             stroke="currentColor"
+             stroke-width="2"
+             width="20"
+             height="20">
+          <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+        </svg>
+      </button>
+
+      <!-- Three-dot menu -->
+      <div class="header-menu-wrap" (click)="$event.stopPropagation()">
+        <button (click)="toggleHeaderMenu(); $event.stopPropagation()"
+                class="header-btn"
+                title="More options"
+                aria-label="More options"
+                [attr.aria-expanded]="showHeaderMenu">
+          <lucide-icon [img]="MoreVerticalIcon" class="w-5 h-5"></lucide-icon>
+        </button>
+
+        <!-- ── Dropdown — same colored icon-chip design as conversation list ── -->
+        <div *ngIf="showHeaderMenu"
+             class="header-dropdown"
+             (click)="$event.stopPropagation()"
+             role="menu">
+
+          <!-- Chat Theme — violet -->
+          <button class="hdd-item hdd-item-theme" (click)="openThemePicker()" role="menuitem">
+            <span class="hdd-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="13.5" cy="6.5" r="2.5"/><circle cx="19" cy="14" r="2.5"/>
+                <circle cx="6" cy="15" r="2.5"/><circle cx="11" cy="19.5" r="2.5"/>
+                <path d="M2 2l20 20"/>
+              </svg>
+            </span>
+            Chat Theme
+          </button>
+
+          <!-- Rename — blue -->
+          <button class="hdd-item hdd-item-rename" (click)="openRename()" role="menuitem">
+            <span class="hdd-icon">
+              <lucide-icon [img]="EditIcon" class="w-3.5 h-3.5"></lucide-icon>
+            </span>
+            Rename
+          </button>
+
+          <!-- Pin — purple -->
+          <button class="hdd-item hdd-item-pin" (click)="togglePinConversation()" role="menuitem">
+            <span class="hdd-icon">
+              <lucide-icon [img]="PinIcon" class="w-3.5 h-3.5"></lucide-icon>
+            </span>
+            {{ isPinned() ? 'Unpin' : 'Pin' }}
+          </button>
+
+          <!-- Favorites — amber -->
+          <button class="hdd-item hdd-item-fav" (click)="toggleFavorite()" role="menuitem">
+            <span class="hdd-icon">
+              <svg viewBox="0 0 24 24"
+                   [attr.fill]="conversation.isFavorite ? '#f59e0b' : 'none'"
+                   stroke="#f59e0b" stroke-width="2" width="14" height="14">
+                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+              </svg>
+            </span>
+            {{ conversation.isFavorite ? 'Remove from favorites' : 'Add to favorites' }}
+          </button>
+
+          <!-- Archive — slate -->
+          <button class="hdd-item hdd-item-archive" (click)="toggleArchiveUI()" role="menuitem">
+            <span class="hdd-icon">
+              <lucide-icon [img]="ArchiveIcon" class="w-3.5 h-3.5"></lucide-icon>
+            </span>
+            {{ conversation.isArchived ? 'Unarchive' : 'Archive' }}
+          </button>
+
+          <div class="hdd-sep"></div>
+
+          <!-- Block user — orange-red -->
+          <button class="hdd-item hdd-item-block" (click)="blockUser()" role="menuitem">
+            <span class="hdd-icon">
+              <lucide-icon [img]="BlockIcon" class="w-3.5 h-3.5"></lucide-icon>
+            </span>
+            {{ isConversationBlocked() ? 'Unblock user' : 'Block user' }}
+          </button>
+
+          <!-- Delete — red -->
+          <button class="hdd-item hdd-item-delete" (click)="deleteConversation()" role="menuitem">
+            <span class="hdd-icon">
+              <lucide-icon [img]="Trash2Icon" class="w-3.5 h-3.5"></lucide-icon>
+            </span>
+            Delete conversation
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PINNED MESSAGE BANNER ═══════════════════════ -->
+  <div *ngIf="getPinnedMessages().length > 0"
+       class="pinned-banner"
+       (click)="scrollToPinnedMessage(getPinnedMessages()[0]); $event.stopPropagation()"
+       role="button"
+       tabindex="0"
+       [attr.aria-label]="'Pinned message: ' + getPinnedMessages()[0].content.substring(0, 50)">
+    <lucide-icon [img]="PinIcon" class="w-4 h-4 pinned-icon"></lucide-icon>
+    <div class="pinned-content">
+      <p class="pinned-title">
+        Pinned message
+        <span *ngIf="getPinnedMessages().length > 1">
+          ({{ getPinnedMessages().length }})
+        </span>
+      </p>
+      <p class="pinned-text">{{ getPinnedMessages()[0].content.substring(0, 80) }}</p>
+    </div>
+    <button (click)="togglePinMessage(getPinnedMessages()[0]); $event.stopPropagation()"
+            class="pinned-close"
+            title="Unpin"
+            aria-label="Unpin message">
+      <lucide-icon [img]="XIcon" class="w-3.5 h-3.5"></lucide-icon>
+    </button>
+  </div>
+
+  <!-- ═══ AI SUMMARY CARD ══════════════════════════════ -->
+  <div *ngIf="summaryText || summaryLoading" class="summary-card" [class.summary-card--collapsed]="!summaryExpanded">
+    <div class="summary-card__header">
+      <div class="summary-card__badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <span>AI Summary</span>
+      </div>
+      <div class="summary-card__actions">
+        <button (click)="toggleSummary()" class="summary-card__toggle" [title]="summaryExpanded ? 'Collapse' : 'Expand'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline *ngIf="summaryExpanded" points="18 15 12 9 6 15"/>
+            <polyline *ngIf="!summaryExpanded" points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        <button (click)="dismissSummary()" class="summary-card__close" title="Dismiss">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="summary-card__body" *ngIf="summaryExpanded">
+      <!-- Loading skeleton -->
+      <div *ngIf="summaryLoading" class="summary-skeleton">
+        <span class="summary-skeleton__line"></span>
+        <span class="summary-skeleton__line summary-skeleton__line--short"></span>
+        <span class="summary-skeleton__line summary-skeleton__line--medium"></span>
+      </div>
+      <!-- Summary text -->
+      <p *ngIf="!summaryLoading && summaryText" class="summary-card__text">{{ summaryText }}</p>
+    </div>
+  </div>
+
+  <!-- ═══ SMART NOTES PANEL ════════════════════════════ -->
+  <div *ngIf="showNotesPanel" class="notes-panel" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="notes-panel__header">
+      <div class="notes-panel__badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+        <span>Smart Notes</span>
+        <span *ngIf="notes.length > 0" class="notes-count">{{ notes.length }}</span>
+        <span class="notes-ai-pill">
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Auto-detect
+        </span>
+      </div>
+      <div class="notes-panel__header-actions">
+        <button (click)="refreshNotes()" class="notes-refresh-btn" title="Refresh notes" [disabled]="notesLoading">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+               [class.spin]="notesLoading">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+        </button>
+        <button (click)="showNotesPanel = false" class="notes-panel__close" title="Close notes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="notes-panel__body">
+
+      <!-- ── Add manual note composer ──────────────────── -->
+      <div class="note-composer">
+        <div class="note-composer__label">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Add manual note
+        </div>
+        <textarea
+          [(ngModel)]="newNoteContent"
+          class="note-composer__input"
+          placeholder="Write a note… e.g. agreed on price, confirmed deadline, next step…"
+          rows="2"
+          (keydown.enter)="$any($event).ctrlKey && saveNewNote()"
+          maxlength="1000">
+        </textarea>
+        <div class="note-composer__footer">
+          <span class="note-composer__hint">Ctrl+Enter to save</span>
+          <button (click)="saveNewNote()"
+                  class="note-composer__save"
+                  [disabled]="!newNoteContent.trim() || noteSaving">
+            <span *ngIf="noteSaving" class="note-saving-spinner"></span>
+            <span *ngIf="!noteSaving">Save</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Loading state ──────────────────────────────── -->
+      <div *ngIf="notesLoading" class="notes-loading">
+        <div class="notes-skeleton-row">
+          <div class="notes-skeleton notes-skeleton--label"></div>
+        </div>
+        <div class="notes-skeleton-row">
+          <div class="notes-skeleton"></div>
+          <div class="notes-skeleton notes-skeleton--short"></div>
+        </div>
+        <div class="notes-skeleton-row">
+          <div class="notes-skeleton notes-skeleton--medium"></div>
+        </div>
+      </div>
+
+      <!-- ── Empty state ────────────────────────────────── -->
+      <div *ngIf="!notesLoading && notes.length === 0" class="notes-empty">
+        <div class="notes-empty__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+        </div>
+        <p class="notes-empty__title">No key points detected yet</p>
+        <p class="notes-empty__sub">The system auto-detects payments, deadlines, agreements,<br>calls, and deliveries from your conversation.</p>
+      </div>
+
+      <!-- ── Notes grouped by date ─────────────────────── -->
+      <ng-container *ngIf="!notesLoading && notes.length > 0">
+        <ng-container *ngFor="let group of groupedNotes()">
+
+          <!-- Date group header -->
+          <div class="notes-date-group">
+            <span class="notes-date-label">{{ formatGroupDate(group.date) }}</span>
+            <span class="notes-date-count">{{ group.notes.length }} note{{ group.notes.length > 1 ? 's' : '' }}</span>
+          </div>
+
+          <!-- Notes in this group -->
+          <div *ngFor="let note of group.notes"
+               class="note-item"
+               [class.note-item--auto]="note.isAutoGenerated"
+               [class.note-item--manual]="!note.isAutoGenerated">
+
+            <!-- Item header -->
+            <div class="note-item__meta">
+              <!-- Auto badge -->
+              <span *ngIf="note.isAutoGenerated" class="note-auto-badge" [ngClass]="getNoteSourceClass(note.sourceType)">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                {{ note.sourceType || 'AUTO' }}
+              </span>
+              <!-- Manual badge -->
+              <span *ngIf="!note.isAutoGenerated" class="note-manual-badge">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+                Manual
+              </span>
+
+              <span class="note-item__time">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {{ formatNoteTime(note.createdAt) }}
+              </span>
+              <span *ngIf="note.updatedAt !== note.createdAt" class="note-item__edited">edited</span>
+
+              <div class="note-item__actions">
+                <button (click)="startEditNote(note)" class="note-action-btn note-action-btn--edit" title="Edit">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                </button>
+                <button (click)="deleteNote(note.id)" class="note-action-btn note-action-btn--delete" title="Delete">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- View mode -->
+            <p *ngIf="editingNoteId !== note.id" class="note-item__content">{{ note.content }}</p>
+
+            <!-- Edit mode -->
+            <div *ngIf="editingNoteId === note.id" class="note-edit-wrap">
+              <textarea
+                [(ngModel)]="editingNoteContent"
+                class="note-composer__input note-edit__input"
+                rows="3"
+                maxlength="1000"
+                (keydown.escape)="cancelEditNote()">
+              </textarea>
+              <div class="note-edit__actions">
+                <button (click)="cancelEditNote()" class="note-edit__cancel">Cancel</button>
+                <button (click)="saveEditNote(note.id)"
+                        class="note-edit__save"
+                        [disabled]="!editingNoteContent.trim()">Save</button>
+              </div>
+            </div>
+          </div>
+
+        </ng-container>
+      </ng-container>
+
+    </div>
+  </div>
+
+  <!-- ═══ MESSAGES ═════════════════════════════════════ -->
+  <div #messagesContainer class="messages-container">
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading-spinner" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <span class="sr-only">Loading messages...</span>
+    </div>
+
+    <ng-container *ngIf="!isLoading">
+      <ng-container *ngFor="let message of messages; let i = index">
+
+        <!-- Date separator -->
+        <div *ngIf="shouldShowDateSeparator(i)" class="date-separator">
+          <span class="date-label">{{ formatDateSeparator(message.createdAt) }}</span>
+        </div>
+
+        <!-- Message row — always rendered; grey banner shown to receiver for BLOCKED messages -->
+        <div [id]="'msg-' + message.id"
+             class="message-row group"
+             [class.sent]="isMyMessage(message)"
+             [class.received]="!isMyMessage(message)"
+             role="article"
+             [attr.aria-label]="(isMyMessage(message) ? 'You' : getParticipantName()) + ': ' + message.content">
+
+          <!-- Avatar (received only — shown only for the last bubble in a consecutive group) -->
+          <img *ngIf="!isMyMessage(message)"
+               [style.visibility]="shouldShowAvatar(i) ? 'visible' : 'hidden'"
+               [src]="getProfilePicture()"
+               class="message-avatar"
+               [alt]="getParticipantName() + ' avatar'"
+               loading="lazy"/>
+
+          <div class="message-content">
+
+            <!-- Pinned indicator -->
+            <div *ngIf="isMessagePinned(message)" class="pinned-indicator">
+              <lucide-icon [img]="PinIcon" class="w-2.5 h-2.5"></lucide-icon>
+              <span>Pinned</span>
+            </div>
+
+            <!-- Bubble + actions -->
+            <div class="bubble-actions-container">
+
+              <!-- Message bubble -->
+              <div class="message-bubble"
+                   [class.deleted]="message.isDeleted"
+                   [class.flagged]="message.deliveryStatus === 'BLOCKED' && isMyMessage(message)"
+                   [class.blocked-received]="message.deliveryStatus === 'BLOCKED' && !isMyMessage(message)">
+
+                <!-- Deleted message -->
+                <p *ngIf="message.isDeleted" class="message-text">🚫 Message deleted</p>
+
+                <!-- Flagged notice (sender only) — text varies per attempt (1st / 2nd / 3rd) -->
+                <div *ngIf="message.deliveryStatus === 'BLOCKED' && isMyMessage(message)"
+                     class="flagged-notice">
+                  <lucide-icon [img]="AlertTriangleIcon" class="flagged-icon"></lucide-icon>
+                  <p class="flagged-text">{{ getFlaggedText(message) }}</p>
+                </div>
+
+                <!-- Blocked banner (receiver only) — grey informational placeholder -->
+                <div *ngIf="message.deliveryStatus === 'BLOCKED' && !isMyMessage(message)"
+                     class="blocked-msg-notice">
+                  <p class="blocked-msg-text">{{ getBlockedBannerText(message) }}</p>
+                </div>
+
+                <!-- Normal content -->
+                <div *ngIf="!message.isDeleted && message.deliveryStatus !== 'BLOCKED'">
+
+                  <!-- Edit mode -->
+                  <div *ngIf="editingMessageId !== null && +editingMessageId === +message.id" class="edit-mode">
+                    <textarea [(ngModel)]="editingMessageText"
+                              class="edit-textarea"
+                              rows="3"
+                              [attr.aria-label]="'Edit message'">
+                    </textarea>
+                    <div class="edit-actions">
+                      <button (click)="saveEditedMessage()" class="edit-save">Save</button>
+                      <button (click)="cancelEditing()" class="edit-cancel">Cancel</button>
+                    </div>
+                  </div>
+
+                  <!-- Display mode -->
+                  <div *ngIf="editingMessageId === null || +editingMessageId !== +message.id">
+                    <!-- REPLY (quoted message + reply body) -->
+                    <div *ngIf="isReplyMessage(message)" class="reply-block">
+                      <div class="reply-quote">{{ getReplyQuote(message) }}</div>
+                      <p class="message-text reply-body" [class.edited]="message.isEdited">{{ getReplyBody(message) }}</p>
+                    </div>
+
+                    <!-- TEXT (plain, non-reply) -->
+                    <p *ngIf="!isImage(message) && !isVideo(message) && !isFile(message) && !isAudio(message) && !isCall(message) && !isReplyMessage(message)"
+                       class="message-text"
+                       [class.edited]="message.isEdited">
+                      {{ message.content }}
+                    </p>
+
+                    <!-- CALL HISTORY BUBBLE -->
+                    <div *ngIf="isCall(message)" class="call-hist-bubble">
+                      <!-- Icon -->
+                      <div class="call-hist-icon-wrap"
+                           [class.call-hist-missed]="getCallData(message).status === 'missed' || getCallData(message).status === 'declined'">
+                        <lucide-icon
+                          [img]="getCallData(message).status === 'missed' || getCallData(message).status === 'declined'
+                                 ? PhoneMissedIcon
+                                 : (getCallData(message).callType === 'video' ? VideoIcon : PhoneIcon)"
+                          class="w-4 h-4">
+                        </lucide-icon>
+                      </div>
+                      <!-- Info -->
+                      <div class="call-hist-info">
+                        <p class="call-hist-type">
+                          {{ getCallData(message).callType === 'video' ? 'Video call' : 'Voice call' }}
+                          <span *ngIf="getCallData(message).status === 'completed'" class="call-hist-badge" style="background:rgba(34,197,94,.15);color:#16a34a">Completed</span>
+                          <span *ngIf="getCallData(message).status === 'declined'" class="call-hist-badge call-hist-badge-missed">Declined</span>
+                          <!-- missed: caller sees "Canceled", receiver sees "Missed" -->
+                          <span *ngIf="getCallData(message).status === 'missed' && isMyMessage(message)"  class="call-hist-badge call-hist-badge-missed">Canceled</span>
+                          <span *ngIf="getCallData(message).status === 'missed' && !isMyMessage(message)" class="call-hist-badge call-hist-badge-missed">Missed</span>
+                        </p>
+                        <p *ngIf="getCallData(message).duration > 0" class="call-hist-duration">
+                          {{ formatCallDuration(getCallData(message).duration) }}
+                        </p>
+                      </div>
+                      <!-- Call back button -->
+                      <button class="call-hist-callback"
+                              (click)="initiateCall(getCallData(message).callType === 'video' ? 'video' : 'audio'); $event.stopPropagation()">
+                        <lucide-icon [img]="getCallData(message).callType === 'video' ? VideoIcon : PhoneIcon" class="w-3 h-3"></lucide-icon>
+                        Call back
+                      </button>
+                    </div>
+
+                    <!-- IMAGE -->
+                    <div *ngIf="isImage(message)">
+                      <img [src]="message.content"
+                           class="message-image"
+                           [alt]="'Shared image'"
+                           loading="lazy"/>
+                      <span *ngIf="message.isEdited" class="text-xs opacity-60 block mt-1">(edited)</span>
+                    </div>
+
+                    <!-- VIDEO -->
+                    <div *ngIf="isVideo(message)">
+                      <video [src]="message.content"
+                             controls
+                             class="message-video"
+                             [attr.aria-label]="'Shared video'">
+                      </video>
+                      <span *ngIf="message.isEdited" class="text-xs opacity-60 block mt-1">(edited)</span>
+                    </div>
+
+                    <!-- AUDIO / VOICE RECORD — Messenger-style player -->
+                    <div *ngIf="isAudio(message)" class="voice-player">
+                      <!-- Hidden HTML audio element — rendered but invisible so browsers
+                           load metadata. display:none can block metadata loading in some browsers. -->
+                      <audio
+                        [id]="'audio-' + message.id"
+                        [src]="getAudioUrl(message)"
+                        (loadedmetadata)="onAudioLoaded($event, message.id)"
+                        (durationchange)="onAudioDurationChange($event, message.id)"
+                        (timeupdate)="onAudioTimeUpdate($event, message.id)"
+                        (ended)="onAudioEnded(message.id)"
+                        preload="auto"
+                        style="position:absolute;width:0;height:0;opacity:0;pointer-events:none">
+                      </audio>
+
+                      <!-- Play / Pause button -->
+                      <button class="voice-play-btn"
+                              (click)="toggleAudio(message.id, $event)"
+                              [attr.aria-label]="playingAudioId === message.id ? 'Pause' : 'Play'">
+                        <!-- Play icon -->
+                        <svg *ngIf="playingAudioId !== message.id"
+                             width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <!-- Pause icon -->
+                        <svg *ngIf="playingAudioId === message.id"
+                             width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Waveform + progress bar (clickable to seek) -->
+                      <div class="voice-waveform" (click)="seekAudio(message.id, $event)">
+                        <div class="waveform-bars">
+                          <span *ngFor="let h of getWaveBars(message.id)"
+                                class="wave-bar"
+                                [style.height.px]="h">
+                          </span>
+                        </div>
+                        <!-- Played-portion overlay -->
+                        <div class="waveform-progress"
+                             [style.width.%]="getAudioProgress(message.id)">
+                        </div>
+                      </div>
+
+                      <!-- Duration / current time -->
+                      <span class="voice-duration">{{ getAudioTime(message.id) }}</span>
+
+                      <!-- Delete button (own messages only, visible on hover) -->
+                      <button *ngIf="isMyMessage(message)"
+                              class="voice-delete-btn"
+                              (click)="deleteMessage(message); $event.stopPropagation()"
+                              title="Delete voice message"
+                              aria-label="Delete voice message">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                      </button>
+                    </div>
+
+                    <!-- FILE -->
+                    <div *ngIf="isFile(message)" class="message-file">
+                      <lucide-icon [img]="PaperclipIcon" class="w-4 h-4 flex-shrink-0"></lucide-icon>
+                      <a [href]="message.content"
+                         [download]="getFileName(message)"
+                         class="file-link">
+                        {{ getFileName(message) }}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Reaction bubble -->
+                <div *ngIf="message.reactionEmoji && !message.isDeleted" class="reaction-bubble">
+                  <button (click)="removeReaction(message); $event.stopPropagation()"
+                          [attr.aria-label]="'Remove reaction ' + message.reactionEmoji">
+                    {{ message.reactionEmoji }}
+                  </button>
+                </div>
+
+                <!-- Time & status -->
+                <div *ngIf="!message.isDeleted" class="message-meta">
+                  <span>{{ formatMessageTime(message.createdAt) }}</span>
+                  <lucide-icon *ngIf="isMyMessage(message) && getDeliveryStatusIcon(message)"
+                               [img]="getDeliveryStatusIcon(message)"
+                               [class.read]="message.deliveryStatus === 'READ'"
+                               class="status-icon"
+                               [attr.aria-label]="message.deliveryStatus === 'READ' ? 'Read' : 'Sent'">
+                  </lucide-icon>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Action buttons (hover) — below the bubble -->
+            <div *ngIf="!message.isDeleted && message.deliveryStatus !== 'BLOCKED'"
+                 class="message-actions">
+
+              <!-- Emoji reaction -->
+              <button (click)="toggleReactionPicker(message.id, $event)"
+                      class="action-btn"
+                      title="React"
+                      aria-label="Add reaction">
+                <lucide-icon [img]="SmileIcon" class="w-3.5 h-3.5"></lucide-icon>
+              </button>
+
+              <!-- Reply -->
+              <button (click)="startReply(message); $event.stopPropagation()"
+                      class="action-btn"
+                      title="Reply"
+                      aria-label="Reply to message">
+                <lucide-icon [img]="ReplyIcon" class="w-3.5 h-3.5"></lucide-icon>
+              </button>
+
+              <!-- Message menu -->
+              <div class="message-menu-wrap">
+                <button (click)="toggleMessageMenu(message.id, $event)"
+                        class="action-btn"
+                        aria-label="More options"
+                        [attr.aria-expanded]="activeMenuMessageId === message.id">
+                  <lucide-icon [img]="MoreVerticalIcon" class="w-3.5 h-3.5"></lucide-icon>
+                </button>
+
+                <!-- Message dropdown — position:fixed coords set by toggleMessageMenu() -->
+                <div *ngIf="activeMenuMessageId === message.id"
+                     class="message-dropdown"
+                     [class.message-dropdown--sent]="isMyMessage(message)"
+                     [class.message-dropdown--received]="!isMyMessage(message)"
+                     [style.top]="menuDropdownStyle.top"
+                     [style.left]="menuDropdownStyle.left"
+                     (click)="$event.stopPropagation()"
+                     role="menu">
+
+                  <!-- Reply — indigo -->
+                  <button (click)="startReply(message)" class="menu-item menu-item-reply" role="menuitem">
+                    <span class="menu-icon">
+                      <lucide-icon [img]="ReplyIcon" class="w-[18px] h-[18px]"></lucide-icon>
+                    </span>
+                    Reply
+                  </button>
+
+                  <!-- Edit — blue (own messages only) -->
+                  <button *ngIf="isMyMessage(message)"
+                          (click)="startEditingMessage(message)"
+                          class="menu-item menu-item-edit"
+                          role="menuitem">
+                    <span class="menu-icon">
+                      <lucide-icon [img]="EditIcon" class="w-[18px] h-[18px]"></lucide-icon>
+                    </span>
+                    Edit
+                  </button>
+
+                  <!-- Pin — purple -->
+                  <button (click)="togglePinMessage(message)" class="menu-item menu-item-pin" role="menuitem">
+                    <span class="menu-icon">
+                      <lucide-icon [img]="PinIcon" class="w-[18px] h-[18px]"></lucide-icon>
+                    </span>
+                    {{ isMessagePinned(message) ? 'Unpin' : 'Pin' }}
+                  </button>
+
+                  <div class="menu-separator"></div>
+
+                  <!-- Delete — red (own messages only) -->
+                  <button *ngIf="isMyMessage(message)"
+                          (click)="deleteMessage(message)"
+                          class="menu-item menu-item-delete"
+                          role="menuitem">
+                    <span class="menu-icon">
+                      <lucide-icon [img]="Trash2Icon" class="w-[18px] h-[18px]"></lucide-icon>
+                    </span>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Reaction picker -->
+            <div *ngIf="reactionPickerMessageId === message.id"
+                 class="reaction-picker"
+                 (click)="$event.stopPropagation()"
+                 role="toolbar"
+                 aria-label="Pick a reaction">
+              <button *ngFor="let emoji of emojis"
+                      (click)="addReaction(message, emoji)"
+                      class="reaction-emoji"
+                      [attr.aria-label]="'React with ' + emoji">
+                {{ emoji }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+    </ng-container>
+  </div>
+
+  <!-- Global suspension banner (appears pinned to bottom while user is suspended) -->
+  <div *ngIf="isSendingBanned" class="global-suspension-banner fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50">
+    <div class="gsb-inner">
+      <span class="gsb-icon">🚫</span>
+      <span class="gsb-text">Sending suspended.</span>
+      <span *ngIf="banCountdown" class="gsb-countdown">{{ banCountdown }}</span>
+    </div>
+  </div>
+
+  <!-- ═══ BLOCKED BANNERS ══════════════════════════════ -->
+
+  <!-- Banner A: YOU blocked this user (shown to the blocker) -->
+  <div *ngIf="isConversationBlocked() && amITheBlocker()" class="blocked-banner blocked-banner--blocker">
+    <span class="blocked-banner__icon">🚫</span>
+    <div class="blocked-banner__body">
+      <strong>You have blocked {{ getParticipantName() }}</strong>
+      <p>They cannot send you messages. Go to the <strong>Blocked</strong> tab to unblock them.</p>
+    </div>
+    <button class="blocked-banner__unblock-btn" (click)="blockUser()" aria-label="Unblock user">
+      Unblock
+    </button>
+  </div>
+
+  <!-- Banner B: YOU were blocked (shown to the blocked receiver) -->
+  <div *ngIf="isConversationBlocked() && !amITheBlocker()" class="blocked-banner blocked-banner--receiver">
+    <span class="blocked-banner__icon">⛔</span>
+    <div class="blocked-banner__body">
+      <strong>You have been blocked</strong>
+      <p>You cannot send messages to {{ getParticipantName() }} until they unblock you.</p>
+    </div>
+  </div>
+
+  <!-- ═══ BAN BANNER ════════════════════════════════════ -->
+  <div *ngIf="isSendingBanned" class="ban-banner" role="alert">
+    🚫 <strong>Messaging suspended.</strong>
+    <span *ngIf="bannedUntil"> Expires at {{ bannedUntil | date:'dd/MM HH:mm' }}</span>
+  </div>
+
+  <!-- ═══ INPUT AREA ═══════════════════════════════════ -->
+  <div class="input-area" [class.input-area--blocked]="isConversationBlocked() || isSendingBanned">
+
+    <!-- Reply preview -->
+    <div *ngIf="replyingTo" class="reply-preview">
+      <lucide-icon [img]="ReplyIcon" class="w-4 h-4 reply-icon"></lucide-icon>
+      <div class="reply-content">
+        <p class="reply-name">{{ getReplyName() }}</p>
+        <p class="reply-text">{{ replyingTo.content.substring(0, 60) }}</p>
+      </div>
+      <button (click)="cancelReply()"
+              class="reply-close"
+              aria-label="Cancel reply">
+        <lucide-icon [img]="XIcon" class="w-4 h-4"></lucide-icon>
+      </button>
+    </div>
+
+    <!-- File preview -->
+    <div *ngIf="selectedFile" class="file-preview">
+      <ng-container *ngIf="selectedFile.type?.startsWith('audio/') && recordedUrl; else fileNamePreview">
+        <audio controls [src]="recordedUrl" class="audio-preview"></audio>
+        <div class="file-actions">
+          <button class="send-draft" (click)="sendMessage()" [disabled]="isSending" aria-label="Send audio">Send</button>
+          <button class="cancel-draft" (click)="cancelRecorded()" aria-label="Delete recording">Cancel</button>
+        </div>
+      </ng-container>
+      <ng-template #fileNamePreview>
+        <lucide-icon [img]="PaperclipIcon" class="w-4 h-4 file-icon"></lucide-icon>
+        <span class="file-name">{{ selectedFile.name }}</span>
+        <button (click)="removeSelectedFile()"
+                class="file-remove"
+                aria-label="Remove file">
+          <lucide-icon [img]="XIcon" class="w-4 h-4"></lucide-icon>
+        </button>
+      </ng-template>
+    </div>
+
+    <!-- RAG Suggestion chips -->
+    <div *ngIf="ragSuggestions.length > 0" class="rag-suggestions-row">
+      <button *ngFor="let s of ragSuggestions"
+              type="button"
+              class="rag-chip"
+              (click)="applySuggestion(s.text)"
+              [title]="s.text">
+        {{ s.text }}
+      </button>
+      <button type="button" class="rag-chip-dismiss" (click)="dismissSuggestions()" aria-label="Dismiss suggestions">✕</button>
+    </div>
+
+    <!-- Input row — hidden when user is blocked (receiver side) -->
+    <div class="input-row" *ngIf="!isConversationBlocked() || amITheBlocker()">
+
+      <!-- Emoji button -->
+      <button type="button"
+              (click)="toggleEmojiPicker(); $event.stopPropagation()"
+              class="input-icon-btn"
+              title="Add an emoji"
+              aria-label="Add an emoji">
+        <lucide-icon [img]="SmileIcon" class="w-6 h-6"></lucide-icon>
+      </button>
+
+      <!-- File button -->
+      <button type="button"
+              class="file-input-label"
+              title="Attach a file"
+              aria-label="Attach a file"
+              (click)="triggerFilePicker(); $event.stopPropagation()">
+        <lucide-icon [img]="PaperclipIcon" class="w-6 h-6"></lucide-icon>
+      </button>
+
+      <!-- Textarea -->
+      <textarea #messageInputEl
+                [(ngModel)]="messageText"
+                name="message"
+                placeholder="Write a message..."
+                rows="1"
+                class="input-textarea"
+                (keydown.enter)="onEnterKey($event)"
+                (input)="onMessageInput()"
+                (click)="$event.stopPropagation()"
+                aria-label="Message">
+      </textarea>
+
+      <!-- Send / Mic button -->
+      <ng-container>
+        <button *ngIf="(messageText && messageText.trim()) || selectedFile"
+                (click)="sendMessage()"
+                [disabled]="isSending"
+                class="send-btn"
+                title="Send"
+                aria-label="Send message">
+          <lucide-icon [img]="SendIcon" class="w-5 h-5"></lucide-icon>
+        </button>
+
+        <button *ngIf="!(messageText && messageText.trim()) && !selectedFile"
+                type="button"
+                class="mic-btn"
+                [class.recording]="isRecording"
+                (click)="toggleRecording()"
+                title="Record a voice message"
+                aria-label="Record a voice message">
+          <ng-container *ngIf="!isRecording">
+            <lucide-icon [img]="MicIcon" class="w-5 h-5"></lucide-icon>
+          </ng-container>
+          <ng-container *ngIf="isRecording">
+            <span class="recording-indicator">
+              <span class="dot"></span>
+              <span class="timer">{{ recordingTimer }}</span>
+            </span>
+          </ng-container>
+        </button>
+      </ng-container>
+    </div>
+
+    <!-- Fallback row shown to the RECEIVER while blocked (no input at all) -->
+    <div class="input-row input-row--blocked" *ngIf="isConversationBlocked() && !amITheBlocker()">
+      <span class="blocked-input-msg">⛔ You cannot send messages</span>
+    </div>
+
+    <!-- Floating send button -->
+    <button *ngIf="(messageText && messageText.trim()) || selectedFile"
+            class="floating-send"
+            (click)="sendMessage()"
+            [disabled]="isSending || isSendingBanned"
+            title="Send"
+            aria-label="Send">
+      <lucide-icon [img]="SendIcon" class="w-5 h-5"></lucide-icon>
+    </button>
+
+    <!-- Emoji picker panel -->
+    <div *ngIf="showEmojiPicker"
+         class="emoji-picker-panel"
+         (click)="$event.stopPropagation()"
+         role="dialog"
+         aria-label="Emoji picker">
+      <button *ngFor="let emoji of emojis"
+              (click)="insertEmoji(emoji)"
+              class="emoji-picker-btn"
+              [attr.aria-label]="'Insert ' + emoji">
+        {{ emoji }}
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Hidden file input — OUTSIDE all *ngIf so it always stays in the DOM -->
+<input id="mt-file-input"
+       type="file"
+       (change)="onFileSelected($event)"
+       accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar"
+       aria-label="Select a file"
+       style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;"/>
+
+<!-- ═══ EMPTY STATE ══════════════════════════════════ -->
+<div *ngIf="!conversation && !isLoading" class="empty-state">
+  <div class="empty-content">
+    <div class="empty-icon">
+      <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+    </div>
+    <h3 class="empty-title">Select a conversation</h3>
+    <p class="empty-description">Choose a contact on the left to start chatting.</p>
+  </div>
+</div>
+
+<!-- ═══ OUTGOING CALL OVERLAY ════════════════════════ -->
+<div *ngIf="callState === 'calling'"
+     class="call-overlay calling-overlay"
+     role="dialog" aria-modal="true" aria-label="Calling...">
+
+  <!-- Local camera preview while waiting (video call) -->
+  <video *ngIf="callType === 'video'"
+         id="local-video-preview"
+         class="local-video-calling"
+         autoplay playsinline muted
+         aria-label="Your camera preview">
+  </video>
+
+  <div class="calling-info">
+    <div class="call-avatar-wrap">
+      <img [src]="getProfilePicture()" [alt]="getParticipantName()" class="call-avatar"/>
+      <div class="call-avatar-ring"></div>
+    </div>
+    <p class="call-label">{{ callType === 'video' ? 'Video calling' : 'Calling' }}...</p>
+    <h2 class="call-name">{{ conversation?.title || getParticipantName() }}</h2>
+  </div>
+
+  <div class="active-call-bar">
+    <button class="call-action-btn hangup-btn" (click)="hangupCall()" aria-label="Cancel call">
+      <lucide-icon [img]="PhoneOffIcon" class="w-6 h-6"></lucide-icon>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ INCOMING CALL OVERLAY ════════════════════════ -->
+<div *ngIf="callState === 'incoming'"
+     class="call-overlay incoming-overlay"
+     role="dialog" aria-modal="true" aria-label="Incoming call">
+  <div class="call-avatar-wrap">
+    <img [src]="getProfilePicture()" [alt]="getParticipantName()" class="call-avatar"/>
+    <div class="call-avatar-ring incoming-ring"></div>
+  </div>
+  <p class="call-label">Incoming {{ callType === 'video' ? 'video' : 'audio' }} call</p>
+  <h2 class="call-name">{{ conversation?.title || getParticipantName() }}</h2>
+
+  <div class="call-actions-row">
+    <button class="call-action-btn reject-btn" (click)="rejectCall()" aria-label="Reject call">
+      <lucide-icon [img]="PhoneOffIcon" class="w-6 h-6"></lucide-icon>
+    </button>
+    <button class="call-action-btn accept-btn" (click)="acceptCall()" aria-label="Accept call">
+      <lucide-icon [img]="PhoneIcon" class="w-6 h-6"></lucide-icon>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ ACTIVE CALL OVERLAY ══════════════════════════ -->
+<div *ngIf="callState === 'active'"
+     class="call-overlay active-overlay"
+     role="dialog" aria-modal="true" aria-label="Active call">
+
+  <!-- Remote video (video call — fills background) -->
+  <video *ngIf="callType === 'video'"
+         id="remote-video"
+         class="remote-video"
+         autoplay playsinline
+         aria-label="Remote video stream">
+  </video>
+
+  <!-- Remote audio — always present so ngAfterViewChecked can attach the stream -->
+  <audio id="remote-audio" autoplay playsinline style="display:none"></audio>
+
+  <!-- Local video PiP (video call) -->
+  <video *ngIf="callType === 'video'"
+         id="local-video"
+         class="local-video"
+         autoplay playsinline muted
+         aria-label="Your camera">
+  </video>
+
+  <!-- Audio-only call: show avatar + name -->
+  <div *ngIf="callType === 'audio'" class="audio-call-ui">
+    <div class="call-avatar-wrap">
+      <img [src]="getProfilePicture()" [alt]="getParticipantName()" class="call-avatar"/>
+      <div class="call-avatar-ring"></div>
+    </div>
+    <h2 class="call-name">{{ conversation?.title || getParticipantName() }}</h2>
+    <p class="call-label" style="color:rgba(255,255,255,0.7)">Call in progress</p>
+  </div>
+
+  <!-- Duration + hang-up bar -->
+  <div class="active-call-bar">
+    <span class="call-duration">{{ activeCallDuration }}</span>
+    <button class="call-action-btn hangup-btn" (click)="hangupCall()" aria-label="End call">
+      <lucide-icon [img]="PhoneOffIcon" class="w-6 h-6"></lucide-icon>
+    </button>
+  </div>
+</div>
+
+<!-- ═══ RENAME MODAL ══════════════════════════════════ -->
+<div *ngIf="showRenameModal"
+     class="mt-modal-bg"
+     (click)="cancelRename()"
+     role="dialog" aria-modal="true" aria-labelledby="mt-rename-title">
+  <div class="mt-modal-box" (click)="$event.stopPropagation()">
+    <div class="mt-modal-ico">✏️</div>
+    <h3 class="mt-modal-h" id="mt-rename-title">Edit conversation</h3>
+
+    <p class="mt-modal-label">Icon</p>
+    <div class="mt-emoji-row" role="radiogroup" aria-label="Select an icon">
+      <button *ngFor="let e of quickEmojis"
+              class="mt-emoji-btn"
+              role="radio"
+              [class.mt-emoji-sel]="renameEmoji === e"
+              [attr.aria-checked]="renameEmoji === e"
+              (click)="renameEmoji = (renameEmoji === e ? '' : e)"
+              [attr.aria-label]="'Icon ' + e">
+        {{ e }}
+      </button>
+    </div>
+
+    <p class="mt-modal-label">Conversation name</p>
+    <input class="mt-modal-input"
+           type="text"
+           [(ngModel)]="renameValue"
+           placeholder="Enter a name..."
+           maxlength="60"
+           (keydown.enter)="confirmRename()"
+           (keydown.escape)="cancelRename()"
+           aria-label="Conversation name"
+           autofocus/>
+
+    <div class="mt-modal-btns">
+      <button class="mt-modal-cancel"  (click)="cancelRename()">Cancel</button>
+      <button class="mt-modal-primary" (click)="confirmRename()" [disabled]="!renameValue.trim()">
+        <lucide-icon [img]="CheckIcon" class="w-4 h-4"></lucide-icon>
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DELETE CONVERSATION MODAL ═════════════════════ -->
+<div *ngIf="showDeleteModal"
+     class="mt-modal-bg"
+     (click)="cancelDelete()"
+     role="dialog" aria-modal="true" aria-labelledby="mt-delete-title">
+  <div class="mt-modal-box" (click)="$event.stopPropagation()">
+    <div class="mt-modal-ico">🗑️</div>
+    <h3 class="mt-modal-h" id="mt-delete-title">Delete conversation</h3>
+    <p class="mt-modal-p">
+      Permanently delete the conversation with
+      <strong>{{ getParticipantName() }}</strong>?
+      This action is <strong>irreversible</strong>.
+    </p>
+    <div class="mt-modal-btns">
+      <button class="mt-modal-cancel" (click)="cancelDelete()">Cancel</button>
+      <button class="mt-modal-danger" (click)="confirmDelete()">
+        <lucide-icon [img]="Trash2Icon" class="w-4 h-4"></lucide-icon>
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BLOCK / UNBLOCK MODAL ═════════════════════════ -->
+<div *ngIf="showBlockModal"
+     class="mt-modal-bg"
+     (click)="cancelBlock()"
+     role="dialog" aria-modal="true"
+     [attr.aria-labelledby]="isConversationBlocked() ? 'mt-unblock-title' : 'mt-block-title'">
+  <div class="mt-modal-box" (click)="$event.stopPropagation()">
+
+    <!-- BLOCK flow -->
+    <ng-container *ngIf="!isConversationBlocked()">
+      <div class="mt-modal-ico">🚫</div>
+      <h3 class="mt-modal-h" id="mt-block-title">Block user</h3>
+      <div class="mt-modal-warn-pill">
+        <span class="mt-modal-warn-inner">⚠️ Important action</span>
+      </div>
+      <p class="mt-modal-p">
+        Block <strong>{{ getParticipantName() }}</strong>?
+        They won't be able to send you messages.
+        The conversation will move to your <strong>Blocked</strong> list.
+      </p>
+      <div class="mt-modal-btns">
+        <button class="mt-modal-cancel"  (click)="cancelBlock()">Cancel</button>
+        <button class="mt-modal-warning" (click)="confirmBlock()">
+          <lucide-icon [img]="BlockIcon" class="w-4 h-4"></lucide-icon>
+          Block
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- UNBLOCK flow -->
+    <ng-container *ngIf="isConversationBlocked()">
+      <div class="mt-modal-ico">✅</div>
+      <h3 class="mt-modal-h" id="mt-unblock-title">Unblock user</h3>
+      <p class="mt-modal-p">
+        Unblock <strong>{{ getParticipantName() }}</strong>?
+        They'll be able to send you messages again.
+      </p>
+      <div class="mt-modal-btns">
+        <button class="mt-modal-cancel"  (click)="cancelBlock()">Cancel</button>
+        <button class="mt-modal-success" (click)="confirmBlock()">
+          Unblock
+        </button>
+      </div>
+    </ng-container>
+
+  </div>
+
+  <!-- ═══ TOAST NOTIFICATION ════════════════════════════════ -->
+  <div *ngIf="toast"
+       class="call-toast"
+       [class.call-toast-success]="toast.type === 'success'"
+       [class.call-toast-error]="toast.type === 'error'"
+       [class.call-toast-info]="toast.type === 'info'">
+    {{ toast.message }}
+  </div>
+
+</div>
+
+<!-- ═══ CHAT THEME PICKER ═══════════════════════════════════ -->
+<div *ngIf="showThemePicker"
+     class="theme-picker-overlay"
+     (click)="showThemePicker = false">
+  <div class="theme-picker-panel" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="theme-picker__header">
+      <div class="theme-picker__title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>
+          <circle cx="8.5" cy="13.5" r="1.5" fill="currentColor"/>
+          <circle cx="7.5" cy="9" r="1.5" fill="currentColor"/>
+          <circle cx="12" cy="7.5" r="1.5" fill="currentColor"/>
+          <circle cx="16.5" cy="9" r="1.5" fill="currentColor"/>
+        </svg>
+        Chat Theme
+      </div>
+      <button class="theme-picker__close" (click)="showThemePicker = false" aria-label="Close">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <p class="theme-picker__sub">Choose a color theme for this conversation</p>
+
+    <!-- Theme grid -->
+    <div class="theme-picker__grid">
+      <button *ngFor="let t of chatThemeService.themes"
+              class="theme-card"
+              [class.theme-card--active]="activeTheme.id === t.id"
+              (click)="selectChatTheme(t.id)"
+              [title]="t.name">
+
+        <!-- Gradient preview swatch -->
+        <div class="theme-card__swatch" [ngStyle]="{'background': t.gradient}">
+          <span class="theme-card__emoji">{{ t.emoji }}</span>
+          <span *ngIf="activeTheme.id === t.id" class="theme-card__check">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
+        </div>
+
+        <!-- Bubble preview -->
+        <div class="theme-card__preview">
+          <span class="theme-card__bubble-out" [ngStyle]="{'background': t.gradient, 'color': t.bubbleText}">Hello!</span>
+          <span class="theme-card__bubble-in">Sure 👍</span>
+        </div>
+
+        <span class="theme-card__name">{{ t.name }}</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOAST NOTIFICATION ════════════════════════════════ -->
+<div *ngIf="toast"
+     class="call-toast"
+     [class.call-toast-success]="toast.type === 'success'"
+     [class.call-toast-error]="toast.type === 'error'"
+     [class.call-toast-info]="toast.type === 'info'">
+  {{ toast.message }}
+</div>

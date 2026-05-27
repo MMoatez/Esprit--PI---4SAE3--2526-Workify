@@ -1,0 +1,401 @@
+<div class="min-h-screen bg-slate-50 relative overflow-hidden pt-12 pb-20">
+  <!-- Background Decorative Elements -->
+  <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+    <div class="absolute top-1/4 -left-24 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl animate-float"></div>
+    <div class="absolute bottom-1/4 -right-24 w-96 h-96 bg-secondary-500/10 rounded-full blur-3xl animate-float"
+      style="animation-delay: -3s"></div>
+  </div>
+
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl relative z-10">
+    <!-- Page Header -->
+    <div class="flex items-end justify-between mb-10 animate-slide-up">
+      <div>
+        <h1 class="text-4xl font-black text-slate-900 tracking-tight mb-2">
+          Hello, {{ profile?.firstName || profile?.lastName || 'Workify Member' }}
+        </h1>
+        <p class="text-slate-500 font-medium">Manage your professional identity and account settings</p>
+      </div>
+      <div class="hidden sm:block">
+        <span
+          class="px-4 py-2 bg-white/80 backdrop-blur-md border border-slate-200 rounded-2xl text-slate-600 text-sm font-semibold shadow-sm">
+          Last updated: {{ profile?.updatedAt | date:'mediumDate' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Error/Loading states -->
+    <div *ngIf="loading" class="flex flex-col items-center justify-center py-24 animate-pulse">
+      <div class="w-12 h-12 border-4 border-primary-500/30 border-t-primary-500 rounded-full animate-spin mb-4"></div>
+      <p class="text-slate-500 font-medium tracking-wide">Loading your professional profile...</p>
+    </div>
+
+    <div *ngIf="error"
+      class="mb-8 p-5 bg-red-50 border border-red-100 rounded-3xl text-red-600 flex items-center gap-4 animate-bounce-in">
+      <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+          </path>
+        </svg>
+      </div>
+      <span class="font-medium">{{ error }}</span>
+    </div>
+
+    <div *ngIf="!loading && profile" class="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-slide-up"
+      style="animation-delay: 0.1s">
+
+      <!-- Left Column: Professional Identity -->
+      <div class="lg:col-span-1 space-y-8">
+        <!-- Avatar Card -->
+        <div
+          class="bg-white/80 backdrop-blur-xl border border-white/20 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-8 text-center group">
+          <div class="relative inline-block mb-6">
+            <div
+              class="w-40 h-40 rounded-[2rem] bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden ring-4 ring-white shadow-xl transition-transform duration-500 group-hover:scale-105">
+              <img *ngIf="avatarUrl" [src]="avatarUrl" class="w-full h-full object-cover" alt="Profile" />
+              <div *ngIf="!avatarUrl"
+                class="w-full h-full flex items-center justify-center text-slate-400 text-5xl font-black">
+                {{ (profile.firstName || profile.email)[0] | uppercase }}
+              </div>
+            </div>
+            <label
+              class="absolute -bottom-2 -right-2 w-12 h-12 bg-primary-600 text-white rounded-2xl flex items-center justify-center cursor-pointer hover:bg-primary-700 hover:scale-110 active:scale-95 transition-all shadow-lg ring-4 ring-white">
+              <input type="file" accept="image/*" class="hidden" (change)='onFileSelected($event)'
+                [disabled]="avatarUploading" />
+              <svg *ngIf="!avatarUploading" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z">
+                </path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              <div *ngIf="avatarUploading"
+                class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            </label>
+          </div>
+          <h2 class="text-2xl font-bold text-slate-900 mb-1">
+            {{ profile.firstName || profile.lastName ? (profile.firstName + ' ' + profile.lastName) : 'Workify Member'
+            }}
+          </h2>
+          <p class="text-slate-500 font-medium mb-6">{{ profile.email }}</p>
+
+          <div class="flex flex-wrap justify-center gap-2">
+            <span
+              class="px-4 py-1.5 rounded-full bg-primary-50 text-primary-700 text-xs font-black uppercase tracking-widest shadow-sm">
+              {{ profile.role }}
+            </span>
+            <span
+              [class]="'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-sm ' + (profile.accountStatus === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')">
+              {{ profile.accountStatus }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Quick Summary / Stats -->
+        <div *ngIf="profile.role === 'FREELANCER'"
+          class="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-slate-900/20 relative overflow-hidden group">
+          <div
+            class="absolute top-0 right-0 w-32 h-32 bg-primary-500/20 rounded-full blur-2xl -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700">
+          </div>
+          <h3 class="text-lg font-bold mb-6 relative z-10">Account Overview</h3>
+          <div class="space-y-6 relative z-10">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 font-medium">Skills</span>
+              <span class="text-2xl font-black">{{ profile.competences.length }}</span>
+            </div>
+            <div class="h-px bg-white/10 w-full"></div>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-400 font-medium">Projects</span>
+              <span class="text-2xl font-black">0</span>
+            </div>
+            <div class="h-px bg-white/10 w-full"></div>
+            <p class="text-xs text-slate-500 leading-relaxed italic">
+              "Your profile completeness helps you stand out to potential partners on the platform."
+            </p>
+            <ng-container *ngIf="profile.role === 'FREELANCER'">
+              <button (click)="openCvBuilder()"
+                class="w-full py-3.5 bg-gradient-to-r from-primary-500 to-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:from-primary-600 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 mt-4 hover:scale-105 active:scale-95">
+                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                  </path>
+                </svg>
+                Build Your CV
+              </button>
+              <button *ngIf="cvPdfUrl" (click)="viewResume()"
+                class="w-full py-3.5 bg-white/10 border border-white/20 text-white font-bold rounded-2xl shadow-sm hover:bg-white/20 transition-all flex items-center justify-center gap-2 mt-3 hover:scale-105 active:scale-95">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                  </path>
+                </svg>
+                View My Resume
+              </button>
+              <a [routerLink]="['/freelancers', profile.id]"
+                class="w-full text-center mt-4 text-slate-400 hover:text-white text-sm font-medium transition-colors border-t border-white/10 pt-4 block">
+                View My Public Profile →
+              </a>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Details & Editing -->
+      <div class="lg:col-span-2 space-y-8">
+
+        <!-- Personal Details Card -->
+        <div
+          class="bg-white/90 backdrop-blur-xl border border-white/20 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 overflow-hidden transition-all duration-300">
+          <div class="p-8 sm:p-10">
+            <div class="flex items-center justify-between mb-8">
+              <h3 class="text-2xl font-bold text-slate-900">Personal Details</h3>
+              <button *ngIf="!editing" (click)="toggleEdit()"
+                class="p-2 w-12 h-12 bg-slate-100 text-slate-600 rounded-2xl hover:bg-primary-50 hover:text-primary-600 transition-all active:scale-90 flex items-center justify-center group">
+                <svg class="w-6 h-6 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                  </path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- View Mode -->
+            <div *ngIf="!editing" class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in">
+              <div class="space-y-1">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Full Name</span>
+                <p class="text-lg font-bold text-slate-900">{{ profile.firstName }} {{ profile.lastName }}</p>
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Phone Number</span>
+                <p class="text-lg font-bold text-slate-900">{{ profile.phone || 'Not provided' }}</p>
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-widest">RIB / Banking</span>
+                <p class="text-lg font-bold text-slate-900 font-mono tracking-tighter">{{ profile.rib || 'Not provided'
+                  }}</p>
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Member Since</span>
+                <p class="text-3xl font-display font-bold text-slate-900">{{ profile.inscriptionDate | date:'longDate'
+                  }}</p>
+              </div>
+              <div class="space-y-1">
+                <span class="text-xs font-black text-slate-400 uppercase tracking-widest">Account Type</span>
+                <p class="text-lg font-bold text-slate-900">{{ profile.role }}</p>
+              </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <form *ngIf="editing" [formGroup]="editForm" (ngSubmit)="saveProfile()" class="space-y-6 animate-slide-up">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                  <label class="block text-sm font-bold text-slate-700 ml-1">First Name</label>
+                  <input formControlName="firstName"
+                    class="w-full px-5 py-3.5 bg-slate-100 border-2 border-transparent rounded-2xl focus:bg-white focus:border-primary-500 transition-all outline-none" />
+                </div>
+                <div class="space-y-2">
+                  <label class="block text-sm font-bold text-slate-700 ml-1">Last Name</label>
+                  <input formControlName="lastName"
+                    class="w-full px-5 py-3.5 bg-slate-100 border-2 border-transparent rounded-2xl focus:bg-white focus:border-primary-500 transition-all outline-none" />
+                </div>
+                <div class="space-y-2">
+                  <label class="block text-sm font-bold text-slate-700 ml-1">Phone</label>
+                  <input formControlName="phone"
+                    class="w-full px-5 py-3.5 bg-slate-100 border-2 border-transparent rounded-2xl focus:bg-white focus:border-primary-500 transition-all outline-none"
+                    placeholder="+33 ..." />
+                </div>
+                <div class="space-y-2">
+                  <label class="block text-sm font-bold text-slate-700 ml-1">RIB</label>
+                  <input formControlName="rib"
+                    class="w-full px-5 py-3.5 bg-slate-100 border-2 border-transparent rounded-2xl focus:bg-white focus:border-primary-500 transition-all outline-none"
+                    placeholder="FR76 ..." />
+                </div>
+              </div>
+
+              <div class="flex items-center gap-4 pt-4">
+                <button type="submit" [disabled]="saving || editForm.invalid"
+                  class="px-8 py-3.5 bg-primary-600 text-white font-bold rounded-2xl shadow-lg shadow-primary-500/25 hover:bg-primary-700 transition-all disabled:opacity-50 active:scale-95 flex items-center gap-2">
+                  <span *ngIf="saving"
+                    class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  Save Changes
+                </button>
+                <button type="button" (click)="toggleEdit()"
+                  class="px-8 py-3.5 bg-white border border-slate-200 text-slate-600 font-bold rounded-2xl hover:bg-slate-50 transition-all active:scale-95">
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Professional Skills Card -->
+        <div *ngIf="profile.role === 'FREELANCER'"
+          class="bg-white/90 backdrop-blur-xl border border-white/20 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-8 sm:p-10 transition-all duration-300">
+          <h3 class="text-2xl font-bold text-slate-900 mb-8">Professional Skills</h3>
+
+          <!-- Skills Grid -->
+          <div class="flex flex-wrap gap-3 mb-10">
+            <div *ngFor="let c of profile.competences" class="group relative animate-fade-in">
+              <div
+                class="px-5 py-3 rounded-2xl bg-slate-50 border border-slate-100 text-slate-700 font-bold text-sm transition-all group-hover:bg-primary-600 group-hover:text-white group-hover:shadow-lg group-hover:shadow-primary-500/25 group-hover:-translate-y-1 pr-12">
+                {{ c.name }}
+                <button (click)="removeCompetence(c)"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-lg bg-slate-200 group-hover:bg-white/20 text-slate-500 group-hover:text-white flex items-center justify-center hover:scale-110 transition-all"
+                  aria-label="Remove">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 16l12 12">
+                    </path>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Add Skill Section -->
+          <div class="relative max-w-md group">
+            <div
+              class="absolute inset-0 bg-primary-500/5 rounded-2xl blur-xl transition-all group-focus-within:bg-primary-500/10">
+            </div>
+            <div class="relative flex gap-3">
+              <div class="relative flex-1">
+                <input type="text" [(ngModel)]="newCompetence" (keyup.enter)="addCompetence()"
+                  class="w-full px-6 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm outline-none focus:border-primary-500 transition-all font-medium text-slate-900 placeholder:text-slate-400"
+                  placeholder="Add a new skill (e.g. Angular)" />
+                <div
+                  class="absolute left-6 -top-3 px-2 bg-white text-[10px] font-black text-slate-400 uppercase tracking-widest ring-1 ring-slate-100 rounded-full">
+                  New Skill</div>
+              </div>
+              <button (click)="addCompetence()" [disabled]="!newCompetence.trim() || addingCompetence"
+                class="w-16 h-14 bg-primary-600 text-white rounded-2xl shadow-lg shadow-primary-500/25 flex items-center justify-center hover:bg-primary-700 disabled:opacity-50 active:scale-90 transition-all flex-shrink-0">
+                <svg *ngIf="!addingCompetence" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <div *ngIf="addingCompetence"
+                  class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Experience Card -->
+        <div *ngIf="profile.role === 'FREELANCER' && profile.experiences && profile.experiences.length > 0"
+          class="bg-white/90 backdrop-blur-xl border border-white/20 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-8 sm:p-10 transition-all duration-300">
+          <h3 class="text-2xl font-bold text-slate-900 mb-8">Experience</h3>
+
+          <div class="space-y-6">
+            <div *ngFor="let exp of profile.experiences"
+              class="relative pl-8 border-l-2 border-primary-100 pb-2 last:border-0 last:pb-0">
+              <div
+                class="absolute w-4 h-4 bg-primary-500 rounded-full -left-[9px] top-1 border-4 border-white shadow-sm">
+              </div>
+              <h4 class="text-lg font-bold text-slate-900">{{ exp.position }}</h4>
+              <p class="text-sm font-bold text-primary-600 mb-2">{{ exp.company }}</p>
+              <p *ngIf="exp.startDate || exp.endDate"
+                class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                {{ exp.startDate || 'N/A' }} - {{ exp.endDate || 'Present' }}
+              </p>
+              <p *ngIf="exp.description" class="text-slate-600 text-sm leading-relaxed">{{ exp.description }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Education Card -->
+        <div *ngIf="profile.role === 'FREELANCER' && profile.educations && profile.educations.length > 0"
+          class="bg-white/90 backdrop-blur-xl border border-white/20 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-8 sm:p-10 transition-all duration-300">
+          <h3 class="text-2xl font-bold text-slate-900 mb-8">Education</h3>
+
+          <div class="space-y-6">
+            <div *ngFor="let edu of profile.educations"
+              class="relative pl-8 border-l-2 border-indigo-100 pb-2 last:border-0 last:pb-0">
+              <div
+                class="absolute w-4 h-4 bg-indigo-500 rounded-full -left-[9px] top-1 border-4 border-white shadow-sm">
+              </div>
+              <h4 class="text-lg font-bold text-slate-900">{{ edu.degree }}</h4>
+              <p class="text-sm font-bold text-indigo-600 mb-2">{{ edu.institution }}</p>
+              <p *ngIf="edu.startDate || edu.endDate"
+                class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+                {{ edu.startDate || 'N/A' }} - {{ edu.endDate || 'Present' }}
+              </p>
+              <p *ngIf="edu.description" class="text-slate-600 text-sm leading-relaxed">{{ edu.description }}</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Resume PDF Modal -->
+  <div *ngIf="showResumeModal && cvPdfUrl"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in"
+    (click)="closeResumeModal()">
+    <div
+      class="relative w-full max-w-4xl h-[90vh] mx-4 bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
+      (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          My Resume
+        </h3>
+        <button (click)="closeResumeModal()"
+          class="w-10 h-10 rounded-xl bg-slate-200 hover:bg-red-100 hover:text-red-600 text-slate-500 flex items-center justify-center transition-all active:scale-90">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <!-- PDF Content -->
+      <iframe [src]="safeCvPdfUrl" class="w-full" style="height: calc(90vh - 65px);" frameborder="0"></iframe>
+    </div>
+  </div>
+
+  <!-- CV Builder Modal -->
+  <div *ngIf="showCvBuilder"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-fade-in"
+    (click)="closeCvBuilder()">
+    <div
+      class="relative w-full max-w-6xl h-[95vh] mx-4 bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-slide-up"
+      (click)="$event.stopPropagation()">
+
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-8 py-4 border-b border-slate-100 bg-slate-50/80">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center text-white shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">Workify Resume Builder</h3>
+            <p class="text-xs text-slate-400 font-medium">Build and export to save to your profile</p>
+          </div>
+        </div>
+        <button (click)="closeCvBuilder()"
+          class="w-11 h-11 rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 flex items-center justify-center transition-all active:scale-90">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Builder iframe -->
+      <iframe [src]="safeCvBuilderUrl" class="w-full border-0" style="height: calc(95vh - 72px);"
+        title="Resume Builder"></iframe>
+
+      <!-- Floating hint -->
+      <div
+        class="absolute bottom-5 left-1/2 -translate-x-1/2 px-5 py-2.5 bg-slate-900/90 text-white rounded-2xl text-xs font-bold backdrop-blur-md shadow-2xl pointer-events-none animate-bounce">
+        Click "Export" in the builder when you're done! 🚀
+      </div>
+    </div>
+  </div>
+</div>

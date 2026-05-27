@@ -1,0 +1,75 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: jdbc:h2:file:./data/userdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: password
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 587
+    username: 8aee1588f55952
+    password: b5c4c8af43c39f
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+  upload:
+    profile-dir: ${USER_PROFILE_UPLOAD_DIR:./uploads/profiles}
+
+
+# Keycloak configuration
+keycloak:
+  auth-server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8180}
+  realm: workify
+  admin:
+    username: admin
+    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+    client-id: admin-cli
+  openrouter:
+    api-key: ${OPENROUTER_API_KEY:YOUR_OPENROUTER_API_KEY_HERE}
+    model: arcee-ai/trinity-large-preview:free
+
+# Keycloak: validate JWT from this issuer (realm)
+spring.security.oauth2.resourceserver.jwt:
+  issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/workify}
+  jwk-set-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/workify}/protocol/openid-connect/certs
+
+  upload:
+    profile-dir: ${USER_PROFILE_UPLOAD_DIR:./uploads/profiles}
+
+# Application Configuration
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
+
+logging:
+  level:
+    org.springframework.security: TRACE
+
+google:
+  recaptcha:
+    project-id: ${RECAPTCHA_PROJECT_ID:strong-host-452620-b4}
+    site-key: ${RECAPTCHA_SITE_KEY:6LfKl3gsAAAAAM9Kiu2KQNGGzUPVi1T54FozkeVf}
+    secret-key: ${RECAPTCHA_SECRET_KEY:6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe}

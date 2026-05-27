@@ -1,0 +1,463 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50/30 to-teal-50/50 p-10">
+
+  <!-- HEADER -->
+  <div class="max-w-7xl mx-auto mb-12 text-center">
+    <h1 class="text-5xl font-bold text-slate-900 mb-4">
+      Your <span class="text-teal-600">Freelance Offers</span>
+    </h1>
+    <p class="text-slate-600">Manage your proposals and track project progress</p>
+    <div *ngIf="!isClient" class="mt-6">
+      <button (click)="openCreateModal()"
+              class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-semibold hover:shadow-lg transition">
+        + Create Offer
+      </button>
+    </div>
+  </div>
+
+  <!-- OFFERS GRID -->
+  <div class="max-w-7xl mx-auto">
+
+    <div *ngIf="error" class="mb-6 p-4 bg-red-50 border border-red-300 rounded-xl text-red-600">
+      {{ error }}
+    </div>
+
+    <div *ngIf="isLoading" class="text-center py-12 text-slate-500">Loading offers...</div>
+
+    <div *ngIf="!isLoading && filteredOffers.length === 0" class="text-center py-12 text-slate-500">
+      No offers found
+    </div>
+
+    <!-- CARDS -->
+    <div *ngIf="!isLoading" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+      <div *ngFor="let offer of filteredOffers; let i = index"
+           class="animate-card bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 relative"
+           [style.animationDelay]="i * 100 + 'ms'">
+
+        <!-- BADGES -->
+        <div *ngIf="offer.status === 'PENDING'"
+             class="absolute top-4 right-4 bg-gradient-to-r from-orange-400 to-pink-500 text-white text-xs px-3 py-1 rounded-full shadow-md">
+          New
+        </div>
+        <div *ngIf="contractSuccess === offer.id"
+             class="absolute top-4 right-4 bg-gradient-to-r from-emerald-400 to-teal-500 text-white text-xs px-3 py-1 rounded-full shadow-md">
+          ✅ Contract generated!
+        </div>
+        <div *ngIf="reviewSuccess === offer.id"
+             class="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-400 text-white text-xs px-3 py-1 rounded-full shadow-md">
+          ⭐ Review submitted!
+        </div>
+
+        <!-- HEADER CARD -->
+        <div class="flex items-start gap-4 mb-4">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
+            {{ offer.freelancer?.nom?.charAt(0) }}
+          </div>
+          <div class="flex-1">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="text-lg font-bold text-slate-900">
+                  {{ offer.project?.title ?? ('Project #' + (offer.project?.id ?? offer.id ?? 'N/A')) }}
+                </h3>
+                <p class="text-sm text-slate-500">{{ offer.freelancer?.nom }}</p>
+                <p class="text-xs text-slate-400">{{ formatDate(offer.createdAt) }}</p>
+              </div>
+              <div>
+                <span *ngIf="offer.status === 'ACCEPTED'"  class="text-green-600 font-semibold text-sm">✅ Accepted</span>
+                <span *ngIf="offer.status === 'COMPLETED'" class="text-emerald-700 font-semibold text-sm">🏁 Completed</span>
+                <span *ngIf="offer.status === 'REJECTED'"  class="text-red-600 font-semibold text-sm">❌ Rejected</span>
+                <span *ngIf="offer.status === 'PENDING'"   class="text-cyan-600 font-semibold text-sm">⏳ Pending</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MESSAGE -->
+        <p class="text-slate-600 text-sm mb-5 leading-relaxed">{{ offer.message }}</p>
+
+        <!-- PRICE & DURATION -->
+        <div class="flex justify-between items-center mb-3">
+          <div class="flex gap-3">
+            <span *ngIf="offer.duration" class="bg-slate-100 text-slate-700 px-3 py-1 text-xs rounded-full font-medium">
+              ⏳ {{ offer.duration }} days
+            </span>
+            <span *ngIf="offer.price" class="bg-teal-50 text-teal-700 px-3 py-1 text-xs rounded-full font-semibold">
+              💰 ${{ offer.price | number:'1.0-0' }}
+            </span>
+          </div>
+          <div *ngIf="offer.price" class="text-2xl font-bold text-teal-600">
+            ${{ offer.price | number:'1.0-0' }}
+          </div>
+        </div>
+
+        <!-- VIEW DETAILS BUTTON -->
+        <div *ngIf="offer.project?.id" class="mb-5">
+          <a [routerLink]="['/my-projects', offer.project!.id]"
+             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-teal-300 text-teal-700 bg-teal-50 text-sm font-semibold hover:bg-teal-100 hover:shadow-sm transition-all duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+            View Project Details
+          </a>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div *ngIf="offer.status === 'ACCEPTED'" class="mb-5">
+          <div class="text-xs text-slate-500 mb-2">Project In Progress</div>
+          <div class="w-full bg-slate-200 rounded-full overflow-hidden">
+            <div class="progress-bar"></div>
+          </div>
+          <!-- Bouton "Marquer terminé" pour le freelancer -->
+          <div *ngIf="isFreelancer" class="mt-3">
+            <button (click)="markAsCompleted(offer)"
+                    [disabled]="completingOfferId === offer.id"
+                    class="w-full py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-60 transition flex items-center justify-center gap-2">
+              <span *ngIf="completingOfferId !== offer.id">✅ Mark project as completed</span>
+              <span *ngIf="completingOfferId === offer.id">⏳ Processing...</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PROJET TERMINÉ -->
+        <div *ngIf="offer.status === 'COMPLETED'" class="mb-5">
+          <div class="text-xs text-emerald-600 font-semibold mb-2">✅ Project Completed</div>
+          <div class="w-full bg-emerald-200 rounded-full overflow-hidden">
+            <div class="h-2 w-full bg-emerald-500 rounded-full"></div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════
+             ⭐ REVIEW DÉJÀ SOUMISE — affichage
+        ════════════════════════════════════════════════ -->
+        <div *ngIf="offer.rating" class="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm font-semibold text-amber-800">⭐ Client review</span>
+            <div class="flex gap-0.5">
+              <span *ngFor="let star of getStars(5)"
+                    class="text-lg"
+                    [class]="star <= offer.rating ? 'text-amber-400' : 'text-slate-300'">★</span>
+            </div>
+          </div>
+          <p *ngIf="offer.reviewComment" class="text-sm text-slate-600 italic mb-3">
+            "{{ offer.reviewComment }}"
+          </p>
+          <p *ngIf="offer.reviewedAt" class="text-xs text-slate-400 mb-3">
+            🕐 {{ offer.reviewedAt | date:'dd/MM/yyyy' }}
+          </p>
+
+          <!-- Réponse freelancer déjà soumise -->
+          <div *ngIf="offer.freelancerReply"
+               class="mt-2 p-3 bg-white border border-slate-200 rounded-xl">
+            <p class="text-xs font-semibold text-slate-700 mb-1">💬 Freelancer reply:</p>
+            <p class="text-sm text-slate-600 italic">"{{ offer.freelancerReply }}"</p>
+            <p *ngIf="offer.freelancerRepliedAt" class="text-xs text-slate-400 mt-1">
+              🕐 {{ offer.freelancerRepliedAt | date:'dd/MM/yyyy' }}
+            </p>
+          </div>
+
+          <!-- Bouton répondre (freelancer, pas encore répondu) -->
+          <div *ngIf="isFreelancer && !offer.freelancerReply && replyOfferId !== offer.id"
+               class="mt-2">
+            <button (click)="openReplyForm(offer.id!)"
+                    class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline">
+              💬 Reply to this review
+            </button>
+          </div>
+
+          <!-- Formulaire réponse freelancer -->
+          <div *ngIf="isFreelancer && replyOfferId === offer.id"
+               class="mt-3 space-y-2">
+            <textarea [(ngModel)]="replyText" rows="3"
+                      placeholder="Your reply..."
+                      class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+            </textarea>
+            <div class="flex gap-2">
+              <button (click)="closeReplyForm()"
+                      class="flex-1 py-1.5 rounded-lg border border-slate-300 text-slate-600 text-xs font-medium">
+                Cancel
+              </button>
+              <button (click)="submitReply(offer.id!)"
+                      [disabled]="isSubmittingReply || !replyText.trim()"
+                      class="flex-1 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold disabled:opacity-60">
+                {{ isSubmittingReply ? 'Sending...' : 'Send' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════
+             SYSTEME FEEDBACK — s'active quand COMPLETED
+        ════════════════════════════════════════════════ -->
+        <div *ngIf="offer.status === 'COMPLETED' && offer.id" class="mt-3">
+
+          <!-- Invitation client à évaluer (si pas encore de feedback) -->
+          <div *ngIf="isClient && !hasFeedback(offer.id) && !isFeedbackFormOpen(offer.id)"
+               class="mb-3 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold text-amber-800">🎉 Project completed!</p>
+              <p class="text-xs text-amber-600 mt-1">The freelancer has delivered your project. Share your experience.</p>
+            </div>
+            <button (click)="openFeedbackForm(offer.id)"
+                    class="ml-3 px-4 py-2 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition whitespace-nowrap">
+              ⭐ Rate
+            </button>
+          </div>
+
+          <!-- Message freelancer quand pas encore évalué -->
+          <div *ngIf="isFreelancer && !hasFeedback(offer.id)"
+               class="mb-3 p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-500 text-sm">
+            ⏳ Waiting for client review...
+          </div>
+
+          <!-- Countdown évaluation -->
+          <app-evaluation-countdown
+            *ngIf="isClient && !hasFeedback(offer.id)"
+            [offerId]="offer.id"
+            (statusUpdate)="onEvaluationStatusUpdate(offer.id!, $event)">
+          </app-evaluation-countdown>
+
+          <!-- Succès feedback soumis -->
+          <div *ngIf="feedbackSuccess === offer.id"
+               class="mb-3 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm font-medium">
+            ✅ Feedback submitted successfully!
+          </div>
+
+          <!-- Formulaire feedback (client) -->
+          <app-feedback-form
+            *ngIf="isClient && isFeedbackFormOpen(offer.id) && !hasFeedback(offer.id)"
+            [offerId]="offer.id"
+            [projectTitle]="offer.project?.title || ''"
+            [projectCategory]="offer.project?.category || 'AUTRE'"
+            (submitted)="onFeedbackSubmitted(offer.id, $event)"
+            (cancelled)="closeFeedbackForm(offer.id)">
+          </app-feedback-form>
+
+          <!-- Feedback existant (lecture + modifier/supprimer + réponse freelancer) -->
+          <app-feedback-card
+            *ngIf="hasFeedback(offer.id)"
+            [feedback]="getExistingFeedback(offer.id)!"
+            [freelancerId]="offer.freelancer?.id || 0"
+            (feedbackUpdated)="onFeedbackCardUpdated(offer.id, $event)"
+            (feedbackDeleted)="onFeedbackDeleted(offer.id)">
+          </app-feedback-card>
+
+        </div>
+
+        <!-- ACTIONS CLIENT -->
+        <div *ngIf="isClient" class="flex flex-col gap-3">
+
+          <!-- Accept / Reject -->
+          <div class="flex gap-3">
+            <button *ngIf="offer.status === 'PENDING'"
+                    (click)="rejectOffer(offer.id)"
+                    class="flex-1 py-2 rounded-xl border border-red-400 text-red-600 hover:bg-red-50 transition font-medium">
+              Reject
+            </button>
+            <button *ngIf="offer.status === 'PENDING'"
+                    (click)="acceptOffer(offer.id)"
+                    class="flex-1 py-2 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 text-white hover:shadow-lg transition font-medium">
+              Accept
+            </button>
+            <button *ngIf="offer.status !== 'PENDING'" disabled
+                    class="flex-1 py-2 rounded-xl bg-slate-100 text-slate-400 font-medium">
+              {{ offer.status }}
+            </button>
+          </div>
+
+          <!-- Contrat PDF -->
+          <button *ngIf="offer.status === 'ACCEPTED'"
+                  (click)="downloadContract(offer)"
+                  [disabled]="generatingContractId === offer.id"
+                  class="w-full py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2"
+                  [ngClass]="generatingContractId === offer.id
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white hover:shadow-lg'">
+            <svg *ngIf="generatingContractId === offer.id" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <svg *ngIf="generatingContractId !== offer.id" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+            </svg>
+            <span>{{ generatingContractId === offer.id ? 'Generating...' : '📄 Download contract' }}</span>
+          </button>
+
+          <!-- BOUTON ÉVALUER — nouveau système feedback complet -->
+          <button *ngIf="offer.status === 'ACCEPTED' && offer.id &&
+                         getEvaluationStatus(offer.id)?.evaluationPending &&
+                         !hasFeedback(offer.id) &&
+                         !isFeedbackFormOpen(offer.id!)"
+                  (click)="openFeedbackForm(offer.id!)"
+                  class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white font-semibold text-sm hover:shadow-lg transition flex items-center justify-center gap-2">
+            ⭐ Leave a detailed review
+          </button>
+
+          <!-- ⭐ FORMULAIRE ÉVALUATION -->
+          <div *ngIf="offer.status === 'ACCEPTED' && !offer.rating && reviewOfferId === offer.id"
+               class="border border-amber-200 bg-amber-50 rounded-2xl p-4 space-y-3">
+
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-semibold text-amber-900">⭐ Rate {{ offer.freelancer?.nom }}</p>
+              <button (click)="closeReviewForm()" class="text-slate-400 hover:text-slate-600 text-lg">✕</button>
+            </div>
+
+            <!-- Étoiles cliquables -->
+            <div class="flex gap-1 justify-center">
+              <button *ngFor="let star of getStars(5)"
+                      (click)="setRating(star)"
+                      (mouseenter)="reviewHover = star"
+                      (mouseleave)="reviewHover = 0"
+                      class="text-4xl transition-transform hover:scale-110 focus:outline-none"
+                      [class]="(reviewHover || reviewRating) >= star ? 'text-amber-400' : 'text-slate-300'">
+                ★
+              </button>
+            </div>
+
+            <!-- Label note -->
+            <p class="text-center text-xs font-medium text-amber-700">
+              <span *ngIf="(reviewHover || reviewRating) === 1">😞 Poor</span>
+              <span *ngIf="(reviewHover || reviewRating) === 2">😐 Fair</span>
+              <span *ngIf="(reviewHover || reviewRating) === 3">🙂 Good</span>
+              <span *ngIf="(reviewHover || reviewRating) === 4">😊 Very good</span>
+              <span *ngIf="(reviewHover || reviewRating) === 5">🤩 Excellent!</span>
+            </p>
+
+            <!-- Commentaire -->
+            <textarea [(ngModel)]="reviewComment" rows="3"
+                      placeholder="Leave a comment (optional)..."
+                      class="w-full border border-amber-300 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-400">
+            </textarea>
+
+            <!-- Boutons -->
+            <div class="flex gap-2">
+              <button (click)="closeReviewForm()"
+                      class="flex-1 py-2 rounded-xl border border-slate-300 text-slate-600 text-sm font-medium hover:bg-slate-50 transition">
+                Cancel
+              </button>
+              <button (click)="submitReview(offer.id!)"
+                      [disabled]="reviewRating === 0 || isSubmittingReview"
+                      class="flex-1 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-white text-sm font-semibold disabled:opacity-50 hover:shadow-md transition">
+                {{ isSubmittingReview ? 'Sending...' : '⭐ Submit' }}
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL CREATE OFFER (FREELANCER)
+════════════════════════════════════════════════════ -->
+<div *ngIf="isCreateModalOpen"
+     class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+     (click)="closeCreateModal()">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6" (click)="$event.stopPropagation()">
+    <h2 class="text-xl font-bold text-slate-900 mb-4">Create New Offer</h2>
+    <div *ngIf="createOfferError" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+      {{ createOfferError }}
+    </div>
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Project</label>
+        <div *ngIf="availableProjects.length === 0" class="w-full border border-slate-200 rounded-lg px-3 py-3 text-sm text-slate-500 bg-slate-50">
+          No projects available.
+        </div>
+        <div *ngIf="availableProjects.length > 0" class="overflow-x-auto pb-2 -mx-1 px-1">
+          <div class="flex gap-3 min-w-max">
+            <button type="button" *ngFor="let project of availableProjects"
+                    (click)="selectedProjectId = project.id"
+                    class="w-72 flex-shrink-0 text-left rounded-xl border p-3 transition"
+                    [ngClass]="selectedProjectId === project.id ? 'border-cyan-500 bg-cyan-50 ring-2 ring-cyan-200' : 'border-slate-200 bg-white hover:border-cyan-300'">
+              <p class="text-sm font-semibold text-slate-900 mb-1">{{ project.title || ('Project #' + project.id) }}</p>
+              <p class="text-xs text-slate-500 mb-2">Budget: {{ project.budget ?? 'N/A' }}</p>
+              <div class="max-h-24 overflow-y-auto pr-1">
+                <p class="text-xs text-slate-600 leading-relaxed whitespace-normal break-words">
+                  {{ project.detailedDescription || project.shortDescription || 'No description provided.' }}
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Price</label>
+        <input type="number" min="1" [(ngModel)]="newOfferPayload.price"
+               class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Delivery Time</label>
+        <input type="text" [(ngModel)]="newOfferPayload.deliveryTime" placeholder="7 days"
+               class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"/>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Description</label>
+        <textarea rows="4" [(ngModel)]="newOfferPayload.description"
+                  class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                  placeholder="I can complete your project with high quality."></textarea>
+      </div>
+    </div>
+    <div class="mt-6 flex gap-3">
+      <button (click)="closeCreateModal()" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium transition">Cancel</button>
+      <button (click)="submitCreateOffer()" [disabled]="isCreatingOffer"
+              class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-semibold hover:shadow-lg transition disabled:opacity-60">
+        {{ isCreatingOffer ? 'Creating...' : 'Create Offer' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MODAL CONFIRM Accept / Reject
+════════════════════════════════════════════════════ -->
+<div *ngIf="isModalOpen && isClient"
+     class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 px-4"
+     (click)="closeModal()">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-center mb-4">
+      <div class="w-14 h-14 rounded-full flex items-center justify-center text-3xl"
+           [ngClass]="modalAction === 'accept' ? 'bg-green-100' : 'bg-red-100'">
+        {{ modalAction === 'accept' ? '✅' : '❌' }}
+      </div>
+    </div>
+    <h2 class="text-xl font-bold text-slate-900 text-center mb-2">
+      {{ modalAction === 'accept' ? 'Accept this offer?' : 'Reject this offer?' }}
+    </h2>
+    <p class="text-slate-500 text-center text-sm mb-2">
+      <b>{{ selectedOffer?.freelancer?.nom }}</b> —
+      {{ selectedOffer?.project?.title ?? ('Project #' + selectedOffer?.id) }}
+    </p>
+    <div *ngIf="modalAction === 'accept'"
+         class="mt-3 mb-4 p-3 bg-indigo-50 border border-indigo-200 rounded-xl flex items-start gap-3">
+      <span class="text-indigo-500 text-lg flex-shrink-0">📄</span>
+      <p class="text-indigo-700 text-xs leading-relaxed">
+        By accepting this offer, a <b>PDF contract</b> will be automatically generated and downloaded.
+      </p>
+    </div>
+    <div *ngIf="selectedOffer?.price" class="text-center text-2xl font-bold text-teal-600 mb-6">
+      ${{ selectedOffer!.price! | number:'1.0-0' }}
+    </div>
+    <div class="flex gap-3">
+      <button (click)="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-50 font-medium transition">Cancel</button>
+      <button (click)="confirmAction()" [disabled]="isConfirming"
+              class="flex-1 py-2.5 rounded-xl text-white font-semibold transition"
+              [ngClass]="modalAction === 'accept' ? 'bg-gradient-to-r from-teal-600 to-cyan-600 hover:shadow-lg' : 'bg-gradient-to-r from-red-500 to-pink-600 hover:shadow-lg'">
+        <span *ngIf="!isConfirming">{{ modalAction === 'accept' ? '✅ Confirm Accept' : '❌ Confirm Reject' }}</span>
+        <span *ngIf="isConfirming" class="flex items-center justify-center gap-2">
+          <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Processing...
+        </span>
+      </button>
+    </div>
+  </div>
+</div>

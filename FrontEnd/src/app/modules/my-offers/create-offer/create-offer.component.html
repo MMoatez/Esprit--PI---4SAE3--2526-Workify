@@ -1,0 +1,68 @@
+<div class="min-h-screen flex items-center justify-center bg-gray-100">
+
+  <div class="bg-white shadow-lg rounded-2xl p-8 w-full max-w-lg">
+
+    <h2 class="text-2xl font-bold mb-6 text-center">
+      Submit Offer
+    </h2>
+
+    <!-- ERROR -->
+    <div *ngIf="error"
+         class="mb-4 p-3 bg-red-100 text-red-600 rounded-lg">
+      {{ error }}
+    </div>
+
+    <!-- MESSAGE -->
+    <div class="mb-4">
+      <label class="block mb-2 font-semibold">Your Message</label>
+      <textarea
+        [(ngModel)]="offer.message"
+        rows="4"
+        class="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Explain how you will complete this project..."
+      ></textarea>
+    </div>
+
+    <!-- PRICE -->
+    <div class="mb-4">
+      <label class="block mb-2 font-semibold">Proposed Price ($)</label>
+      <input
+        type="number"
+        [(ngModel)]="offer.price"
+        class="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+
+    <!-- DURATION -->
+    <div class="mb-6">
+      <label class="block mb-2 font-semibold">Duration (days)</label>
+      <input
+        type="number"
+        [(ngModel)]="offer.duration"
+        class="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+    </div>
+
+    <!-- BUTTONS -->
+    <div class="flex gap-4">
+
+      <button
+        (click)="submitOffer()"
+        [disabled]="isSubmitting"
+        class="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+      >
+        <span *ngIf="!isSubmitting">Submit Offer</span>
+        <span *ngIf="isSubmitting">Submitting...</span>
+      </button>
+
+      <button
+        (click)="cancel()"
+        class="flex-1 border border-gray-400 py-3 rounded-lg hover:bg-gray-100 transition"
+      >
+        Cancel
+      </button>
+
+    </div>
+
+  </div>
+</div>

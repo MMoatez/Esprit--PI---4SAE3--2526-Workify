@@ -1,0 +1,183 @@
+<div class="fb-form-container">
+  <div class="fb-form-header">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <h3 style="margin:0">Rate the project <span *ngIf="projectTitle">« {{ projectTitle }} »</span></h3>
+      <span style="padding:3px 10px;background:#eef2ff;color:#4f46e5;border-radius:20px;font-size:12px;font-weight:600;">
+        {{ categoryLabel }}
+      </span>
+    </div>
+    <p class="fb-hint">Once the freelancer replies, you will no longer be able to edit.</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="fb-form">
+
+    <!-- Rating per criterion -->
+    <div class="fb-criteria">
+      <div class="fb-criterion" *ngFor="let c of criteria">
+        <label>{{ c.icon }} {{ c.label }}</label>
+        <app-star-rating
+          [value]="form.get(c.key)?.value || 0"
+          (valueChange)="setRating(c.key, $event)">
+        </app-star-rating>
+        <span class="fb-criterion-val">{{ form.get(c.key)?.value || 0 }}/5</span>
+      </div>
+    </div>
+
+    <!-- AI Suggestions -->
+    <div class="fb-suggestions-block">
+      <div class="fb-suggestions-label">🤖 AI Suggestions based on your ratings</div>
+      <p *ngIf="!suggestions.length" class="fb-suggestions-hint">
+        Set your ratings above to generate suggested phrases.
+      </p>
+      <div class="fb-suggestions-pills" *ngIf="suggestions.length">
+        <button type="button" class="fb-pill"
+                *ngFor="let s of suggestions"
+                (click)="applySuggestion(s)">
+          + {{ s }}
+        </button>
+      </div>
+      <!-- Summary paragraph -->
+      <div *ngIf="summary" class="fb-summary-block">
+        <div class="fb-summary-label">📝 Summary</div>
+        <p class="fb-summary-text">{{ summary }}</p>
+        <button type="button" class="fb-summary-use" (click)="applySuggestion(summary)">
+          Use this summary
+        </button>
+      </div>
+    </div>
+
+    <!-- Commentaire -->
+    <div class="fb-field">
+      <div class="fb-field-toolbar">
+        <label>Comment <span class="required">*</span></label>
+        <button type="button" class="fb-btn-emoji-toggle"
+                (click)="showEmojiPicker = !showEmojiPicker">
+          😊 Emoji
+        </button>
+      </div>
+
+      <!-- Emoji picker -->
+      <div *ngIf="showEmojiPicker" class="fb-emoji-picker">
+        <div *ngFor="let g of emojiGroups" class="fb-emoji-group">
+          <span class="fb-emoji-group-label">{{ g.label }}</span>
+          <div class="fb-emoji-row">
+            <button type="button" class="fb-emoji-btn"
+                    *ngFor="let e of g.emojis"
+                    (click)="insertEmoji(e)">{{ e }}</button>
+          </div>
+        </div>
+      </div>
+
+      <textarea
+        #commentArea
+        formControlName="comment"
+        rows="4"
+        placeholder="Describe your experience (min. 20 characters)..."
+        class="fb-textarea"
+      ></textarea>
+      <div class="fb-char-count" [class.invalid]="commentLength < 20">
+        {{ commentLength }} / 2000
+        <span *ngIf="commentLength < 20"> (min. 20)</span>
+      </div>
+    </div>
+
+    <!-- Recommandation -->
+    <div class="fb-field">
+      <label>Would you recommend this freelancer?</label>
+      <div class="fb-recommend">
+        <button type="button" class="fb-btn-recommend"
+          [class.active-yes]="form.get('recommend')?.value === true"
+          (click)="form.get('recommend')?.setValue(true)">
+          👍 Yes
+        </button>
+        <button type="button" class="fb-btn-recommend"
+          [class.active-no]="form.get('recommend')?.value === false"
+          (click)="form.get('recommend')?.setValue(false)">
+          👎 No
+        </button>
+      </div>
+    </div>
+
+    <!-- Attachments -->
+    <div class="fb-field">
+      <label>Attachments <span class="fb-attach-hint">(optional — PNG, JPG, GIF, MP4 · max {{ MAX_SIZE_MB }} MB each · max {{ MAX_FILES }} files)</span></label>
+
+      <div class="fb-attach-row">
+        <button type="button" class="fb-btn-attach" (click)="fileInput.click()">
+          📎 Add file
+        </button>
+        <input #fileInput type="file" hidden multiple
+               accept="image/png,image/jpeg,image/gif,video/mp4"
+               (change)="onFileSelected($event)">
+        <span *ngIf="uploadingFiles" class="fb-uploading">Uploading…</span>
+      </div>
+
+      <div *ngIf="uploadError" class="fb-error" style="margin-top:6px">{{ uploadError }}</div>
+
+      <!-- Files not yet uploaded -->
+      <div class="fb-attach-preview" *ngIf="pendingFiles.length">
+        <div class="fb-attach-item" *ngFor="let f of pendingFiles; let i = index">
+          <span class="fb-attach-name">{{ f.name }}</span>
+          <button type="button" class="fb-attach-remove" (click)="removeFile(i)">✕</button>
+        </div>
+      </div>
+
+      <!-- Already uploaded previews -->
+      <div class="fb-attach-preview" *ngIf="uploadedUrls.length">
+        <div class="fb-attach-item fb-attach-item--done" *ngFor="let url of uploadedUrls; let i = index">
+          <img *ngIf="isImage(url)" [src]="url" class="fb-attach-thumb" alt="">
+          <video *ngIf="isVideo(url)" [src]="url" class="fb-attach-thumb" muted></video>
+          <span class="fb-attach-ok">✓ Uploaded</span>
+          <button type="button" class="fb-attach-remove" (click)="removeUploaded(i)">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spam detected: client chooses what to do -->
+    <div *ngIf="isSpamChoice && !isPendingReview" class="fb-error fb-error--spam" style="background:#fff7ed;border-color:#fed7aa;color:#92400e;">
+      <span class="fb-error-icon">⚠️</span>
+      <div style="flex:1">
+        <strong style="color:#c2410c;">Your comment was flagged as spam</strong>
+        <p style="margin:6px 0 12px;">What would you like to do?</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button type="button" (click)="retryComment()"
+            style="padding:8px 16px;background:#fff;border:1.5px solid #c2410c;color:#c2410c;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;">
+            ✏️ Edit my comment
+          </button>
+          <button type="button" (click)="requestReview()" [disabled]="requestingReview"
+            style="padding:8px 16px;background:#c2410c;color:#fff;border:none;border-radius:8px;font-weight:600;font-size:13px;cursor:pointer;opacity:1;"
+            [style.opacity]="requestingReview ? '0.6' : '1'">
+            {{ requestingReview ? '⏳ Submitting…' : '📨 Submit for admin review' }}
+          </button>
+        </div>
+        <p style="margin-top:10px;font-size:12px;color:#b45309;">
+          Choosing "Submit for admin review" will lock this feedback until an administrator validates it.
+        </p>
+      </div>
+    </div>
+
+    <!-- Pending review (admin doit valider) -->
+    <div *ngIf="isPendingReview" class="fb-error fb-error--spam" style="background:#fef3c7;border-color:#fde68a;color:#92400e;">
+      <span class="fb-error-icon">🕐</span>
+      <div>
+        <strong style="color:#92400e;">Feedback pending admin review</strong>
+        <p>Your feedback has been submitted but requires validation by an administrator before being published.</p>
+        <p class="fb-error-hint" style="color:#b45309;">You will be notified once it is approved.</p>
+      </div>
+    </div>
+
+    <!-- Generic error -->
+    <div *ngIf="error && !isSpamChoice && !isPendingReview" class="fb-error">{{ error }}</div>
+
+    <!-- Actions -->
+    <div class="fb-actions">
+      <button type="button" class="fb-btn-cancel" (click)="cancelled.emit()">Cancel</button>
+      <button type="submit" class="fb-btn-submit"
+        [disabled]="!isValid || submitting || isPendingReview">
+        <span *ngIf="!submitting">Submit feedback</span>
+        <span *ngIf="submitting">Submitting...</span>
+      </button>
+    </div>
+
+  </form>
+</div>

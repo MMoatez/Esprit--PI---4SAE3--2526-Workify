@@ -1,0 +1,131 @@
+.create-container {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.card-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+form {
+  padding: 24px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+input, select, textarea {
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1f2937;
+  transition: border 0.2s;
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.error {
+  color: #dc2626;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.error-msg {
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 12px 24px;
+  margin: 0 24px 16px;
+  border-radius: 8px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.btn-cancel {
+  padding: 10px 24px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: white;
+  color: #374151;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.btn-cancel:hover {
+  background: #f9fafb;
+}
+
+.btn-submit {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  background: #0d9488;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: #0f766e;
+}
+
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.location-input-row { display: flex; gap: 8px; align-items: stretch; }
+.location-input-row input { flex: 1; }
+.btn-geocode { padding: 0 16px; background: #3b82f6; color: #fff; border: none;
+  border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px;
+  white-space: nowrap; transition: background .2s; }
+.btn-geocode:hover:not(:disabled) { background: #2563eb; }
+.btn-geocode:disabled { opacity: .55; cursor: not-allowed; }
+.geocode-status { font-size: 12px; color: #059669; margin-top: 4px; display: block; }

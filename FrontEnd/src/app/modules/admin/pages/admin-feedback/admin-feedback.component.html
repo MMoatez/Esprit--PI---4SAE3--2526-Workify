@@ -1,0 +1,651 @@
+<!-- ══ Custom Confirm Modal ══ -->
+<div *ngIf="modal.visible"
+  class="fixed inset-0 z-[999] flex items-center justify-center"
+  style="background:rgba(15,23,42,0.55);backdrop-filter:blur(4px)">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden animate-modal">
+
+    <!-- Header -->
+    <div class="px-6 pt-6 pb-4 flex items-start gap-4">
+      <div class="text-3xl leading-none mt-0.5">{{ modal.icon }}</div>
+      <div class="flex-1">
+        <h3 class="text-lg font-bold text-slate-800">{{ modal.title }}</h3>
+        <p class="text-sm text-slate-500 mt-1 leading-relaxed">{{ modal.message }}</p>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="border-t border-slate-100 mx-6"></div>
+
+    <!-- Actions -->
+    <div class="px-6 py-4 flex items-center justify-end gap-3">
+      <button (click)="cancelModal()"
+        class="px-5 py-2 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors">
+        Cancel
+      </button>
+      <button (click)="confirmModal()"
+        class="px-5 py-2 rounded-xl text-sm font-semibold text-white transition-colors"
+        [ngClass]="{
+          'bg-red-600 hover:bg-red-700':    modal.confirmClass === 'modal-btn-danger',
+          'bg-green-600 hover:bg-green-700': modal.confirmClass === 'modal-btn-success',
+          'bg-indigo-600 hover:bg-indigo-700': modal.confirmClass === 'modal-btn-primary'
+        }">
+        {{ modal.confirmLabel }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="p-6 space-y-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-800">Feedback Intelligence</h2>
+      <p class="text-slate-500 mt-1">AI-powered feedback moderation & analytics</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button (click)="analyzeAll()" [disabled]="analyzing"
+        class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-60">
+        {{ analyzing ? '⏳ Analyzing...' : '🤖 AI Analyze All' }}
+      </button>
+      <button (click)="loadAll()"
+        class="px-4 py-2 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors">
+        🔄 Refresh
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="analyzeMsg" class="p-3 bg-indigo-50 border border-indigo-100 text-indigo-700 rounded-xl text-sm">
+    {{ analyzeMsg }}
+  </div>
+
+  <!-- Action toast -->
+  <div *ngIf="toastMsg2"
+    class="fixed bottom-6 right-6 z-50 px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold transition-all"
+    [class]="toastType2 === 'success' ? 'bg-green-600 text-white' : 'bg-red-600 text-white'">
+    {{ toastMsg2 }}
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="flex justify-center py-20">
+    <div class="w-10 h-10 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="bg-red-50 border border-red-100 rounded-2xl p-6 text-center text-red-600 text-sm">
+    {{ error }}
+  </div>
+
+  <ng-container *ngIf="!loading && !error && stats">
+
+    <!-- Tabs -->
+    <div class="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
+      <button (click)="activeTab = 'overview'"
+        [class]="activeTab === 'overview'
+          ? 'px-4 py-2 bg-white rounded-lg text-sm font-semibold text-slate-800 shadow-sm'
+          : 'px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700'">
+        📊 Overview
+      </button>
+      <button (click)="activeTab = 'flagged'"
+        [class]="activeTab === 'flagged'
+          ? 'px-4 py-2 bg-white rounded-lg text-sm font-semibold text-slate-800 shadow-sm'
+          : 'px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700'">
+        🚩 Flagged ({{ flagged.length }})
+      </button>
+      <button (click)="activeTab = 'analytics'"
+        [class]="activeTab === 'analytics'
+          ? 'px-4 py-2 bg-white rounded-lg text-sm font-semibold text-slate-800 shadow-sm'
+          : 'px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700'">
+        📈 Analytics
+      </button>
+    </div>
+
+    <!-- ══════════════════ OVERVIEW TAB ══════════════════ -->
+    <div *ngIf="activeTab === 'overview'" class="space-y-6">
+
+      <!-- Row 1: Health Score + 4 KPI cards -->
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+
+        <!-- Health Score -->
+        <div class="lg:col-span-1 bg-gradient-to-br {{ healthGradient() }} rounded-2xl p-5 text-white flex flex-col items-center justify-center shadow-lg">
+          <p class="text-xs font-semibold uppercase tracking-wider opacity-80 mb-2">Platform Health</p>
+          <div class="text-5xl font-black mb-1">{{ healthScore() }}</div>
+          <div class="text-sm font-semibold opacity-90">{{ healthStatus() }}</div>
+          <div class="mt-3 w-full bg-white/20 rounded-full h-1.5">
+            <div class="bg-white rounded-full h-1.5 transition-all" [style.width.%]="healthScore()"></div>
+          </div>
+        </div>
+
+        <!-- KPI cards -->
+        <div class="lg:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+            <p class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Total Feedbacks</p>
+            <p class="text-3xl font-black text-slate-800">{{ stats.totalFeedbacks }}</p>
+            <p class="text-xs text-slate-500 mt-1">AI analyzed: {{ stats.aiAnalyzedCount }}</p>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+            <p class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Avg Rating</p>
+            <p class="text-3xl font-black text-amber-500">{{ stats.avgGlobalRating }}</p>
+            <p class="text-xs text-slate-500 mt-1">out of 5.0 stars</p>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+            <p class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Recommend Rate</p>
+            <p class="text-3xl font-black text-green-600">{{ stats.recommendRate }}%</p>
+            <p class="text-xs text-slate-500 mt-1">clients recommend</p>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+            <p class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Response Rate</p>
+            <p class="text-3xl font-black text-blue-600">{{ stats.responseRate }}%</p>
+            <p class="text-xs text-slate-500 mt-1">freelancers replied</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Sentiment + Rating Distribution -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        <!-- Sentiment Distribution -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="text-sm font-bold text-slate-700 mb-4">AI Sentiment Distribution</h3>
+          <div class="space-y-3">
+            <div *ngFor="let s of sentimentOrder" class="flex items-center gap-3">
+              <span class="text-lg w-6">{{ getSentimentIcon(s) }}</span>
+              <span class="text-xs font-semibold text-slate-600 w-28">{{ s }}</span>
+              <div class="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
+                <div class="h-3 rounded-full transition-all {{ getSentimentBarColor(s) }}"
+                  [style.width.%]="sentimentBarWidth(s)"></div>
+              </div>
+              <span class="text-sm font-bold text-slate-700 w-8 text-right">{{ sentimentCount(s) }}</span>
+            </div>
+          </div>
+          <p *ngIf="stats.pendingAICount > 0" class="mt-3 text-xs text-orange-500">
+            ⚠️ {{ stats.pendingAICount }} feedbacks pending AI analysis
+          </p>
+        </div>
+
+        <!-- Rating Distribution -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="text-sm font-bold text-slate-700 mb-4">Rating Distribution (Global)</h3>
+          <div class="space-y-3">
+            <div *ngFor="let star of ratingStars" class="flex items-center gap-3">
+              <div class="flex gap-0.5 w-20">
+                <span *ngFor="let _ of stars(star)" class="text-amber-400 text-xs">★</span>
+                <span *ngFor="let _ of emptyStars(star)" class="text-slate-200 text-xs">★</span>
+              </div>
+              <div class="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden">
+                <div class="h-3 rounded-full transition-all {{ getRatingBarColor(star) }}"
+                  [style.width.%]="ratingBarWidth(star)"></div>
+              </div>
+              <span class="text-sm font-bold text-slate-700 w-8 text-right">{{ ratingCount(star) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Sub-ratings + Fraud + AI -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        <!-- Sub-category ratings -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <h3 class="text-sm font-bold text-slate-700 mb-4">Rating Breakdown by Dimension</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div *ngFor="let dim of [
+              {label: 'Communication', val: stats.avgCommunicationRating, icon: '💬'},
+              {label: 'Quality',       val: stats.avgQualityRating,       icon: '🎯'},
+              {label: 'Deadline',      val: stats.avgDeadlineRating,      icon: '⏱'},
+              {label: 'Professionalism', val: stats.avgProfessionalismRating, icon: '🏆'}
+            ]" class="bg-slate-50 rounded-xl p-3">
+              <div class="flex items-center gap-2 mb-1">
+                <span>{{ dim.icon }}</span>
+                <p class="text-xs font-semibold text-slate-600">{{ dim.label }}</p>
+              </div>
+              <p class="text-2xl font-black text-slate-800">{{ dim.val }}</p>
+              <div class="flex gap-0.5 mt-1">
+                <span *ngFor="let _ of stars(dim.val)" class="text-amber-400 text-xs">★</span>
+                <span *ngFor="let _ of emptyStars(dim.val)" class="text-slate-300 text-xs">★</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fraud & AI Status -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4">
+          <h3 class="text-sm font-bold text-slate-700">Moderation Status</h3>
+          <div class="flex items-center justify-between p-3 bg-red-50 rounded-xl">
+            <div>
+              <p class="text-xs text-red-600 font-semibold">Fraud Flagged</p>
+              <p class="text-2xl font-black text-red-600">{{ stats.fraudFlaggedCount }}</p>
+            </div>
+            <span class="text-3xl">🚩</span>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-green-50 rounded-xl">
+            <div>
+              <p class="text-xs text-green-700 font-semibold">AI Analyzed</p>
+              <p class="text-2xl font-black text-green-700">{{ stats.aiAnalyzedCount }}</p>
+            </div>
+            <span class="text-3xl">🤖</span>
+          </div>
+          <div class="flex items-center justify-between p-3 bg-orange-50 rounded-xl">
+            <div>
+              <p class="text-xs text-orange-600 font-semibold">Pending AI</p>
+              <p class="text-2xl font-black text-orange-600">{{ stats.pendingAICount }}</p>
+            </div>
+            <span class="text-3xl">⏳</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Top Freelancers -->
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5" *ngIf="stats.topFreelancers?.length">
+        <h3 class="text-sm font-bold text-slate-700 mb-4">Top Rated Freelancers</h3>
+        <div class="space-y-3">
+          <div *ngFor="let fl of stats.topFreelancers; let i = index"
+            class="flex items-center gap-4 p-3 rounded-xl"
+            [class]="i === 0 ? 'bg-amber-50' : i === 1 ? 'bg-slate-50' : i === 2 ? 'bg-orange-50/60' : 'bg-slate-50/50'">
+            <span class="text-2xl">{{ medalIcon(i) }}</span>
+            <div class="flex-1">
+              <p class="text-sm font-semibold text-slate-700">Freelancer #{{ fl.freelancerId }}</p>
+              <p class="text-xs text-slate-400">{{ fl.count }} review{{ fl.count > 1 ? 's' : '' }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-lg font-black text-amber-500">{{ fl.avgRating }}</p>
+              <div class="flex gap-0.5 justify-end">
+                <span *ngFor="let _ of stars(fl.avgRating)" class="text-amber-400 text-xs">★</span>
+                <span *ngFor="let _ of emptyStars(fl.avgRating)" class="text-slate-200 text-xs">★</span>
+              </div>
+            </div>
+            <div class="w-24">
+              <div class="bg-slate-200 rounded-full h-2">
+                <div class="bg-amber-400 h-2 rounded-full" [style.width.%]="(fl.avgRating / 5) * 100"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- ══════════════════ END OVERVIEW TAB ══════════════════ -->
+
+    <!-- ══════════════════ FLAGGED TAB ══════════════════ -->
+    <div *ngIf="activeTab === 'flagged'" class="space-y-4">
+
+      <!-- Filter bar -->
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-4">
+        <label class="text-sm font-medium text-slate-600">Min fraud score:</label>
+        <input type="range" min="0" max="1" step="0.05"
+          [(ngModel)]="minScore" (change)="loadFlagged()"
+          class="w-40 accent-indigo-600">
+        <span class="text-sm font-bold text-slate-700">{{ minScore | number:'1.2-2' }}</span>
+        <span class="text-xs text-slate-400 ml-2">({{ flagged.length }} results)</span>
+      </div>
+
+      <!-- Empty -->
+      <div *ngIf="flagged.length === 0" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center">
+        <div class="text-4xl mb-3">✅</div>
+        <p class="text-slate-500 font-medium">No flagged feedbacks at this threshold.</p>
+        <p class="text-slate-400 text-sm mt-1">Lower the fraud score filter to see more results.</p>
+      </div>
+
+      <!-- Feedback cards -->
+      <div *ngFor="let fb of flagged" class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <p class="font-semibold text-slate-800">{{ fb.projectTitle || 'Project #' + fb.offerId }}</p>
+            <p class="text-xs text-slate-400 mt-0.5">By {{ fb.clientEmail }} · Freelancer #{{ fb.freelancerId }}</p>
+            <p class="text-xs text-slate-400">{{ fb.createdAt | date:'mediumDate' }}</p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap justify-end">
+            <span *ngIf="fb.aiSentiment"
+              class="px-2 py-0.5 rounded-full text-xs font-semibold"
+              [ngClass]="getSentimentClass(fb.aiSentiment)">
+              {{ getSentimentIcon(fb.aiSentiment) }} {{ fb.aiSentiment }}
+            </span>
+            <span *ngIf="fb.aiTone" class="px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full text-xs">
+              {{ fb.aiTone }}
+            </span>
+            <span class="px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs font-bold">
+              🚩 {{ (fb.fraudScore! * 100) | number:'1.0-0' }}% fraud
+            </span>
+          </div>
+        </div>
+
+        <!-- Comment -->
+        <p class="text-slate-600 text-sm mb-3 leading-relaxed">{{ fb.comment }}</p>
+
+        <!-- AI Themes -->
+        <div *ngIf="fb.aiThemes" class="flex flex-wrap gap-1 mb-3">
+          <span *ngFor="let theme of fb.aiThemes.split(',')" class="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-full text-xs">
+            {{ theme.trim() }}
+          </span>
+        </div>
+
+        <!-- Ratings row -->
+        <div class="flex flex-wrap items-center gap-4 text-sm text-slate-500 border-t border-slate-50 pt-3">
+          <span class="font-semibold text-amber-500">⭐ {{ fb.ratingGlobal }}/5</span>
+          <span>💬 Comm: {{ fb.ratingCommunication }}</span>
+          <span>🎯 Quality: {{ fb.ratingQuality }}</span>
+          <span>⏱ Deadline: {{ fb.ratingDeadline }}</span>
+          <span>🏆 Profess.: {{ fb.ratingProfessionalism }}</span>
+          <span [class]="fb.recommend ? 'text-green-600' : 'text-red-500'">
+            {{ fb.recommend ? '👍 Recommends' : '👎 No recommend' }}
+          </span>
+        </div>
+
+        <!-- Fraud flags -->
+        <div *ngIf="fb.fraudFlags" class="mt-2 flex items-start gap-2">
+          <p *ngIf="fb.fraudFlags.includes('spam_detected')"
+            class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 font-semibold">
+            🕐 Pending admin review — spam detected, awaiting validation
+          </p>
+          <p *ngIf="!fb.fraudFlags.includes('spam_detected')"
+            class="text-xs text-orange-600 bg-orange-50 rounded-lg px-3 py-1">
+            ⚠️ {{ fb.fraudFlags }}
+          </p>
+        </div>
+
+        <!-- Freelancer response -->
+        <div *ngIf="fb.response" class="mt-3 pl-4 border-l-4 border-primary-200 bg-primary-50 rounded-r-xl p-3">
+          <p class="text-xs font-semibold text-primary-600 mb-1">Freelancer Response</p>
+          <p class="text-sm text-slate-600">{{ fb.response.content }}</p>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 flex-wrap">
+          <button (click)="validateFeedback(fb)"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 transition-colors">
+            ✅ Validate
+          </button>
+          <button (click)="clearFraud(fb)"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors">
+            🛡️ Clear Fraud Flag
+          </button>
+          <button (click)="deleteFeedback(fb)"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors">
+            🗑️ Delete
+          </button>
+          <button (click)="banClient(fb)"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-white rounded-lg text-xs font-semibold hover:bg-slate-900 transition-colors">
+            🚫 Ban {{ fb.clientEmail }}
+          </button>
+        </div>
+      </div>
+
+    </div>
+    <!-- ══════════════════ END FLAGGED TAB ══════════════════ -->
+
+    <!-- ══════════════════ ANALYTICS TAB ══════════════════ -->
+    <div *ngIf="activeTab === 'analytics'" class="space-y-5">
+
+      <!-- Freelancer selector row -->
+      <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+        <h3 class="text-sm font-bold text-slate-700 mb-4">Select a freelancer to view their analytics</h3>
+
+        <!-- Quick cards from top freelancers -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5" *ngIf="stats?.topFreelancers?.length">
+          <button *ngFor="let fl of stats!.topFreelancers; let i = index"
+            (click)="loadFreelancerAnalytics(fl.freelancerId)"
+            class="flex flex-col items-center p-3 rounded-xl border-2 transition-all text-center"
+            [class]="analyticsId === fl.freelancerId
+              ? 'border-indigo-500 bg-indigo-50'
+              : 'border-slate-100 bg-slate-50 hover:border-indigo-200 hover:bg-indigo-50/50'">
+            <span class="text-xl mb-1">{{ medalIcon(i) }}</span>
+            <p class="text-xs font-bold text-slate-700">Freelancer #{{ fl.freelancerId }}</p>
+            <p class="text-sm font-black text-amber-500 mt-0.5">⭐ {{ fl.avgRating }}</p>
+            <p class="text-xs text-slate-400">{{ fl.count }} review{{ fl.count > 1 ? 's' : '' }}</p>
+          </button>
+        </div>
+
+        <!-- Manual ID search -->
+        <div class="flex items-center gap-3">
+          <input type="number" [(ngModel)]="analyticsInputId" placeholder="Or enter Freelancer ID…"
+            class="border border-slate-200 rounded-xl px-4 py-2 text-sm w-56 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+          <button (click)="searchAnalytics()"
+            class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors">
+            View Analytics
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div *ngIf="analyticsLoading" class="flex justify-center py-12">
+        <div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="analyticsError && !analyticsLoading"
+        class="bg-red-50 border border-red-100 rounded-2xl p-5 text-red-600 text-sm text-center">
+        {{ analyticsError }}
+      </div>
+
+      <!-- No selection yet -->
+      <div *ngIf="!analyticsId && !analyticsLoading"
+        class="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center">
+        <div class="text-5xl mb-3">📈</div>
+        <p class="text-slate-500 font-medium">Select a freelancer above to view their detailed analytics.</p>
+      </div>
+
+      <!-- ── Analytics detail ──────────────────────────────────────────── -->
+      <ng-container *ngIf="analyticsData && !analyticsLoading">
+
+        <!-- Title bar -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800">Freelancer #{{ analyticsData.freelancerId }}</h3>
+            <p class="text-sm text-slate-500">{{ analyticsData.totalFeedbacks }} feedback(s) · {{ analyticsData.totalContracts }} contract(s)</p>
+          </div>
+          <div class="flex gap-1">
+            <span *ngFor="let _ of stars(analyticsData.avgGlobalRating)" class="text-amber-400 text-xl">★</span>
+            <span *ngFor="let _ of emptyStars(analyticsData.avgGlobalRating)" class="text-slate-200 text-xl">★</span>
+          </div>
+        </div>
+
+        <!-- KPI row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center">
+            <p class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Global Rating</p>
+            <p class="text-3xl font-black text-amber-500">{{ analyticsData.avgGlobalRating }}</p>
+            <p class="text-xs text-slate-400 mt-1">out of 5.0</p>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center">
+            <p class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Percentile Rank</p>
+            <p class="text-3xl font-black text-indigo-600">{{ analyticsData.rankPercentile }}%</p>
+            <p class="text-xs text-slate-400 mt-1">better than peers</p>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center">
+            <p class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Feedback Rate</p>
+            <p class="text-3xl font-black text-green-600">{{ analyticsData.feedbackRate }}%</p>
+            <p class="text-xs text-slate-400 mt-1">of contracts rated</p>
+          </div>
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-center">
+            <p class="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Trend</p>
+            <p class="text-3xl font-black" [ngClass]="aTrendColor()">{{ aTrendIcon() }}</p>
+            <p class="text-xs text-slate-400 mt-1">last 2 months</p>
+          </div>
+        </div>
+
+        <!-- SVG chart + Rating distribution -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+          <!-- Line chart -->
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="text-sm font-bold text-slate-700">Rating Evolution</h4>
+              <div class="flex items-center gap-4 text-xs text-slate-500">
+                <span class="flex items-center gap-1.5"><span class="inline-block w-6 h-0.5 bg-indigo-500 rounded"></span>This freelancer</span>
+                <span class="flex items-center gap-1.5"><span class="inline-block w-6 border-t-2 border-dashed border-slate-400"></span>Market avg {{ analyticsData.marketAvgRating }}</span>
+              </div>
+            </div>
+
+            <div *ngIf="analyticsData.monthlyEvolution?.length < 2" class="flex items-center justify-center h-32 text-slate-400 text-sm">
+              Not enough data to display chart (min. 2 months)
+            </div>
+
+            <svg *ngIf="analyticsData.monthlyEvolution?.length >= 2"
+              [attr.viewBox]="'0 0 ' + CHART_W + ' ' + (CHART_H + 24)"
+              class="w-full" style="height:160px">
+
+              <!-- Grid lines -->
+              <line *ngFor="let y of [1,2,3,4,5]"
+                [attr.x1]="PAD_X" [attr.y1]="PAD_Y + ((5 - y) / 4) * (CHART_H - PAD_Y * 2)"
+                [attr.x2]="CHART_W - PAD_X" [attr.y2]="PAD_Y + ((5 - y) / 4) * (CHART_H - PAD_Y * 2)"
+                stroke="#f1f5f9" stroke-width="1"/>
+              <text *ngFor="let y of [1,2,3,4,5]"
+                [attr.x]="PAD_X - 6"
+                [attr.y]="PAD_Y + ((5 - y) / 4) * (CHART_H - PAD_Y * 2) + 4"
+                font-size="9" fill="#94a3b8" text-anchor="end">{{ y }}</text>
+
+              <!-- Area fill -->
+              <polygon [attr.points]="svgFill(analyticsData.monthlyEvolution)"
+                fill="url(#chartGrad)" opacity="0.18"/>
+              <defs>
+                <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#6366f1"/>
+                  <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Market average dashed line -->
+              <polyline [attr.points]="svgMarketLine(analyticsData.marketAvgRating)"
+                fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.7"/>
+
+              <!-- Main line -->
+              <polyline [attr.points]="svgPoints(analyticsData.monthlyEvolution)"
+                fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+
+              <!-- Dots -->
+              <g *ngFor="let d of svgDots(analyticsData.monthlyEvolution)">
+                <circle [attr.cx]="d.x" [attr.cy]="d.y" r="5" fill="#6366f1" stroke="white" stroke-width="2"/>
+                <text [attr.x]="d.x" [attr.y]="d.y - 9" font-size="9" fill="#4f46e5" text-anchor="middle" font-weight="bold">{{ d.label }}</text>
+              </g>
+
+              <!-- X-axis labels -->
+              <text *ngFor="let l of xLabels(analyticsData.monthlyEvolution)"
+                [attr.x]="l.x" [attr.y]="CHART_H + 16"
+                font-size="9" fill="#94a3b8" text-anchor="middle">{{ l.label }}</text>
+            </svg>
+          </div>
+
+          <!-- Rating distribution -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <h4 class="text-sm font-bold text-slate-700 mb-4">Rating Distribution</h4>
+            <div class="space-y-3">
+              <div *ngFor="let star of ratingStars" class="flex items-center gap-2">
+                <div class="flex gap-0.5 w-16">
+                  <span *ngFor="let _ of stars(star)" class="text-amber-400 text-xs">★</span>
+                  <span *ngFor="let _ of emptyStars(star)" class="text-slate-200 text-xs">★</span>
+                </div>
+                <div class="flex-1 bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                  <div class="h-2.5 rounded-full transition-all"
+                    [style.width.%]="aBarWidth(star)"
+                    [style.background]="aBarColor(star)"></div>
+                </div>
+                <span class="text-xs font-bold text-slate-600 w-5 text-right">{{ aRatingCount(star) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Best/Worst month + Market comparison + Dimensions -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <!-- Best month -->
+          <div class="bg-green-50 border border-green-100 rounded-2xl p-4" *ngIf="analyticsData.bestMonth">
+            <p class="text-xs font-semibold text-green-700 uppercase tracking-wide mb-1">🏆 Best Month</p>
+            <p class="text-xl font-black text-green-700">{{ analyticsData.bestMonth.month }}</p>
+            <p class="text-sm text-green-600 mt-1">⭐ {{ analyticsData.bestMonth.avgRating }} avg · {{ analyticsData.bestMonth.count }} review(s)</p>
+          </div>
+          <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-center text-slate-400 text-sm" *ngIf="!analyticsData.bestMonth">
+            No data yet
+          </div>
+
+          <!-- Worst month -->
+          <div class="bg-red-50 border border-red-100 rounded-2xl p-4" *ngIf="analyticsData.worstMonth">
+            <p class="text-xs font-semibold text-red-600 uppercase tracking-wide mb-1">⚠️ Worst Month</p>
+            <p class="text-xl font-black text-red-600">{{ analyticsData.worstMonth.month }}</p>
+            <p class="text-sm text-red-500 mt-1">⭐ {{ analyticsData.worstMonth.avgRating }} avg · {{ analyticsData.worstMonth.count }} review(s)</p>
+          </div>
+          <div class="bg-slate-50 border border-slate-100 rounded-2xl p-4 flex items-center justify-center text-slate-400 text-sm" *ngIf="!analyticsData.worstMonth">
+            No data yet
+          </div>
+
+          <!-- Market comparison -->
+          <div class="bg-white border border-slate-100 rounded-2xl shadow-sm p-4">
+            <p class="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">Market Comparison</p>
+            <div class="flex items-end gap-4 justify-center">
+              <div class="text-center">
+                <p class="text-xs text-slate-400 mb-1">This freelancer</p>
+                <p class="text-2xl font-black" [class]="analyticsData.avgGlobalRating >= analyticsData.marketAvgRating ? 'text-indigo-600' : 'text-red-500'">
+                  {{ analyticsData.avgGlobalRating }}
+                </p>
+              </div>
+              <div class="text-slate-300 text-lg font-light mb-1">vs</div>
+              <div class="text-center">
+                <p class="text-xs text-slate-400 mb-1">Market avg</p>
+                <p class="text-2xl font-black text-slate-500">{{ analyticsData.marketAvgRating }}</p>
+              </div>
+            </div>
+            <p class="text-center text-xs mt-2 font-semibold"
+              [class]="analyticsData.avgGlobalRating >= analyticsData.marketAvgRating ? 'text-green-600' : 'text-red-500'">
+              {{ analyticsData.avgGlobalRating >= analyticsData.marketAvgRating ? '▲ Above market' : '▼ Below market' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- 4 dimensions + Recommend/Response -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <!-- Dimensions -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <h4 class="text-sm font-bold text-slate-700 mb-4">Rating by Dimension</h4>
+            <div class="space-y-4">
+              <div *ngFor="let dim of aDims" class="space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm text-slate-600">{{ dim.icon }} {{ dim.label }}</span>
+                  <span class="text-sm font-bold text-slate-700">{{ aDimVal(dim.key) }}/5</span>
+                </div>
+                <div class="bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                  <div class="h-2.5 rounded-full transition-all"
+                    [style.width.%]="(aDimVal(dim.key) / 5) * 100"
+                    [style.background]="aDimVal(dim.key) >= 4 ? '#22c55e' : aDimVal(dim.key) >= 3 ? '#facc15' : '#f87171'">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommend + Response rates -->
+          <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <h4 class="text-sm font-bold text-slate-700 mb-4">Satisfaction Rates</h4>
+            <div class="space-y-5">
+              <div>
+                <div class="flex justify-between text-sm mb-1.5">
+                  <span class="text-slate-600">👍 Recommendation rate</span>
+                  <span class="font-bold text-slate-800">{{ analyticsData.recommendRate }}%</span>
+                </div>
+                <div class="bg-slate-100 rounded-full h-3 overflow-hidden">
+                  <div class="h-3 rounded-full bg-green-500 transition-all" [style.width.%]="analyticsData.recommendRate"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1.5">
+                  <span class="text-slate-600">💬 Freelancer response rate</span>
+                  <span class="font-bold text-slate-800">{{ analyticsData.responseRate }}%</span>
+                </div>
+                <div class="bg-slate-100 rounded-full h-3 overflow-hidden">
+                  <div class="h-3 rounded-full bg-indigo-500 transition-all" [style.width.%]="analyticsData.responseRate"></div>
+                </div>
+              </div>
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
+                <span>Rank percentile</span>
+                <span class="font-black text-indigo-600 text-base">Top {{ 100 - analyticsData.rankPercentile | number:'1.0-0' }}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+    <!-- ══════════════════ END ANALYTICS TAB ══════════════════ -->
+
+  </ng-container>
+</div>

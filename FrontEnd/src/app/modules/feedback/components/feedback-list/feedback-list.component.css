@@ -1,0 +1,81 @@
+.fb-list-container { padding: 4px 0; }
+
+.fb-loading { color: #6b7280; font-size: 0.9rem; padding: 20px 0; }
+
+.fb-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: #f9fafb;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.fb-summary-main { display: flex; align-items: baseline; gap: 10px; }
+.fb-avg { font-size: 1.6rem; font-weight: 700; color: #f59e0b; }
+.fb-total { font-size: 0.85rem; color: #6b7280; }
+
+.fb-recommend-rate { display: flex; flex-direction: column; align-items: flex-end; }
+.fb-rec-pct { font-size: 1.4rem; font-weight: 700; color: #10b981; }
+.fb-rec-label { font-size: 0.78rem; color: #6b7280; }
+
+.fb-pdf-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #6c63ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+.fb-pdf-btn:hover:not(:disabled) { background: #574fd6; }
+.fb-pdf-btn:disabled { opacity: 0.6; cursor: default; }
+
+.fb-filters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.fb-filter-btn {
+  padding: 5px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #fff;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fb-filter-btn.active {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  color: #fff;
+}
+
+.fb-sort-btns { display: flex; gap: 6px; margin-left: auto; }
+
+.fb-sort-btn {
+  padding: 5px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.fb-sort-btn.active {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+
+.fb-empty { color: #9ca3af; font-size: 0.88rem; padding: 20px 0; text-align: center; }

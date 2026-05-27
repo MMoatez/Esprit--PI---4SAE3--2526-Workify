@@ -1,0 +1,161 @@
+<div class="min-h-screen bg-slate-50">
+    <!-- Header -->
+    <div class="bg-white border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-center">
+            <h1 class="text-4xl font-extrabold tracking-tight mb-4">
+                <span style="color: #00C3A5;">Work</span><span style="color: #FF7A00;">ify</span> Courses
+            </h1>
+            <p class="text-slate-600 text-lg max-w-2xl mx-auto">
+                Develop your skills and earn certifications with our expert training programs.
+            </p>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-10">
+            <!-- Filters Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-8 sticky top-24">
+                    <div class="flex items-center gap-3 mb-8">
+                        <svg class="w-6 h-6 text-[#002D44]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        <h2 class="text-xl font-bold text-[#002D44]">Filters</h2>
+                    </div>
+
+                    <!-- Domain Filter -->
+                    <div class="mb-10">
+                        <label
+                            class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Category</label>
+                        <div class="space-y-2">
+                            <button (click)="selectedDomain = 'ALL'; applyFilters()"
+                                [class]="'w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all ' + (selectedDomain === 'ALL' ? 'bg-[#002D44] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50')">
+                                All Categories
+                            </button>
+                            <button *ngFor="let domain of domains" (click)="selectedDomain = domain; applyFilters()"
+                                [class]="'w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all ' + (selectedDomain === domain ? 'bg-[#002D44] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50')">
+                                {{ domain }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Format</label>
+                        <div class="space-y-2">
+                            <button (click)="selectedStatus = 'ALL'; applyFilters()"
+                                [class]="'w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all ' + (selectedStatus === 'ALL' ? 'bg-[#002D44] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50')">
+                                All Formats
+                            </button>
+                            <button *ngFor="let status of statuses" (click)="selectedStatus = status; applyFilters()"
+                                [class]="'w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all ' + (selectedStatus === status ? 'bg-[#002D44] text-white shadow-md' : 'text-slate-600 hover:bg-slate-50')">
+                                {{ status === 'ONLINE' ? 'Online' : 'On-site' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-3">
+                <!-- Search Bar -->
+                <div class="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 mb-10 overflow-hidden">
+                    <div class="relative group">
+                        <svg class="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400 group-focus-within:text-[#00C3A5] transition-colors"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" placeholder="Search for a course..." [(ngModel)]="searchTerm"
+                            (input)="applyFilters()"
+                            class="w-full pl-14 pr-6 py-4 bg-white rounded-2xl focus:outline-none text-slate-700 text-lg placeholder:text-slate-300 transition-all font-medium" />
+                    </div>
+                </div>
+
+                <!-- Formation Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div *ngFor="let formation of filteredFormations"
+                        class="group bg-white rounded-[2rem] border border-slate-100 p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex flex-col h-full">
+                        <div class="flex justify-between items-start mb-6">
+                            <span
+                                [class]="'px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ' + getDomainColor(formation.field)">
+                                {{ formation.field }}
+                            </span>
+                            <span class="flex items-center gap-1.5 text-slate-400 text-sm font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {{ formation.period }}
+                            </span>
+                        </div>
+
+                        <h3
+                            class="text-2xl font-bold text-[#002D44] mb-2 group-hover:text-[#00C3A5] transition-colors leading-tight">
+                            {{ formation.title }}
+                        </h3>
+                        <p class="text-slate-500 text-sm mb-6 line-clamp-2">
+                            {{ formation.description }}
+                        </p>
+
+                        <div class="space-y-4 mb-8">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-slate-50 rounded-lg">
+                                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <span class="text-slate-600 font-medium">Level {{ formation.level }}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-slate-50 rounded-lg">
+                                    <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <span class="text-slate-600 font-medium">{{ formation.status === 'ONLINE' ? 'Online
+                                    (Google Meet)' : 'On-site' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto flex gap-4">
+                            <a [routerLink]="['/formation', formation.id]"
+                                class="flex-1 py-3 px-6 bg-[#002D44] text-white text-center rounded-2xl font-bold hover:bg-[#001A29] transition-all shadow-md active:scale-95">
+                                View details
+                            </a>
+                            <a *ngIf="formation.status === 'ONLINE' && formation.googleMeetLink"
+                                [href]="formation.googleMeetLink" target="_blank"
+                                class="p-4 bg-[#00C3A5]/10 text-[#00C3A5] rounded-2xl hover:bg-[#00C3A5]/20 transition-all shadow-sm">
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                    <path
+                                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div *ngIf="filteredFormations.length === 0"
+                        class="col-span-full py-20 bg-white rounded-[2rem] border border-dashed border-slate-200 text-center">
+                        <svg class="w-16 h-16 text-slate-300 mx-auto mb-6" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <h3 class="text-2xl font-bold text-slate-900 mb-2">No courses found</h3>
+                        <p class="text-slate-500">Try adjusting your filters or search.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

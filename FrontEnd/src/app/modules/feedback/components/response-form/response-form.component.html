@@ -1,0 +1,94 @@
+<div class="resp-form">
+  <h4>Reply to this feedback</h4>
+
+  <!-- AI Suggestions -->
+  <div class="resp-suggestions-block" *ngIf="suggestions.length">
+    <div class="resp-suggestions-label">🤖 AI Suggestions based on client's ratings</div>
+    <div class="resp-suggestions-pills">
+      <button type="button" class="resp-pill"
+              *ngFor="let s of suggestions"
+              (click)="applySuggestion(s)">
+        + {{ s }}
+      </button>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+    <!-- Toolbar: emoji toggle -->
+    <div class="resp-field-toolbar">
+      <span class="resp-field-label">Your reply</span>
+      <button type="button" class="resp-btn-emoji-toggle"
+              (click)="showEmojiPicker = !showEmojiPicker">
+        😊 Emoji
+      </button>
+    </div>
+
+    <!-- Emoji picker -->
+    <div *ngIf="showEmojiPicker" class="resp-emoji-picker">
+      <div *ngFor="let g of emojiGroups" class="resp-emoji-group">
+        <span class="resp-emoji-group-label">{{ g.label }}</span>
+        <div class="resp-emoji-row">
+          <button type="button" class="resp-emoji-btn"
+                  *ngFor="let e of g.emojis"
+                  (click)="insertEmoji(e)">{{ e }}</button>
+        </div>
+      </div>
+    </div>
+
+    <textarea
+      #contentArea
+      formControlName="content"
+      rows="3"
+      placeholder="Your reply (min. 10 characters)..."
+      class="resp-textarea"
+    ></textarea>
+    <div class="resp-char" [class.invalid]="contentLength < 10">
+      {{ contentLength }} / 1000
+    </div>
+
+    <!-- Attachments -->
+    <div class="resp-attach-section">
+      <div class="resp-attach-row">
+        <button type="button" class="resp-btn-attach" (click)="fileInput.click()">
+          📎 Add file
+        </button>
+        <input #fileInput type="file" hidden multiple
+               accept="image/png,image/jpeg,image/gif,video/mp4"
+               (change)="onFileSelected($event)">
+        <span *ngIf="uploadingFiles" class="resp-uploading">Uploading…</span>
+      </div>
+      <div *ngIf="uploadError" class="resp-error" style="margin-top:6px">{{ uploadError }}</div>
+      <div class="resp-attach-preview" *ngIf="pendingFiles.length">
+        <div class="resp-attach-item" *ngFor="let f of pendingFiles; let i = index">
+          <span>{{ f.name }}</span>
+          <button type="button" class="resp-attach-remove" (click)="removeFile(i)">✕</button>
+        </div>
+      </div>
+      <div class="resp-attach-preview" *ngIf="uploadedUrls.length">
+        <div class="resp-attach-item resp-attach-item--done" *ngFor="let url of uploadedUrls; let i = index">
+          <img *ngIf="isImage(url)" [src]="url" class="resp-attach-thumb" alt="">
+          <video *ngIf="isVideo(url)" [src]="url" class="resp-attach-thumb" muted></video>
+          <span class="resp-attach-ok">✓</span>
+          <button type="button" class="resp-attach-remove" (click)="removeUploaded(i)">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="error && isSpamError" class="resp-error resp-error--spam">
+      <span class="resp-error-icon">⚠️</span>
+      <div>
+        <strong>Reply rejected</strong>
+        <p>{{ error }}</p>
+        <p class="resp-error-hint">Please write a genuine and constructive reply.</p>
+      </div>
+    </div>
+    <div *ngIf="error && !isSpamError" class="resp-error">{{ error }}</div>
+    <div class="resp-actions">
+      <button type="button" class="resp-cancel" (click)="cancelled.emit()">Cancel</button>
+      <button type="submit" class="resp-submit" [disabled]="form.invalid || submitting">
+        {{ submitting ? 'Sending...' : 'Send reply' }}
+      </button>
+    </div>
+  </form>
+</div>

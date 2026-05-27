@@ -1,0 +1,158 @@
+spring:
+  application:
+    name: api-gateway
+
+  # Force reactive (WebFlux) — prevents conflict with eureka-client's transitive spring-webmvc
+  main:
+    web-application-type: reactive
+
+  cloud:
+    gateway:
+      # Global CORS for Angular frontend
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:4200"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+      # Discovery locator: auto-create routes from Eureka (optional, explicit routes below take priority)
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+      routes:
+        # ─────────────────────────────────────────────
+        # USER SERVICE  (Keycloak-secured, port 8081)
+        # ─────────────────────────────────────────────
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**, /api/auth/**, /api/public/users/**
+          filters:
+            - StripPrefix=0
+
+        # ─────────────────────────────────────────────
+        # PROJECT SERVICE  (marketplace projects / offers, port 8082)
+        # ─────────────────────────────────────────────
+        - id: project-service
+          uri: lb://project-service
+          predicates:
+            - Path=/api/projects/**, /api/offers/**, /api/freelancers/**, /api/skills/**, /api/matching/**
+          filters:
+            - StripPrefix=0
+
+        # ─────────────────────────────────────────────
+        # FORMATION SERVICE  (port 8082 / 8083 - own Eureka registration)
+        # ─────────────────────────────────────────────
+        - id: formation-service
+          uri: lb://formation-service
+          predicates:
+            - Path=/api/formations/**
+          filters:
+            - StripPrefix=0
+
+        # ─────────────────────────────────────────────
+        # COMMUNICATION SERVICE  (port 8084)
+        # ─────────────────────────────────────────────
+        - id: communication-service
+          uri: lb://communication-service
+          predicates:
+            - Path=/api/conversations/**, /api/messages/**, /api/notes/**, /api/calls/**
+          filters:
+            - StripPrefix=0
+
+        # ─────────────────────────────────────────────
+        # FEEDBACK SERVICE  (port 8086)
+        # ─────────────────────────────────────────────
+        - id: feedback-service
+          uri: lb://feedback-service
+          predicates:
+            - Path=/api/feedbacks/**, /api/evaluations/**, /api/responses/**
+          filters:
+            - StripPrefix=0
+
+        # ─────────────────────────────────────────────
+        # EVENT SERVICE  (port 8096)
+        # ─────────────────────────────────────────────
+        - id: event-service
+          uri: lb://event-service
+          predicates:
+            - Path=/api/events/**, /api/registrations/**, /api/partners/**
+          filters:
+            - StripPrefix=0
+
+        # ─────────────────────────────────────────────
+        # RAG SERVICE  (port 8097)
+        # ─────────────────────────────────────────────
+        - id: rag-service
+          uri: lb://rag-service
+          predicates:
+            - Path=/api/rag/**
+          filters:
+            - StripPrefix=0
+
+        # ─────────────────────────────────────────────
+        # WORKIFY SERVICE  (pack/subscription/payment/meeting/kanban, port 8089)
+        # ─────────────────────────────────────────────
+        - id: workify-rest
+          uri: lb://workify-service
+          predicates:
+            - Path=/api/packs/**, /api/subscriptions/**, /api/payments/**, /api/projets/**, /api/meetings/**, /api/plannings/**, /api/colonnes/**, /api/taches/**, /api/files/**, /api/recommendations/**, /api/workify-users/**
+          filters:
+            - StripPrefix=0
+
+        # WebSocket (STOMP) — workify-service
+        - id: workify-websocket
+          uri: lb://workify-service
+          predicates:
+            - Path=/ws/**
+          filters:
+            - StripPrefix=0
+
+        # Static uploads — workify-service
+        - id: workify-uploads
+          uri: lb://workify-service
+          predicates:
+            - Path=/uploads/**
+          filters:
+            - StripPrefix=0
+
+server:
+  port: 8888
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.netflix.eureka: WARN
+    com.netflix.discovery: WARN

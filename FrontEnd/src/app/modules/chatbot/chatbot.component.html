@@ -1,0 +1,103 @@
+<section class="chatbot-page">
+	<div class="chatbot-board">
+		<header class="assistant-header">
+			<div class="assistant-logo">
+				<div class="assistant-mark">W</div>
+				<div class="assistant-name">work<span>ify</span> assistant</div>
+			</div>
+			<div class="assistant-status">
+				<span class="status-dot"></span>
+				AI service online
+			</div>
+		</header>
+
+		<div class="assistant-layout">
+			<aside class="assistant-sidebar">
+				<div class="sidebar-block">
+					<p class="sidebar-title">Quick prompts</p>
+					<button
+						*ngFor="let prompt of quickPrompts"
+						type="button"
+						class="quick-btn"
+						(click)="useQuickPrompt(prompt)"
+					>
+						<span class="quick-icon">{{ prompt.icon }}</span>
+						<span>{{ prompt.text }}</span>
+					</button>
+				</div>
+
+				<div class="sidebar-divider"></div>
+
+				<div class="sidebar-block">
+					<p class="sidebar-title">Intents</p>
+					<div class="intent-tags">
+						<span class="intent-tag intent-estimate">⏱ estimate</span>
+						<span class="intent-tag intent-match">🔎 match</span>
+					</div>
+				</div>
+			</aside>
+
+			<div class="assistant-chat">
+				<div class="messages" aria-live="polite">
+					<div *ngIf="!hasMessages" class="welcome">
+						<div class="welcome-icon">⚡</div>
+						<h2>Workify AI Assistant</h2>
+						<p>
+							Estimate project duration and complexity, or match your project with the best freelancers using natural language.
+						</p>
+						<div class="welcome-pills">
+							<span class="pill">Project Estimation</span>
+							<span class="pill">Freelancer Matching</span>
+							<span class="pill">Complexity Analysis</span>
+						</div>
+					</div>
+
+					<div *ngFor="let message of messages; trackBy: trackByIndex" class="msg" [ngClass]="message.sender">
+						<div class="avatar" [ngClass]="message.sender === 'user' ? 'avatar-user' : 'avatar-bot'">
+							{{ message.sender === 'user' ? 'U' : 'W' }}
+						</div>
+
+						<div class="bubble-wrapper">
+							<div class="bubble" [ngClass]="message.sender === 'user' ? 'user-bubble' : 'bot-bubble'">
+								<p class="whitespace-pre-line">{{ message.text }}</p>
+							</div>
+							<p class="msg-time">{{ message.time | date : 'shortTime' }}</p>
+						</div>
+					</div>
+
+					<div *ngIf="isSending" class="msg bot">
+						<div class="avatar avatar-bot">W</div>
+						<div class="typing-dots">
+							<span></span><span></span><span></span>
+						</div>
+					</div>
+				</div>
+
+				<form class="composer" (ngSubmit)="sendMessage()">
+					<div class="composer-wrap">
+						<textarea
+							[(ngModel)]="draftMessage"
+							name="draftMessage"
+							rows="1"
+							maxlength="1000"
+							(keydown)="onComposerKeydown($event)"
+							placeholder="Describe your project or ask to match freelancers..."
+						></textarea>
+
+						<button type="submit" [disabled]="isSending || !draftMessage.trim()" class="send-btn" aria-label="Send">
+							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<line x1="22" y1="2" x2="11" y2="13"></line>
+								<polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+							</svg>
+						</button>
+					</div>
+
+					<div class="composer-hint">
+						<span><kbd>Enter</kbd> send</span>
+						<span><kbd>Shift</kbd> + <kbd>Enter</kbd> newline</span>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</section>

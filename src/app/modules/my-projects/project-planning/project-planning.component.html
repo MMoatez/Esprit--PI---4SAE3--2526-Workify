@@ -1,0 +1,360 @@
+<div [class]="isDarkMode ? 'min-h-screen bg-slate-900 text-white' : 'min-h-screen bg-gray-50 text-gray-900'">
+  <!-- Header -->
+  <div [class]="isDarkMode ? 'bg-slate-800 border-b border-slate-700' : 'bg-white border-b border-gray-200 shadow-sm'">
+    <div class="max-w-screen-2xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <button 
+            (click)="goBack()" 
+            [class]="'p-2 rounded-lg transition-colors ' + (isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-100')"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1 class="text-xl font-bold">Project Planning Board</h1>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <!--  Toggle Theme Button -->
+          <button
+            (click)="toggleTheme()"
+            [class]="'p-2.5 rounded-lg transition-all ' + (isDarkMode ? 'bg-slate-700 hover:bg-slate-600' : 'bg-gray-200 hover:bg-gray-300')"
+            [title]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+          >
+            <!-- Sun Icon (Light Mode) -->
+            <svg *ngIf="isDarkMode" class="w-5 h-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <!-- Moon Icon (Dark Mode) -->
+            <svg *ngIf="!isDarkMode" class="w-5 h-5 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          </button>
+
+          <button
+            (click)="openAddColumnModal()"
+            class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+          >
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Column
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="flex items-center justify-center py-20">
+    <div [class]="'animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 ' + (isDarkMode ? 'border-blue-500' : 'border-blue-600')"></div>
+  </div>
+
+  <!-- Kanban Board -->
+  <div *ngIf="!loading && planning" class="overflow-x-auto">
+    <div class="inline-flex gap-4 p-6 min-w-full">
+      <!-- Column -->
+      <div
+        *ngFor="let colonne of planning.colonnes"
+        [class]="'flex-shrink-0 w-80 rounded-xl border ' + (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200 shadow-lg')"
+      >
+        <!-- Column Header -->
+        <div [class]="'p-4 border-b ' + (isDarkMode ? 'border-slate-700' : 'border-gray-200')">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div
+                class="w-3 h-3 rounded-full shadow-sm"
+                [style.background-color]="colonne.color"
+              ></div>
+              <h3 class="font-bold text-lg">{{ colonne.name }}</h3>
+              <span [class]="'text-sm ' + (isDarkMode ? 'text-slate-400' : 'text-gray-500')">
+                {{ colonne.taches.length || 0 }}
+              </span>
+            </div>
+            
+            <div class="flex items-center gap-1">
+              <button
+                (click)="openEditColumnModal(colonne)"
+                [class]="'p-1.5 rounded transition-colors ' + (isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-100')"
+                title="Edit column"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+              <button
+                (click)="deleteColumn(colonne.id!)"
+                class="p-1.5 hover:bg-red-600 hover:text-white rounded transition-colors"
+                title="Delete column"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <p *ngIf="colonne.description" [class]="'text-sm ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">
+            {{ colonne.description }}
+          </p>
+        </div>
+
+        <!-- Tasks Drop Zone -->
+        <div
+          cdkDropList
+          [id]="'column-' + colonne.id"
+          [cdkDropListData]="colonne.taches || []"
+          [cdkDropListConnectedTo]="getConnectedLists()"
+          (cdkDropListDropped)="drop($event, colonne.id!)"
+          class="p-3 min-h-[200px] space-y-2"
+        >
+          <!-- Task Card -->
+          <div
+            *ngFor="let tache of colonne.taches"
+            cdkDrag
+            [class]="'border rounded-lg p-3 cursor-move transition-all group ' + 
+                     (isDarkMode 
+                       ? 'bg-slate-700 border-slate-600 hover:border-slate-500 hover:shadow-lg' 
+                       : 'bg-gray-50 border-gray-300 hover:border-gray-400 hover:shadow-md')"
+          >
+            <div class="flex items-start justify-between gap-2">
+              <p class="text-sm flex-1">{{ tache.task }}</p>
+              <button
+                (click)="deleteTask(tache.id!, colonne.id!)"
+                class="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-600 hover:text-white rounded transition-all"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!colonne.taches || colonne.taches.length === 0" 
+               [class]="'text-center text-sm py-8 ' + (isDarkMode ? 'text-slate-500' : 'text-gray-400')">
+            Drop tasks here
+          </div>
+        </div>
+
+        <!-- Add Task Button -->
+        <div [class]="'p-3 border-t ' + (isDarkMode ? 'border-slate-700' : 'border-gray-200')">
+          <button
+            (click)="openAddTaskModal(colonne)"
+            [class]="'w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ' + 
+                     (isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-gray-100')"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add item
+          </button>
+        </div>
+      </div>
+
+      <!-- Add Column Placeholder -->
+      <div class="flex-shrink-0 w-80">
+        <button
+          (click)="openAddColumnModal()"
+          [class]="'w-full h-full min-h-[200px] border-2 border-dashed rounded-xl transition-all flex flex-col items-center justify-center gap-3 font-semibold ' + 
+                   (isDarkMode 
+                     ? 'border-slate-700 hover:border-slate-600 hover:bg-slate-800/50 text-slate-400 hover:text-slate-300' 
+                     : 'border-gray-300 hover:border-gray-400 hover:bg-gray-100 text-gray-500 hover:text-gray-700')"
+        >
+          <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span>New Column</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS -->
+
+<!-- Add Column Modal -->
+<div *ngIf="showAddColumnModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" (click)="showAddColumnModal = false">
+  <div [class]="'rounded-2xl border p-6 max-w-md w-full shadow-2xl ' + (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200')" 
+       (click)="$event.stopPropagation()">
+    <h2 [class]="'text-2xl font-bold mb-6 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">Add New Column</h2>
+    
+    <div class="space-y-4">
+      <div>
+        <label [class]="'block text-sm font-semibold mb-2 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+          Column Name
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="newColumn.name"
+          placeholder="e.g., To Review"
+          [class]="'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ' + 
+                   (isDarkMode 
+                     ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500/20' 
+                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500/20')"
+        />
+      </div>
+
+      <div>
+        <label [class]="'block text-sm font-semibold mb-2 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+          Description (optional)
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="newColumn.description"
+          placeholder="e.g., Items ready for review"
+          [class]="'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ' + 
+                   (isDarkMode 
+                     ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500/20' 
+                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500/20')"
+        />
+      </div>
+
+      <div>
+        <label [class]="'block text-sm font-semibold mb-2 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+          Color
+        </label>
+        <div class="grid grid-cols-4 gap-2">
+          <button
+            *ngFor="let color of colors"
+            (click)="newColumn.color = color.value"
+            [class]="'w-full h-12 rounded-lg border-2 transition-all ' + 
+                     (newColumn.color === color.value 
+                       ? 'border-white scale-110 ring-2 ring-white/50' 
+                       : (isDarkMode ? 'border-slate-600 hover:border-slate-500' : 'border-gray-300 hover:border-gray-400'))"
+            [style.background-color]="color.value"
+            [title]="color.name"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+      <button
+        (click)="showAddColumnModal = false"
+        [class]="'flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ' + 
+                 (isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900')"
+      >
+        Cancel
+      </button>
+      <button
+        (click)="addColumn()"
+        class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-lg shadow-blue-500/30"
+      >
+        Create
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Task Modal -->
+<div *ngIf="showAddTaskModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" (click)="showAddTaskModal = false">
+  <div [class]="'rounded-2xl border p-6 max-w-md w-full shadow-2xl ' + (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200')" 
+       (click)="$event.stopPropagation()">
+    <h2 [class]="'text-2xl font-bold mb-6 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+      Add Task to {{ selectedColonneForTask?.name }}
+    </h2>
+    
+    <div class="mb-6">
+      <label [class]="'block text-sm font-semibold mb-2 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+        Task Description
+      </label>
+      <textarea
+        [(ngModel)]="newTask.task"
+        rows="4"
+        placeholder="Describe the task..."
+        [class]="'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 resize-none ' + 
+                 (isDarkMode 
+                   ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500/20' 
+                   : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500/20')"
+      ></textarea>
+    </div>
+
+    <div class="flex gap-3">
+      <button
+        (click)="showAddTaskModal = false"
+        [class]="'flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ' + 
+                 (isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900')"
+      >
+        Cancel
+      </button>
+      <button
+        (click)="addTask()"
+        class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-lg shadow-blue-500/30"
+      >
+        Add Task
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Column Modal -->
+<div *ngIf="showEditColumnModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" (click)="showEditColumnModal = false">
+  <div [class]="'rounded-2xl border p-6 max-w-md w-full shadow-2xl ' + (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200')" 
+       (click)="$event.stopPropagation()">
+    <h2 [class]="'text-2xl font-bold mb-6 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">Edit Column</h2>
+    
+    <div class="space-y-4">
+      <div>
+        <label [class]="'block text-sm font-semibold mb-2 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+          Column Name
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="editColumn.name"
+          [class]="'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ' + 
+                   (isDarkMode 
+                     ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500/20' 
+                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500/20')"
+        />
+      </div>
+
+      <div>
+        <label [class]="'block text-sm font-semibold mb-2 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+          Description
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="editColumn.description"
+          [class]="'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ' + 
+                   (isDarkMode 
+                     ? 'bg-slate-700 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500/20' 
+                     : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-blue-500/20')"
+        />
+      </div>
+
+      <div>
+        <label [class]="'block text-sm font-semibold mb-2 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+          Color
+        </label>
+        <div class="grid grid-cols-4 gap-2">
+          <button
+            *ngFor="let color of colors"
+            (click)="editColumn.color = color.value"
+            [class]="'w-full h-12 rounded-lg border-2 transition-all ' + 
+                     (editColumn.color === color.value 
+                       ? 'border-white scale-110 ring-2 ring-white/50' 
+                       : (isDarkMode ? 'border-slate-600 hover:border-slate-500' : 'border-gray-300 hover:border-gray-400'))"
+            [style.background-color]="color.value"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+      <button
+        (click)="showEditColumnModal = false"
+        [class]="'flex-1 px-4 py-3 rounded-lg font-semibold transition-colors ' + 
+                 (isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900')"
+      >
+        Cancel
+      </button>
+      <button
+        (click)="updateColumn()"
+        class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors shadow-lg shadow-blue-500/30"
+      >
+        Save
+      </button>
+    </div>
+  </div>
+</div>

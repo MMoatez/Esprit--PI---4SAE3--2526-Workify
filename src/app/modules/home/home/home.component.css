@@ -1,0 +1,23 @@
+/* Animations personnalisées */
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
+/* Amélioration des transitions */
+section {
+  scroll-margin-top: 80px;
+}
+
+/* Effet de survol sur les cartes */
+.group:hover {
+  transform: translateY(-5px);
+}

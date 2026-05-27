@@ -1,0 +1,1074 @@
+<div
+  class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-100 flex animate-fadeIn"
+>
+  <!-- Sidebar -->
+  
+<!-- Sidebar -->
+<aside
+  class="w-80 bg-transparent flex-shrink-0 hidden lg:block px-6 py-8"
+>
+ <div class="glass-card p-6">
+
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-6">
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-md">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor"
+             viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2l-7 7v5l-4 2v-7L3 6V4z"/>
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-slate-800">Filters</h2>
+      </div>
+    </div>
+
+    <hr class="mb-6 border-slate-200">
+
+    <!-- Search -->
+    <div class="mb-6">
+      <label class="block">
+        <span class="text-sm font-semibold text-slate-700 mb-2 block">
+          Search
+        </span>
+
+        <div class="relative">
+          <input
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchChange()"
+            type="text"
+            placeholder="Search projects..."
+            class="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-100 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition-all text-sm"
+          />
+          <svg
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </div>
+      </label>
+    </div>
+
+    <!-- Category -->
+    <h3 class="text-slate-700 font-semibold mb-4">Category</h3>
+
+    <div class="space-y-3">
+
+      <!-- All Categories -->
+      <button
+        (click)="selectedCategory = null; onCategoryChange()"
+        class="w-full flex items-center justify-between px-5 py-4 rounded-2xl font-semibold transition-all duration-300"
+        [ngClass]="
+          !selectedCategory
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        "
+      >
+        <span>All Categories</span>
+
+        <svg *ngIf="!selectedCategory"
+             class="w-5 h-5"
+             fill="none"
+             stroke="currentColor"
+             viewBox="0 0 24 24">
+          <path stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="3"
+                d="M5 13l4 4L19 7"/>
+        </svg>
+      </button>
+
+      <!-- Dynamic Categories -->
+      <button
+        *ngFor="let category of categories"
+        (click)="selectedCategory = category; onCategoryChange()"
+        class="w-full flex items-center justify-between px-5 py-4 rounded-2xl font-semibold transition-all duration-300"
+        [ngClass]="
+          selectedCategory === category
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        "
+      >
+        <span>{{ category }}</span>
+
+        <svg *ngIf="selectedCategory === category"
+             class="w-5 h-5"
+             fill="none"
+             stroke="currentColor"
+             viewBox="0 0 24 24">
+          <path stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="3"
+                d="M5 13l4 4L19 7"/>
+        </svg>
+      </button>
+
+    </div>
+
+    <!-- Status -->
+    <h3 class="text-slate-700 font-semibold mt-8 mb-4">Status</h3>
+
+    <div class="space-y-3">
+
+      <button
+        (click)="selectedStatus = null; onStatusChange()"
+        class="w-full px-5 py-4 rounded-2xl font-semibold transition-all duration-300"
+        [ngClass]="
+          !selectedStatus
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        "
+      >
+        All Statuses
+      </button>
+
+      <button
+        *ngFor="let status of statuses"
+        (click)="selectedStatus = status; onStatusChange()"
+        class="w-full px-5 py-4 rounded-2xl font-semibold transition-all duration-300"
+        [ngClass]="
+          selectedStatus === status
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        "
+      >
+        {{ status }}
+      </button>
+
+    </div>
+
+    <!-- Clear -->
+    <div class="mt-8">
+      <button
+        (click)="clearFilters()"
+        class="w-full px-4 py-3 rounded-2xl bg-slate-900 text-white font-semibold hover:bg-slate-800 transition-all"
+      >
+        Clear All Filters
+      </button>
+    </div>
+
+  </div>
+</aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Header -->
+    <div class="bg-white border-b border-slate-200 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div
+          class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div class="flex-1">
+            <h1 class="text-2xl lg:text-3xl font-bold text-slate-900">
+              My Projects
+            </h1>
+            <p class="text-slate-600 mt-1 lg:mt-2 text-sm lg:text-base">
+              Manage your projects and their planning boards
+              <span
+                *ngIf="filteredProjects.length !== projects.length"
+                class="text-blue-600 font-semibold"
+              >
+                ({{ filteredProjects.length }} of {{ projects.length }})
+              </span>
+            </p>
+          </div>
+
+          <!-- Mobile Filter Toggle -->
+          <button
+            (click)="toggleMobileFilters()"
+            class="lg:hidden inline-flex items-center justify-center px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 font-medium hover:bg-slate-50 transition"
+          >
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+              />
+            </svg>
+            Filters
+          </button>
+
+          <button
+            *ngIf="canManageProjects"
+            (click)="openCreateForm()"
+            class="inline-flex items-center justify-center px-5 py-3 rounded-lg bg-blue-500 text-white font-semibold shadow-sm hover:bg-blue-600 transition text-sm lg:text-base"
+          >
+            <svg
+              class="w-5 h-5 mr-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Create Project
+          </button>
+        </div>
+
+        <!-- Mobile Search -->
+        <div class="mt-4 lg:hidden">
+          <div class="relative">
+            <input
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearchChange()"
+              type="text"
+              placeholder="Search projects..."
+              class="w-full pl-10 pr-4 py-2.5 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm transition"
+            />
+            <svg
+              class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex items-center justify-center py-20 flex-1">
+      <div class="text-center">
+        <div
+          class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600 mx-auto"
+        ></div>
+        <p class="text-slate-600 mt-4">Loading projects...</p>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div
+      *ngIf="error && !loading"
+      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1"
+    >
+      <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+        <svg
+          class="w-12 h-12 text-red-500 mx-auto mb-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <p class="text-red-600 font-semibold text-lg">{{ error }}</p>
+        <button
+          (click)="loadProjects()"
+          class="mt-4 px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+
+    <!-- Projects Grid -->
+    <div *ngIf="!loading && !error" class="flex-1 overflow-y-auto">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <!-- Active Filters Display -->
+        <div
+          *ngIf="hasActiveFilters()"
+          class="mb-6 flex flex-wrap gap-2 items-center"
+        >
+          <span class="text-sm font-semibold text-slate-700"
+            >Active Filters:</span
+          >
+          <span
+            *ngIf="selectedCategory"
+            class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium"
+          >
+            {{ selectedCategory }}
+            <button
+              (click)="selectedCategory = null; onCategoryChange()"
+              class="hover:text-blue-900"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </span>
+          <span
+            *ngIf="selectedStatus"
+            class="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm font-medium"
+          >
+            {{ selectedStatus }}
+            <button
+              (click)="selectedStatus = null; onStatusChange()"
+              class="hover:text-purple-900"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </span>
+          <span
+            *ngIf="searchQuery"
+            class="inline-flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium"
+          >
+            "{{ searchQuery }}"
+            <button
+              (click)="searchQuery = ''; onSearchChange()"
+              class="hover:text-green-900"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </span>
+          <button
+            (click)="clearFilters()"
+            class="text-sm text-slate-600 hover:text-slate-900 underline font-medium"
+          >
+            Clear all
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div
+            *ngFor="let project of filteredProjects"
+            class="bg-white rounded-2xl shadow-lg border border-slate-200 hover:shadow-2xl transition-all duration-300 p-6 group cursor-pointer"
+            (click)="viewProjectDetails(project.id)"
+          >
+            <!-- Project Icon -->
+            <div
+              class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform"
+            >
+              <svg
+                class="w-8 h-8 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
+                />
+              </svg>
+            </div>
+
+            <!-- Project Name -->
+            <h3
+              class="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2"
+            >
+              {{ project.name }}
+            </h3>
+
+            <div
+              class="flex flex-wrap items-center gap-2 text-sm text-slate-500 mb-4"
+            >
+              <span
+                class="px-2 py-1 rounded-full bg-slate-100 text-slate-600 font-semibold"
+              >
+                {{ project.status }}
+              </span>
+              <span class="text-xs">Client ID: {{ project.clientId }}</span>
+            </div>
+
+            <div class="space-y-2 text-sm text-slate-600">
+              <div class="flex items-center justify-between">
+                <span>Budget</span>
+                <span class="font-semibold text-slate-900">{{
+                  formatBudget(project)
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Duration</span>
+                <span class="font-semibold text-slate-900">{{
+                  project.duration
+                }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Created</span>
+                <span class="font-semibold text-slate-900">{{
+                  project.createdAt
+                }}</span>
+              </div>
+            </div>
+
+            <div class="mt-6 grid gap-2" [ngClass]="canManageProjects ? 'grid-cols-3' : 'grid-cols-1'">
+              <button
+                class="px-3 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition text-sm"
+                (click)="
+                  viewProjectDetails(project.id); $event.stopPropagation()
+                "
+              >
+                View
+              </button>
+              <button
+                *ngIf="canManageProjects"
+                class="px-3 py-2 border border-slate-300 text-slate-700 font-semibold rounded-lg hover:bg-slate-50 transition text-sm"
+                (click)="openEditForm(project, $event)"
+              >
+                Edit
+              </button>
+              <button
+                *ngIf="canManageProjects"
+                class="px-3 py-2 border border-red-200 text-red-600 font-semibold rounded-lg hover:bg-red-50 transition text-sm"
+                (click)="openDeleteConfirm(project, $event)"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div
+          *ngIf="filteredProjects.length === 0 && projects.length > 0"
+          class="text-center py-20"
+        >
+          <div
+            class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <svg
+              class="w-12 h-12 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">
+            No projects found
+          </h3>
+          <p class="text-slate-600 mb-4">
+            Try adjusting your filters or search query
+          </p>
+          <button
+            (click)="clearFilters()"
+            class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+          >
+            Clear Filters
+          </button>
+        </div>
+
+        <!-- No Projects Ever -->
+        <div *ngIf="projects.length === 0" class="text-center py-20">
+          <div
+            class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"
+          >
+            <svg
+              class="w-12 h-12 text-slate-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+              />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-slate-900 mb-2">No projects yet</h3>
+          <p class="text-slate-600 mb-4">
+            Create your first project to get started
+          </p>
+          <button
+            *ngIf="canManageProjects"
+            (click)="openCreateForm()"
+            class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition"
+          >
+            Create Project
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile Filters Sidebar -->
+<div
+  *ngIf="showMobileFilters"
+  class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 lg:hidden"
+  (click)="toggleMobileFilters()"
+>
+  <aside
+    class="w-80 max-w-[85vw] bg-white h-full shadow-xl overflow-y-auto"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Mobile Sidebar Header -->
+    <div
+      class="p-6 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10"
+    >
+      <div>
+        <h2 class="text-xl font-bold text-slate-900">Filters</h2>
+        <p class="text-xs text-slate-500 mt-1">Refine your projects</p>
+      </div>
+      <button
+        (click)="toggleMobileFilters()"
+        class="text-slate-500 hover:text-slate-700"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Category Filter -->
+    <div class="p-6 border-b border-slate-200">
+      <h3 class="text-sm font-semibold text-slate-700 mb-3">Category</h3>
+      <div class="space-y-2">
+        <label
+          class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition group"
+        >
+          <input
+            type="radio"
+            name="mobileCategoryFilter"
+            [value]="null"
+            [(ngModel)]="selectedCategory"
+            (ngModelChange)="onCategoryChange()"
+            class="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+          />
+          <span
+            class="text-sm text-slate-700 group-hover:text-slate-900 font-medium"
+            >All Categories</span
+          >
+          <span
+            class="ml-auto text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full"
+          >
+            {{ projects.length }}
+          </span>
+        </label>
+        <label
+          *ngFor="let category of categories"
+          class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition group"
+        >
+          <input
+            type="radio"
+            name="mobileCategoryFilter"
+            [value]="category"
+            [(ngModel)]="selectedCategory"
+            (ngModelChange)="onCategoryChange()"
+            class="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+          />
+          <span class="text-sm text-slate-700 group-hover:text-slate-900">{{
+            category
+          }}</span>
+          <span
+            class="ml-auto text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full"
+          >
+            {{ getProjectCountByCategory(category) }}
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Status Filter -->
+    <div class="p-6 border-b border-slate-200">
+      <h3 class="text-sm font-semibold text-slate-700 mb-3">Status</h3>
+      <div class="space-y-2">
+        <label
+          class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition group"
+        >
+          <input
+            type="radio"
+            name="mobileStatusFilter"
+            [value]="null"
+            [(ngModel)]="selectedStatus"
+            (ngModelChange)="onStatusChange()"
+            class="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+          />
+          <span
+            class="text-sm text-slate-700 group-hover:text-slate-900 font-medium"
+            >All Statuses</span
+          >
+        </label>
+        <label
+          *ngFor="let status of statuses"
+          class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition group"
+        >
+          <input
+            type="radio"
+            name="mobileStatusFilter"
+            [value]="status"
+            [(ngModel)]="selectedStatus"
+            (ngModelChange)="onStatusChange()"
+            class="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500"
+          />
+          <span class="text-sm text-slate-700 group-hover:text-slate-900">{{
+            status
+          }}</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Clear Filters -->
+    <div class="p-6">
+      <button
+        (click)="clearFilters(); toggleMobileFilters()"
+        class="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 transition text-sm font-medium"
+      >
+        Clear All Filters
+      </button>
+    </div>
+  </aside>
+</div>
+
+<!-- Create / Edit Modal -->
+<div
+  *ngIf="showCreateModeModal && canManageProjects"
+  class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center px-4 z-50"
+  (click)="closeCreateModeModal()"
+>
+  <div
+    class="bg-white border border-slate-200 rounded-2xl shadow-xl max-w-md w-full p-6"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h3 class="text-lg font-bold text-slate-900">Choose creation mode</h3>
+        <p class="text-slate-600 text-sm">
+          Select how you want to set duration and estimation.
+        </p>
+      </div>
+      <button
+        (click)="closeCreateModeModal()"
+        class="text-slate-500 hover:text-slate-700 text-xl"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3">
+      <button
+        (click)="selectCreateMode('auto')"
+        class="w-full px-4 py-3 rounded-xl border-2 border-teal-200 bg-teal-50 text-teal-700 font-semibold hover:bg-teal-100 transition"
+      >
+        Automatic estimation
+        <span class="block text-xs font-normal text-teal-600 mt-1">
+          Let the system calculate duration and complexity.
+        </span>
+      </button>
+      <button
+        (click)="selectCreateMode('manual')"
+        class="w-full px-4 py-3 rounded-xl border-2 border-blue-200 bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 transition"
+      >
+        Manual setup
+        <span class="block text-xs font-normal text-blue-600 mt-1">
+          Enter duration and complexity yourself.
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Create / Edit Modal -->
+<div
+  *ngIf="showForm && canManageProjects"
+  class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center px-4 py-6 z-50 overflow-y-auto"
+  (click)="cancelForm()"
+>
+  <div
+    class="bg-white border border-slate-200 rounded-2xl shadow-xl w-full max-w-2xl md:max-w-4xl my-auto p-4 sm:p-6 max-h-[90vh] overflow-y-auto"
+    (click)="$event.stopPropagation()"
+  >
+    <div
+      class="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between sticky top-0 bg-white pb-3 sm:pb-4 z-10"
+    >
+      <div>
+        <h2 class="text-lg sm:text-xl font-bold text-slate-900">
+          {{ isEditing ? "Edit Project" : "Create Project" }}
+        </h2>
+        <p class="text-slate-600 text-xs sm:text-sm">
+          Fill in project essentials and save.
+        </p>
+      </div>
+      <button
+        (click)="cancelForm()"
+        class="text-slate-500 hover:text-slate-700 text-xl"
+      >
+        ✕
+      </button>
+    </div>
+
+    <div
+      *ngIf="!isEditing"
+      class="mt-3 sm:mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 p-1 bg-slate-50"
+    >
+      <button
+        type="button"
+        (click)="selectCreateMode('auto')"
+        [class]="
+          'px-4 py-2 rounded-lg text-sm font-semibold transition ' +
+          (createMode === 'auto'
+            ? 'bg-white shadow text-teal-700'
+            : 'text-slate-600 hover:text-slate-900')
+        "
+      >
+        Automatic
+      </button>
+      <button
+        type="button"
+        (click)="selectCreateMode('manual')"
+        [class]="
+          'px-4 py-2 rounded-lg text-sm font-semibold transition ' +
+          (createMode === 'manual'
+            ? 'bg-white shadow text-blue-700'
+            : 'text-slate-600 hover:text-slate-900')
+        "
+      >
+        Manual
+      </button>
+    </div>
+
+    <form
+      (ngSubmit)="submitForm()"
+      class="mt-4 sm:mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+    >
+      <div
+        *ngIf="createMode === 'auto'"
+        class="sm:col-span-2 lg:col-span-3 bg-teal-50 border border-teal-200 rounded-lg p-3 sm:p-4"
+      >
+        <p class="text-xs sm:text-sm text-teal-700">
+          Automatic estimation will calculate duration and complexity based on
+          your project details after creation.
+        </p>
+      </div>
+      <!-- Error Message -->
+      <div
+        *ngIf="formError"
+        class="sm:col-span-2 lg:col-span-3 bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4"
+      >
+        <p class="text-xs sm:text-sm text-red-700 whitespace-pre-line">
+          {{ formError }}
+        </p>
+      </div>
+
+      <!-- Title -->
+      <label class="block">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700"
+          >Project Title</span
+        >
+        <input
+          [(ngModel)]="formModel.title"
+          name="title"
+          type="text"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 text-sm"
+          placeholder="Application mobile e-commerce"
+          required
+        />
+      </label>
+
+      <!-- Short Description -->
+      <label class="block">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700"
+          >Short Description</span
+        >
+        <input
+          [(ngModel)]="formModel.shortDescription"
+          name="shortDescription"
+          type="text"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 text-sm"
+          placeholder="Brief overview of the project"
+        />
+      </label>
+
+      <!-- Category -->
+      <label class="block">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700"
+          >Category</span
+        >
+        <select
+          [(ngModel)]="formModel.category"
+          name="category"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 text-sm"
+        >
+          <option [value]="null" disabled selected>Select a category</option>
+          <option *ngFor="let cat of categories" [value]="cat">
+            {{ cat }}
+          </option>
+        </select>
+      </label>
+
+      <!-- Detailed Description -->
+      <label class="block sm:col-span-2 lg:col-span-3">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700"
+          >Detailed Description</span
+        >
+        <textarea
+          [(ngModel)]="formModel.detailedDescription"
+          name="detailedDescription"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 min-h-20 sm:min-h-24 resize-none text-sm"
+          placeholder="Full project description with requirements and goals..."
+        ></textarea>
+      </label>
+
+      <!-- Budget -->
+      <label class="block">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700">Budget</span>
+
+        <!-- ML Prediction banner -->
+        <div class="mt-2 mb-2 flex items-center gap-2">
+          <button type="button" (click)="predictBudget()"
+            [disabled]="budgetPredicting || !formModel.title || !formModel.category"
+            class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 transition">
+            {{ budgetPredicting ? '⏳ Analyse...' : '🤖 Suggérer budget IA' }}
+          </button>
+          <span *ngIf="budgetPrediction" class="text-xs text-slate-500">
+            Min: <strong>${{ budgetPrediction.predicted_min | number:'1.0-0' }}</strong>
+            · Moy: <strong>${{ budgetPrediction.predicted_avg | number:'1.0-0' }}</strong>
+            · Max: <strong>${{ budgetPrediction.predicted_max | number:'1.0-0' }}</strong>
+            <button type="button" (click)="applyPredictedBudget()"
+              class="ml-2 px-2 py-0.5 rounded bg-green-100 text-green-700 font-semibold hover:bg-green-200 transition text-xs">
+              Appliquer
+            </button>
+          </span>
+        </div>
+
+        <input
+          [(ngModel)]="formModel.minBudget"
+          name="minBudget"
+          type="number"
+          min="0"
+          class="w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 text-sm"
+          placeholder="5000"
+        />
+      </label>
+
+      <!-- Estimated Duration (Manual) -->
+      <label *ngIf="createMode === 'manual'" class="block">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700"
+          >Estimated Duration (days)</span
+        >
+        <input
+          [(ngModel)]="formModel.estimatedDuration"
+          name="estimatedDuration"
+          type="number"
+          min="1"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 text-sm"
+          placeholder="45"
+        />
+      </label>
+
+      <!-- Complexity (Manual) -->
+      <label *ngIf="createMode === 'manual'" class="block">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700"
+          >Complexity</span
+        >
+        <select
+          [(ngModel)]="formModel.complexity"
+          name="complexity"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 text-sm"
+        >
+          <option [value]="null" disabled selected>Select complexity</option>
+          <option *ngFor="let level of complexityOptions" [value]="level">
+            {{ level }}
+          </option>
+        </select>
+      </label>
+
+      <!-- Status -->
+      <label class="block">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700"
+          >Status</span
+        >
+        <select
+          [(ngModel)]="formModel.status"
+          name="status"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 text-sm"
+        >
+          <option *ngFor="let status of statuses" [value]="status">
+            {{ status }}
+          </option>
+        </select>
+      </label>
+
+      <!-- Client Information Section -->
+      <div
+        class="sm:col-span-2 lg:col-span-3 border-t border-slate-200 pt-3 sm:pt-4"
+      >
+        <h3
+          class="text-xs sm:text-sm font-semibold text-slate-700 mb-3 sm:mb-4"
+        >
+          Client Information
+        </h3>
+      </div>
+
+      <!-- Client Name -->
+      <label class="block">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700"
+          >Client Name</span
+        >
+        <input
+          [(ngModel)]="formModel.clientName"
+          name="clientName"
+          type="text"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 text-sm"
+          placeholder="Nour"
+        />
+      </label>
+
+      <!-- Client Email -->
+      <label class="block">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700"
+          >Client Email</span
+        >
+        <input
+          [(ngModel)]="formModel.clientEmail"
+          name="clientEmail"
+          type="email"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 text-sm"
+          placeholder="guest@example.com"
+        />
+      </label>
+
+      <!-- Client Phone -->
+      <label class="block">
+        <span class="text-xs sm:text-sm font-semibold text-slate-700"
+          >Client Phone</span
+        >
+        <input
+          [(ngModel)]="formModel.clientPhone"
+          name="clientPhone"
+          type="text"
+          class="mt-2 w-full rounded-lg border border-slate-300 px-3 sm:px-4 py-2 sm:py-2.5 focus:border-blue-500 focus:ring-blue-500 text-sm"
+          placeholder="123456789"
+        />
+      </label>
+
+      <!-- Form Actions -->
+      <div
+        class="sm:col-span-2 lg:col-span-3 flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end"
+      >
+        <button
+          type="button"
+          (click)="cancelForm()"
+          class="px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm sm:text-base font-medium"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 text-sm sm:text-base"
+        >
+          {{ isEditing ? "Save Changes" : "Create Project" }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div
+  *ngIf="confirmDeleteOpen && canManageProjects"
+  class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center px-4 z-50"
+>
+  <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+    <div
+      class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"
+    >
+      <svg
+        class="w-6 h-6 text-red-600"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+        />
+      </svg>
+    </div>
+    <h3 class="text-lg font-bold text-slate-900 text-center">
+      Delete project?
+    </h3>
+    <p class="text-slate-600 mt-2 text-center">
+      This action cannot be undone. Are you sure you want to delete
+      <span class="font-semibold text-slate-900">{{ pendingDelete?.name }}</span
+      >?
+    </p>
+    <div class="mt-6 flex flex-col sm:flex-row gap-3 sm:justify-end">
+      <button
+        (click)="closeDeleteConfirm()"
+        class="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium"
+      >
+        Cancel
+      </button>
+      <button
+        (click)="confirmDelete()"
+        class="px-5 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700"
+      >
+        Delete Project
+      </button>
+    </div>
+  </div>
+</div>

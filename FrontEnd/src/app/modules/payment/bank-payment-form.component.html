@@ -1,0 +1,324 @@
+<div>
+  <!-- Success State -->
+  <div *ngIf="submitted" class="text-center py-8">
+    <div class="inline-flex items-center justify-center size-16 bg-green-100 rounded-full mb-4">
+      <svg class="size-8 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+    </div>
+    <h3 class="text-2xl font-bold text-slate-900 mb-2">Receipt Uploaded Successfully!</h3>
+    <p class="text-slate-600 mb-4">
+      Your payment is pending verification by our admin team.
+    </p>
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-slate-700">
+      <p class="font-medium mb-2">What happens next?</p>
+      <ul class="text-left space-y-1 text-slate-600">
+        <li>• Our team will verify your payment within 24-48 hours</li>
+        <li>• You'll receive an email confirmation once verified</li>
+        <li>• Your subscription will be activated immediately after verification</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Payment Form -->
+  <div *ngIf="!submitted">
+    <!-- Header -->
+    <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl p-6 mb-6">
+      <div class="flex items-center gap-3 mb-3">
+        <div [class]="paymentMethod === 'bank-transfer' ? 'p-2 rounded-lg bg-green-600' : 'p-2 rounded-lg bg-purple-600'">
+          <svg *ngIf="paymentMethod === 'bank-transfer'" class="size-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" x2="21" y1="22" y2="22"></line>
+            <line x1="6" x2="6" y1="18" y2="11"></line>
+            <line x1="10" x2="10" y1="18" y2="11"></line>
+            <line x1="14" x2="14" y1="18" y2="11"></line>
+            <line x1="18" x2="18" y1="18" y2="11"></line>
+            <polygon points="12 2 20 7 4 7"></polygon>
+          </svg>
+          <svg *ngIf="paymentMethod !== 'bank-transfer'" class="size-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" x2="12" y1="3" y2="15"></line>
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-slate-900">
+            {{ paymentMethod === 'bank-transfer' ? 'Bank Transfer Payment' : 'Cash Deposit Payment' }}
+          </h3>
+          <p class="text-sm text-slate-600">
+            {{ paymentMethod === 'bank-transfer' ? 'Transfer funds to our bank account' : 'Deposit cash and upload receipt' }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="bg-slate-50 rounded-xl p-6 mb-6">
+      <h3 class="font-semibold text-slate-900 mb-4">Order Summary</h3>
+      <div class="space-y-2">
+        <div class="flex justify-between">
+          <span class="text-slate-600">{{ plan.name }} Plan</span>
+          <span class="font-semibold text-slate-900">${{ plan.price }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-600">Billing Period</span>
+          <span class="text-slate-900">{{ plan.billingPeriod }}</span>
+        </div>
+        <div class="border-t border-slate-200 pt-2 mt-2">
+          <div class="flex justify-between">
+            <span class="font-semibold text-slate-900">Total Amount</span>
+            <span class="text-2xl font-bold text-green-600">${{ plan.price }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bank Details -->
+    <div class="bg-white border-2 border-slate-200 rounded-xl p-6 mb-6">
+      <h3 class="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+        <svg class="size-5 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" x2="21" y1="22" y2="22"></line>
+          <line x1="6" x2="6" y1="18" y2="11"></line>
+          <line x1="10" x2="10" y1="18" y2="11"></line>
+          <line x1="14" x2="14" y1="18" y2="11"></line>
+          <line x1="18" x2="18" y1="18" y2="11"></line>
+          <polygon points="12 2 20 7 4 7"></polygon>
+        </svg>
+        Bank Account Details
+      </h3>
+      <div class="space-y-3">
+        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div>
+            <div class="text-xs text-slate-500">Bank Name</div>
+            <div class="font-medium text-slate-900">{{ bankDetails.bankName }}</div>
+          </div>
+          <button (click)="handleCopy(bankDetails.bankName, 'bankName')" type="button" class="text-blue-600 hover:text-blue-700">
+            <svg *ngIf="copiedField === 'bankName'" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <svg *ngIf="copiedField !== 'bankName'" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div>
+            <div class="text-xs text-slate-500">Account Name</div>
+            <div class="font-medium text-slate-900">{{ bankDetails.accountName }}</div>
+          </div>
+          <button (click)="handleCopy(bankDetails.accountName, 'accountName')" type="button" class="text-blue-600 hover:text-blue-700">
+            <svg *ngIf="copiedField === 'accountName'" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <svg *ngIf="copiedField !== 'accountName'" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div>
+            <div class="text-xs text-slate-500">Account Number</div>
+            <div class="font-medium text-slate-900">{{ bankDetails.accountNumber }}</div>
+          </div>
+          <button (click)="handleCopy(bankDetails.accountNumber, 'accountNumber')" type="button" class="text-blue-600 hover:text-blue-700">
+            <svg *ngIf="copiedField === 'accountNumber'" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <svg *ngIf="copiedField !== 'accountNumber'" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div>
+            <div class="text-xs text-slate-500">Routing Number</div>
+            <div class="font-medium text-slate-900">{{ bankDetails.routingNumber }}</div>
+          </div>
+          <button (click)="handleCopy(bankDetails.routingNumber, 'routingNumber')" type="button" class="text-blue-600 hover:text-blue-700">
+            <svg *ngIf="copiedField === 'routingNumber'" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <svg *ngIf="copiedField !== 'routingNumber'" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div>
+            <div class="text-xs text-slate-500">SWIFT Code</div>
+            <div class="font-medium text-slate-900">{{ bankDetails.swiftCode }}</div>
+          </div>
+          <button (click)="handleCopy(bankDetails.swiftCode, 'swiftCode')" type="button" class="text-blue-600 hover:text-blue-700">
+            <svg *ngIf="copiedField === 'swiftCode'" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <svg *ngIf="copiedField !== 'swiftCode'" class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Important Notice -->
+    <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
+      <div class="flex gap-3">
+        <svg class="size-5 text-orange-600 flex-shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" x2="12" y1="8" y2="12"></line>
+          <line x1="12" x2="12.01" y1="16" y2="16"></line>
+        </svg>
+        <div class="text-sm text-slate-700">
+          <p class="font-medium mb-1">Important Instructions:</p>
+          <ul class="space-y-1 text-slate-600">
+            <li>• Make sure to include the exact amount: <strong>${{ plan.price }}</strong></li>
+            <li>• {{ paymentMethod === 'bank-transfer' ? 'Complete the bank transfer using the details above' : 'Deposit the cash amount at any of our partner bank branches' }}</li>
+            <li>• Keep your receipt/confirmation as proof of payment</li>
+            <li>• Upload a clear photo or scan of your receipt below</li>
+            <li>• Our team will verify your payment within 24-48 hours</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Upload Form -->
+    <form (ngSubmit)="handleSubmit()" #paymentForm="ngForm" class="space-y-6">
+      <!-- Full Name -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          Full Name *
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="fullName"
+          name="fullName"
+          placeholder="John Doe"
+          class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          Email Address *
+        </label>
+        <input
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          placeholder="your.email@example.com"
+          class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+
+      <!-- Transaction Reference -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          Transaction Reference Number *
+        </label>
+        <input
+          type="text"
+          [(ngModel)]="transactionRef"
+          name="transactionRef"
+          placeholder="Enter the reference number from your receipt"
+          class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+          required
+        />
+      </div>
+
+      <!-- File Upload -->
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">
+          Upload Receipt *
+        </label>
+        <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-green-500 transition-colors">
+          <div *ngIf="uploadedFile" class="flex items-center justify-between bg-green-50 rounded-lg p-4">
+            <div class="flex items-center gap-3">
+              <svg class="size-8 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"></path>
+                <path d="M14 2v4a2 2 0 0 0 2 2h4"></path>
+              </svg>
+              <div class="text-left">
+                <div class="font-medium text-slate-900">{{ uploadedFile.name }}</div>
+                <div class="text-sm text-slate-600">{{ getFileSize() }} KB</div>
+              </div>
+            </div>
+            <button
+              type="button"
+              (click)="handleRemoveFile()"
+              class="text-red-600 hover:text-red-700"
+            >
+              <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <div *ngIf="!uploadedFile">
+            <svg class="size-12 text-slate-400 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" x2="12" y1="3" y2="15"></line>
+            </svg>
+            <p class="text-slate-700 mb-2">Click to upload or drag and drop your receipt</p>
+            <p class="text-sm text-slate-500">PNG, JPG, or PDF (max. 5MB)</p>
+            <input
+              #fileInput
+              type="file"
+              accept="image/jpeg,image/png,image/jpg,application/pdf"
+              (change)="handleFileSelect($event)"
+              class="hidden"
+              required
+            />
+            <button
+              type="button"
+              (click)="fileInput.click()"
+              class="mt-4 px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Choose File
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-3">
+        <button
+          type="button"
+          (click)="onCancel()"
+          class="flex-1 px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium"
+          [disabled]="uploading"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="uploading"
+          class="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium disabled:bg-slate-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <svg *ngIf="uploading" class="size-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+          </svg>
+          <span>{{ uploading ? 'Uploading...' : 'Submit for Verification' }}</span>
+        </button>
+      </div>
+
+      <!-- Info Text -->
+      <div class="text-center text-xs text-slate-500">
+        <p>By submitting this receipt, you confirm that the payment has been made.</p>
+        <p class="mt-1">False submissions may result in account suspension.</p>
+      </div>
+    </form>
+  </div>
+</div>

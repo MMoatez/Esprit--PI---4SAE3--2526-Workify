@@ -1,0 +1,85 @@
+<div class="public-container">
+
+  <!-- Hero Section -->
+  <div class="hero">
+    <h1>🎯 Événements Workify</h1>
+    <p>Découvrez les prochains événements et formations pour freelancers et clients</p>
+    <a routerLink="/events/calendar" class="btn-calendar">📅 Voir le Calendrier</a>
+  </div>
+
+  <!-- Mes événements (visible uniquement si connecté) -->
+  <app-my-events></app-my-events>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        placeholder="Rechercher un événement..."
+        [(ngModel)]="searchTerm"
+        (input)="filterEvents()" />
+    </div>
+
+    <select [(ngModel)]="selectedCategory" (change)="filterEvents()">
+      <option value="">Toutes les catégories</option>
+      <option *ngFor="let cat of categories" [value]="cat">{{ cat }}</option>
+    </select>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Chargement des événements...</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+  <!-- No Results -->
+  <div class="no-results" *ngIf="!loading && filteredEvents.length === 0">
+    <p>😕 Aucun événement trouvé</p>
+  </div>
+
+  <!-- Events Grid -->
+  <div class="events-grid" *ngIf="!loading && filteredEvents.length > 0">
+    <div class="event-card" *ngFor="let event of filteredEvents"
+         (click)="viewDetail(event.id)">
+
+      <div class="card-top">
+        <span class="category-badge">{{ event.category }}</span>
+        <span class="spots" [class.full]="isFull(event)">
+          {{ isFull(event) ? '🔴 Complet' : '🟢 ' + getAvailableSpots(event) + ' places' }}
+        </span>
+      </div>
+
+      <h3 class="event-title">{{ event.title }}</h3>
+      <p class="event-topic">{{ event.topic }}</p>
+
+      <p class="event-description">
+        {{ event.description | slice:0:120 }}{{ event.description.length > 120 ? '...' : '' }}
+      </p>
+
+      <div class="card-footer">
+        <div class="footer-item">
+          <span>📅</span>
+          <span>{{ event.eventDate | date:'dd MMM yyyy' }}</span>
+        </div>
+        <div class="footer-item">
+          <span>📍</span>
+          <span>{{ event.location }}</span>
+        </div>
+        <div class="footer-item">
+          <span>👥</span>
+          <span>{{ event.totalRegistrations }}/{{ event.capacity }}</span>
+        </div>
+      </div>
+
+      <button class="btn-detail" [disabled]="isFull(event)">
+        {{ isFull(event) ? 'Complet' : 'Voir détails →' }}
+      </button>
+
+    </div>
+  </div>
+
+</div>

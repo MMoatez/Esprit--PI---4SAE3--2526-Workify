@@ -1,0 +1,100 @@
+<div class="space-y-8">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Hello, {{ auth.getUserName() || 'Partner' }}</h1>
+            <p class="text-sm text-slate-500 mt-0.5">{{ today | date:'EEEE, MMMM d, y' }}</p>
+        </div>
+    </div>
+
+    <div *ngIf="isLoading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div *ngFor="let i of [1,2,3]" class="h-32 bg-slate-100 rounded-2xl animate-pulse"></div>
+    </div>
+
+    <!-- ── Quick Actions ── -->
+    <div class="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100">
+            <h2 class="text-base font-bold text-slate-900">Accès rapide</h2>
+            <p class="text-xs text-slate-400 mt-0.5">Gérez vos formations, invitations et événements</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-5">
+
+            <!-- Mes Formations -->
+            <a routerLink="/admin/formations"
+                class="flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:border-purple-200 hover:bg-purple-50 transition-all group cursor-pointer">
+                <div class="w-11 h-11 rounded-xl bg-purple-50 group-hover:bg-purple-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                    <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                        <path stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-semibold text-slate-800 text-sm group-hover:text-purple-700 transition-colors">Mes Formations</div>
+                    <div class="text-xs text-slate-400">Créer &amp; gérer</div>
+                </div>
+            </a>
+
+            <!-- Mes Invitations -->
+            <a routerLink="/events/partner/invitations"
+                class="flex items-center gap-4 p-4 rounded-xl border border-slate-100 hover:border-teal-200 hover:bg-teal-50 transition-all group cursor-pointer">
+                <div class="w-11 h-11 rounded-xl bg-teal-50 group-hover:bg-teal-100 flex items-center justify-center flex-shrink-0 transition-colors">
+                    <svg class="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="font-semibold text-slate-800 text-sm group-hover:text-teal-700 transition-colors">Mes Invitations</div>
+                    <div class="text-xs text-slate-400">Événements partenaire</div>
+                </div>
+            </a>
+
+        </div>
+    </div>
+
+    <!-- ── Stats Formations ── -->
+    <div *ngIf="!isLoading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Formations -->
+        <div
+            class="relative overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg shadow-indigo-200">
+            <div class="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                        <span class="text-2xl">🎓</span>
+                    </div>
+                </div>
+                <div class="text-4xl font-extrabold tracking-tight mb-1">{{ stats?.totalFormations ?? 0 }}</div>
+                <div class="text-indigo-100 text-sm font-medium">Total Formations</div>
+            </div>
+        </div>
+
+        <!-- Chapters -->
+        <div
+            class="relative overflow-hidden bg-gradient-to-br from-sky-500 to-blue-600 text-white rounded-2xl p-6 shadow-lg shadow-sky-200">
+            <div class="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                        <span class="text-2xl">📚</span>
+                    </div>
+                </div>
+                <div class="text-4xl font-extrabold tracking-tight mb-1">{{ stats?.totalChapters ?? 0 }}</div>
+                <div class="text-sky-100 text-sm font-medium">Total Chapters</div>
+            </div>
+        </div>
+
+        <!-- Lessons -->
+        <div
+            class="relative overflow-hidden bg-gradient-to-br from-teal-500 to-emerald-600 text-white rounded-2xl p-6 shadow-lg shadow-teal-200">
+            <div class="absolute -top-4 -right-4 w-24 h-24 rounded-full bg-white/10"></div>
+            <div class="relative">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                        <span class="text-2xl">📝</span>
+                    </div>
+                </div>
+                <div class="text-4xl font-extrabold tracking-tight mb-1">{{ stats?.totalLessons ?? 0 }}</div>
+                <div class="text-teal-100 text-sm font-medium">Total Lessons</div>
+            </div>
+        </div>
+    </div>
+</div>

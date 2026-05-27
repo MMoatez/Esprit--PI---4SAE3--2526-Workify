@@ -1,0 +1,324 @@
+<div class="ai-panel">
+
+  <!-- Header -->
+  <div class="ai-header">
+    <div class="ai-brand">
+      <div class="ai-logo">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <div class="ai-brand-name">Assistant IA</div>
+        <div class="ai-brand-sub">Propulsé par Claude</div>
+      </div>
+    </div>
+    <div class="ai-status"><span class="ai-dot"></span> Actif</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="ai-tabs">
+    <button [class.active]="activeTab==='create'"   (click)="setTab('create')">✨ Créer</button>
+    <button [class.active]="activeTab==='schedule'" (click)="setTab('schedule')">📅 Planifier</button>
+    <button [class.active]="activeTab==='predict'"  (click)="setTab('predict')">📊 Prédire</button>
+    <button [class.active]="activeTab==='partners'" (click)="setTab('partners')">🤝 Partenaires</button>
+    <button [class.active]="activeTab==='email'"    (click)="setTab('email')">✉️ Email</button>
+    <button [class.active]="activeTab==='insights'" (click)="setTab('insights')">🔍 Insights</button>
+  </div>
+
+  <!-- Error -->
+  <div class="ai-error" *ngIf="error">⚠️ {{ error }}</div>
+
+  <!-- ========== 1. CREATE ========== -->
+  <div class="ai-body" *ngIf="activeTab==='create'">
+    <div class="ai-intro">
+      <div class="ai-intro-icon">✨</div>
+      <h3>Création intelligente</h3>
+      <p>Décrivez votre événement en langage naturel</p>
+    </div>
+    <div class="prompt-area">
+      <textarea [(ngModel)]="createPrompt" rows="3"
+        placeholder="Ex: Organiser un hackathon tech ce weekend pour 50 développeurs à Tunis..."></textarea>
+      <button class="btn-ai-run" (click)="generateEvent()" [disabled]="!createPrompt.trim() || loading">
+        <span *ngIf="!loading">✨ Générer</span>
+        <span *ngIf="loading" class="btn-loading"><span class="dot-spin"></span> Génération...</span>
+      </button>
+    </div>
+
+    <!-- Result -->
+    <div class="ai-result" *ngIf="generatedEvent && !loading">
+      <div class="result-header">
+        <span class="result-badge">Événement généré</span>
+        <div class="success-score" [style.color]="scoreColor(generatedEvent.successScore)">
+          Score de succès : {{ generatedEvent.successScore }}/100
+        </div>
+      </div>
+
+      <div class="gen-event-card">
+        <h2 class="gen-title">{{ generatedEvent.title }}</h2>
+        <p class="gen-desc">{{ generatedEvent.description }}</p>
+        <div class="gen-meta-grid">
+          <div class="gen-meta-item"><span class="gm-lbl">📅 Date suggérée</span><span class="gm-val">{{ formatDate(generatedEvent.suggestedDate) }}</span></div>
+          <div class="gen-meta-item"><span class="gm-lbl">📍 Lieu</span><span class="gm-val">{{ generatedEvent.location }}</span></div>
+          <div class="gen-meta-item"><span class="gm-lbl">🏷️ Catégorie</span><span class="gm-val">{{ generatedEvent.category }}</span></div>
+          <div class="gen-meta-item"><span class="gm-lbl">👥 Capacité</span><span class="gm-val">{{ generatedEvent.capacity }} personnes</span></div>
+          <div class="gen-meta-item"><span class="gm-lbl">💡 Sujet</span><span class="gm-val">{{ generatedEvent.topic }}</span></div>
+          <div class="gen-meta-item"><span class="gm-lbl">📈 Participation estimée</span><span class="gm-val">~{{ generatedEvent.estimatedAttendance }} personnes</span></div>
+        </div>
+
+        <div class="gen-tips" *ngIf="generatedEvent.tips?.length">
+          <div class="tips-title">💡 Conseils IA</div>
+          <ul><li *ngFor="let t of generatedEvent.tips">{{ t }}</li></ul>
+        </div>
+      </div>
+
+      <button class="btn-apply" (click)="applyGenerated()">Utiliser pour créer l'événement →</button>
+    </div>
+
+    <div class="ai-skeleton" *ngIf="loading">
+      <div class="sk-line sk-w80"></div>
+      <div class="sk-line sk-w60"></div>
+      <div class="sk-line sk-w90"></div>
+      <div class="sk-line sk-w50"></div>
+    </div>
+  </div>
+
+  <!-- ========== 2. SCHEDULE ========== -->
+  <div class="ai-body" *ngIf="activeTab==='schedule'">
+    <div class="ai-intro">
+      <div class="ai-intro-icon">📅</div>
+      <h3>Planification optimisée</h3>
+      <p>Trouvez le meilleur créneau pour votre événement</p>
+    </div>
+    <div class="form-group">
+      <label>Type d'événement</label>
+      <input [(ngModel)]="scheduleEventType" placeholder="Ex: Conférence, Hackathon, Workshop..." />
+    </div>
+    <div class="form-group">
+      <label>Catégorie</label>
+      <select [(ngModel)]="scheduleCategory">
+        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+      </select>
+    </div>
+    <button class="btn-ai-run" (click)="suggestSchedule()" [disabled]="!scheduleEventType.trim() || loading">
+      <span *ngIf="!loading">📅 Analyser les créneaux</span>
+      <span *ngIf="loading" class="btn-loading"><span class="dot-spin"></span> Analyse...</span>
+    </button>
+
+    <div class="ai-result" *ngIf="scheduleResult && !loading">
+      <div class="schedule-best">
+        <div class="sb-label">⭐ Meilleur créneau</div>
+        <div class="sb-date">{{ formatDate(scheduleResult.bestSlot) }}</div>
+      </div>
+      <div class="schedule-suggestions">
+        <div class="ss-item" *ngFor="let s of scheduleResult.suggestions; let i=index">
+          <div class="ss-rank">#{{ i+1 }}</div>
+          <div class="ss-info">
+            <div class="ss-date">{{ formatDate(s.datetime) }}</div>
+            <div class="ss-label">{{ s.label }}</div>
+            <div class="ss-reason">{{ s.reason }}</div>
+          </div>
+          <div class="ss-score" [style.color]="scoreColor(s.score)">{{ s.score }}%</div>
+        </div>
+      </div>
+      <div class="ai-advice" *ngIf="scheduleResult.generalAdvice">
+        <span>💡</span><span>{{ scheduleResult.generalAdvice }}</span>
+      </div>
+    </div>
+
+    <div class="ai-skeleton" *ngIf="loading"><div class="sk-line sk-w80"></div><div class="sk-line sk-w60"></div><div class="sk-line sk-w70"></div></div>
+  </div>
+
+  <!-- ========== 3. PREDICT ========== -->
+  <div class="ai-body" *ngIf="activeTab==='predict'">
+    <div class="ai-intro">
+      <div class="ai-intro-icon">📊</div>
+      <h3>Prédiction de participation</h3>
+      <p>Estimez le taux de présence avant l'événement</p>
+    </div>
+    <div class="form-group">
+      <label>Sélectionner un événement</label>
+      <select [(ngModel)]="selectedEventId">
+        <option [ngValue]="null">-- Choisir --</option>
+        <option *ngFor="let e of events" [value]="e.id">{{ e.title }}</option>
+      </select>
+    </div>
+    <button class="btn-ai-run" (click)="predictAttendance()" [disabled]="!selectedEventId || loading">
+      <span *ngIf="!loading">📊 Analyser</span>
+      <span *ngIf="loading" class="btn-loading"><span class="dot-spin"></span> Analyse...</span>
+    </button>
+
+    <div class="ai-result" *ngIf="predictionResult && !loading">
+      <!-- Big stats -->
+      <div class="predict-stats">
+        <div class="pstat">
+          <div class="pstat-num" [style.color]="scoreColor(predictionResult.attendanceRate)">{{ predictionResult.attendanceRate }}%</div>
+          <div class="pstat-lbl">Taux prédit</div>
+        </div>
+        <div class="pstat">
+          <div class="pstat-num">{{ predictionResult.predictedAttendance }}</div>
+          <div class="pstat-lbl">Personnes estimées</div>
+        </div>
+        <div class="pstat">
+          <div class="pstat-num">{{ predictionResult.confidence }}%</div>
+          <div class="pstat-lbl">Confiance IA</div>
+        </div>
+      </div>
+      <div class="risk-badge" [ngClass]="riskClass(predictionResult.noShowRisk)">
+        Risque no-show : {{ predictionResult.noShowRisk }}
+      </div>
+
+      <!-- Factors -->
+      <div class="factors-list" *ngIf="predictionResult.factors?.length">
+        <div class="fl-title">Facteurs d'influence</div>
+        <div class="factor-item" *ngFor="let f of predictionResult.factors">
+          <span class="f-impact" [class.pos]="f.impact==='POSITIVE'" [class.neg]="f.impact==='NEGATIVE'">
+            {{ f.impact==='POSITIVE' ? '↑' : f.impact==='NEGATIVE' ? '↓' : '→' }}
+          </span>
+          <div>
+            <div class="f-label">{{ f.label }}</div>
+            <div class="f-desc">{{ f.description }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recommendations -->
+      <div class="recommendations" *ngIf="predictionResult.recommendations?.length">
+        <div class="rec-title">Recommandations</div>
+        <ul><li *ngFor="let r of predictionResult.recommendations">{{ r }}</li></ul>
+      </div>
+    </div>
+    <div class="ai-skeleton" *ngIf="loading"><div class="sk-line sk-w80"></div><div class="sk-line sk-w60"></div><div class="sk-line sk-w40"></div></div>
+  </div>
+
+  <!-- ========== 4. PARTNERS ========== -->
+  <div class="ai-body" *ngIf="activeTab==='partners'">
+    <div class="ai-intro">
+      <div class="ai-intro-icon">🤝</div>
+      <h3>Recommandation de partenaires</h3>
+      <p>L'IA sélectionne les partenaires les plus adaptés</p>
+    </div>
+    <div class="form-group">
+      <label>Sélectionner un événement</label>
+      <select [(ngModel)]="selectedEventId">
+        <option [ngValue]="null">-- Choisir --</option>
+        <option *ngFor="let e of events" [value]="e.id">{{ e.title }}</option>
+      </select>
+    </div>
+    <button class="btn-ai-run" (click)="recommendPartners()" [disabled]="!selectedEventId || loading">
+      <span *ngIf="!loading">🤝 Analyser les partenaires</span>
+      <span *ngIf="loading" class="btn-loading"><span class="dot-spin"></span> Analyse...</span>
+    </button>
+
+    <div class="ai-result" *ngIf="partnersResult && !loading">
+      <div class="ai-advice" *ngIf="partnersResult.analysisNote">
+        <span>🧠</span><span>{{ partnersResult.analysisNote }}</span>
+      </div>
+      <div class="partner-rec" *ngFor="let p of partnersResult.recommendations; let i=index"
+           [class.top-pick]="p.ref === partnersResult.topPickRef">
+        <div class="pr-rank">#{{ i+1 }}</div>
+        <div class="pr-info">
+          <div class="pr-name">{{ p.name }} <span *ngIf="p.ref===partnersResult.topPickRef" class="top-badge">⭐ Top</span></div>
+          <div class="pr-match">{{ p.matchReason }}</div>
+          <div class="pr-contrib">{{ p.expectedContribution }}</div>
+        </div>
+        <div class="pr-right">
+          <div class="pr-score" [style.color]="scoreColor(p.score)">{{ p.score }}%</div>
+          <div class="pr-risk" [ngClass]="riskClass(p.risk)">{{ p.risk }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="ai-skeleton" *ngIf="loading"><div class="sk-line sk-w80"></div><div class="sk-line sk-w60"></div></div>
+  </div>
+
+  <!-- ========== 5. EMAIL ========== -->
+  <div class="ai-body" *ngIf="activeTab==='email'">
+    <div class="ai-intro">
+      <div class="ai-intro-icon">✉️</div>
+      <h3>Génération d'emails</h3>
+      <p>Créez des invitations personnalisées avec l'IA</p>
+    </div>
+    <div class="form-group">
+      <label>Événement</label>
+      <select [(ngModel)]="selectedEventId">
+        <option [ngValue]="null">-- Choisir --</option>
+        <option *ngFor="let e of events" [value]="e.id">{{ e.title }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Type de destinataire</label>
+      <div class="recipient-chips">
+        <span [class.chip-active]="emailRecipient==='participant'" (click)="emailRecipient='participant'">Participant</span>
+        <span [class.chip-active]="emailRecipient==='partenaire'" (click)="emailRecipient='partenaire'">Partenaire</span>
+        <span [class.chip-active]="emailRecipient==='VIP'" (click)="emailRecipient='VIP'">VIP</span>
+        <span [class.chip-active]="emailRecipient==='sponsor'" (click)="emailRecipient='sponsor'">Sponsor</span>
+      </div>
+    </div>
+    <button class="btn-ai-run" (click)="generateEmail()" [disabled]="!selectedEventId || loading">
+      <span *ngIf="!loading">✉️ Générer l'email</span>
+      <span *ngIf="loading" class="btn-loading"><span class="dot-spin"></span> Rédaction...</span>
+    </button>
+
+    <div class="ai-result" *ngIf="emailResult && !loading">
+      <div class="email-preview">
+        <div class="ep-subject"><span class="ep-lbl">Objet :</span> {{ emailResult.subject }}</div>
+        <div class="ep-tone">Ton : <em>{{ emailResult.tone }}</em></div>
+        <div class="ep-body" [innerHTML]="emailResult.body"></div>
+        <div class="ep-cta">{{ emailResult.callToAction }}</div>
+      </div>
+      <button class="btn-copy" (click)="copyEmail()">📋 Copier l'email</button>
+    </div>
+    <div class="ai-skeleton" *ngIf="loading"><div class="sk-line sk-w80"></div><div class="sk-line sk-w100"></div><div class="sk-line sk-w70"></div></div>
+  </div>
+
+  <!-- ========== 6. INSIGHTS ========== -->
+  <div class="ai-body" *ngIf="activeTab==='insights'">
+    <div class="ai-intro">
+      <div class="ai-intro-icon">🔍</div>
+      <h3>Analyse post-événement</h3>
+      <p>Obtenez des insights IA sur vos événements passés</p>
+    </div>
+    <div class="form-group">
+      <label>Événement à analyser</label>
+      <select [(ngModel)]="selectedEventId">
+        <option [ngValue]="null">-- Choisir --</option>
+        <option *ngFor="let e of events" [value]="e.id">{{ e.title }}</option>
+      </select>
+    </div>
+    <button class="btn-ai-run" (click)="getInsights()" [disabled]="!selectedEventId || loading">
+      <span *ngIf="!loading">🔍 Analyser</span>
+      <span *ngIf="loading" class="btn-loading"><span class="dot-spin"></span> Analyse...</span>
+    </button>
+
+    <div class="ai-result" *ngIf="insightsResult && !loading">
+      <div class="insights-score">
+        <div class="is-circle" [style.border-color]="scoreColor(insightsResult.overallScore)">
+          <div class="is-num" [style.color]="scoreColor(insightsResult.overallScore)">{{ insightsResult.overallScore }}</div>
+          <div class="is-lbl">Score global</div>
+        </div>
+        <p class="is-summary">{{ insightsResult.summary }}</p>
+      </div>
+
+      <div class="insights-grid" *ngIf="insightsResult.insights?.length">
+        <div class="insight-card" *ngFor="let ins of insightsResult.insights">
+          <div class="ic-trend" [ngClass]="trendClass(ins.trend)">{{ trendIcon(ins.trend) }}</div>
+          <div class="ic-title">{{ ins.title }}</div>
+          <div class="ic-value">{{ ins.value }}</div>
+          <div class="ic-expl">{{ ins.explanation }}</div>
+        </div>
+      </div>
+
+      <div class="highlights-list" *ngIf="insightsResult.highlights?.length">
+        <div class="hl-title">✅ Points forts</div>
+        <ul><li *ngFor="let h of insightsResult.highlights">{{ h }}</li></ul>
+      </div>
+      <div class="improvements-list" *ngIf="insightsResult.improvements?.length">
+        <div class="imp-title">🔧 Améliorations</div>
+        <ul><li *ngFor="let im of insightsResult.improvements">{{ im }}</li></ul>
+      </div>
+      <div class="ai-advice" *ngIf="insightsResult.nextEventRecommendation">
+        <span>🚀</span><span>{{ insightsResult.nextEventRecommendation }}</span>
+      </div>
+    </div>
+    <div class="ai-skeleton" *ngIf="loading"><div class="sk-line sk-w80"></div><div class="sk-line sk-w60"></div><div class="sk-line sk-w90"></div></div>
+  </div>
+
+</div>

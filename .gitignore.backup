@@ -1,0 +1,12 @@
+# Ignore application config with secrets
+backend/rag-service/src/main/resources/application.properties
+
+# Env files
+.env
+*.env
+
+# IDE and build
+.idea/
+target/
+node_modules/
+dist/

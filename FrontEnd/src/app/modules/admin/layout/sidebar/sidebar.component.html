@@ -1,0 +1,91 @@
+<div class="h-full flex flex-col">
+  <div class="h-16 flex items-center justify-center border-b border-slate-100">
+    <span class="text-xl font-bold text-primary-600">Workify Admin</span>
+  </div>
+  <nav class="flex-1 overflow-y-auto py-4">
+    <ul class="space-y-1 px-2">
+      <li>
+        <a *ngIf="isAdmin" routerLink="/admin/dashboard" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>📊</span>
+          <span class="font-medium">Dashboard</span>
+        </a>
+        <a *ngIf="isPartner" routerLink="/admin/partner-dashboard" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>📊</span>
+          <span class="font-medium">Dashboard</span>
+        </a>
+      </li>
+      <li *ngIf="isAdmin">
+        <a routerLink="/admin/users" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>👥</span>
+          <span class="font-medium">Users</span>
+        </a>
+      </li>
+      <li *ngIf="isAdmin">
+        <a routerLink="/admin/communication" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>💬</span>
+          <span class="font-medium">Communication</span>
+        </a>
+      </li>
+      <li *ngIf="isAdmin">
+        <a routerLink="/admin/feedback" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>⭐</span>
+          <span class="font-medium">Feedback Responses</span>
+        </a>
+      </li>
+      <li>
+        <a routerLink="/admin/formations" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>🎓</span>
+          <span class="font-medium">Formations</span>
+        </a>
+      </li>
+      <li *ngIf="isAdmin">
+        <a routerLink="/events/admin/list" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>📅</span>
+          <span class="font-medium">Événements</span>
+        </a>
+      </li>
+      <li *ngIf="isAdmin">
+        <a routerLink="/events/admin/validator" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>🔍</span>
+          <span class="font-medium">Scan Tickets</span>
+        </a>
+      </li>
+      <li *ngIf="isPartner">
+        <a routerLink="/events/partner/invitations" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>📩</span>
+          <span class="font-medium">Mes Invitations</span>
+        </a>
+      </li>
+      <li *ngIf="isAdmin">
+        <a routerLink="/admin/packs" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>📦</span>
+          <span class="font-medium">Packs</span>
+        </a>
+      </li>
+      <li *ngIf="isAdmin">
+        <a routerLink="/admin/subscriptions" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>🔑</span>
+          <span class="font-medium">Subscriptions</span>
+        </a>
+      </li>
+      <li *ngIf="isAdmin">
+        <a routerLink="/admin/payments" routerLinkActive="bg-primary-50 text-primary-600"
+          class="flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors">
+          <span>💳</span>
+          <span class="font-medium">Payments</span>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div>

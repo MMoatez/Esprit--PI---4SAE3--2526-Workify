@@ -1,0 +1,11 @@
+{
+  "java.import.maven.enabled": true,
+  "java.import.exclusions": [
+    "**/node_modules/**",
+    "**/target/**",
+    "**/.git/**",
+    "**/FrontEnd/**"
+  ],
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.autobuild.enabled": true
+}

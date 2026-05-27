@@ -1,0 +1,38 @@
+<!-- Desktop Layout (2 columns) -->
+<div class="messenger-shell hidden lg:flex h-screen">
+
+  <!-- Left panel — conversation list -->
+  <div class="left-panel w-96 flex-shrink-0 overflow-hidden">
+    <app-conversation-list></app-conversation-list>
+  </div>
+
+  <!--
+    Right panel — message thread
+    CRITICAL FIX: overflow must be "hidden" NOT "overflow-y:auto"
+    overflow-y:auto creates a scrolling ancestor that breaks all
+    position:absolute dropdowns — they anchor to this panel instead
+    of their direct parent and fall to the bottom of the page.
+    Scrolling is handled by .messages-container inside the thread.
+  -->
+  <div class="right-panel flex-1 overflow-hidden">
+    <ng-container *ngIf="hasActiveThread; else emptyState">
+      <router-outlet></router-outlet>
+    </ng-container>
+    <ng-template #emptyState>
+      <div class="h-full flex items-center justify-center p-10">
+        <div class="max-w-md text-center">
+          <div class="mx-auto w-16 h-16 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center shadow-md mb-5">
+            <span class="text-3xl">💬</span>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 mb-1">Select a conversation</h3>
+          <p class="text-sm text-gray-500">Choose a contact on the left to start chatting.</p>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Mobile Layout (1 column) -->
+<div class="messenger-shell lg:hidden h-screen overflow-hidden">
+  <router-outlet></router-outlet>
+</div>

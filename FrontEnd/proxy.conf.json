@@ -1,0 +1,54 @@
+{
+  "/api/conversations": {
+    "target": "http://localhost:8084",
+    "secure": false,
+    "pathRewrite": {}
+  },
+  "/api/messages": {
+    "target": "http://localhost:8084",
+    "secure": false
+  },
+  "/api/notifications": {
+    "target": "http://localhost:8084",
+    "secure": false
+  },
+  "/api/suggestions": {
+    "target": "http://localhost:8084",
+    "secure": false
+  },
+  "/api/calls": {
+    "target": "http://localhost:8084",
+    "secure": false
+  },
+  "/uploads/feedback": {
+    "target": "http://localhost:8086",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/api/evaluation": {
+    "target": "http://localhost:8086",
+    "secure": false
+  },
+  "/api/feedback": {
+    "target": "http://localhost:8086",
+    "secure": false
+  },
+  "/api/response-feedback": {
+    "target": "http://localhost:8086",
+    "secure": false
+  },
+  "/api/events": {
+    "target": "http://localhost:8096",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/api": {
+    "target": "http://localhost:8081",
+    "secure": false
+  },
+  "/ml": {
+    "target": "http://localhost:8085",
+    "secure": false,
+    "pathRewrite": {"^/ml": ""}
+  }
+}

@@ -1,0 +1,36 @@
+<!-- Toast stack — fixed top-right, rendered above everything (z-index: 99999) -->
+<div class="nt-stack" *ngIf="toasts.length > 0" aria-live="polite" aria-atomic="false">
+
+  <div *ngFor="let toast of toasts; trackBy: trackById"
+       class="nt-toast"
+       [class.nt-toast--high]="toast.priority === 'HIGH'"
+       [class.nt-toast--medium]="toast.priority === 'MEDIUM' || toast.priority === 'LOW' && toast.type === 'archive_notice'"
+       [class.nt-toast--low]="toast.priority === 'LOW' && toast.type !== 'archive_notice'"
+       role="alert"
+       [attr.aria-label]="toastTitle(toast)"
+       (click)="navigate(toast)">
+
+    <!-- Coloured left strip is provided via CSS border-left on .nt-toast -->
+
+    <!-- Priority icon -->
+    <span class="nt-icon" aria-hidden="true">{{ priorityIcon(toast.priority) }}</span>
+
+    <!-- Body -->
+    <div class="nt-body">
+      <p class="nt-title">{{ toastTitle(toast) }}</p>
+      <p class="nt-msg">{{ toast.message }}</p>
+      <p class="nt-sub" *ngIf="toast.conversationId && toast.type !== 'archive_notice'">
+        Tap to open conversation
+      </p>
+    </div>
+
+    <!-- Dismiss button -->
+    <button class="nt-close"
+            (click)="dismiss(toast.id, $event)"
+            [attr.aria-label]="'Dismiss: ' + toastTitle(toast)">
+      &times;
+    </button>
+
+  </div>
+
+</div>

@@ -1,0 +1,143 @@
+<div class="detail-container">
+  <div class="loading" *ngIf="loading">Chargement...</div>
+  <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+  <div *ngIf="event && !loading">
+    <div class="detail-header">
+      <button class="btn-back" (click)="goBack()">← Retour</button>
+      <span [class]="'badge ' + getStatusClass(event.status)">{{ event.status }}</span>
+    </div>
+
+    <div class="main-card">
+      <div class="event-title">
+        <h1>{{ event.title }}</h1>
+        <p class="topic">🏷️ {{ event.topic }}</p>
+      </div>
+      <div class="event-meta">
+        <div class="meta-item">
+          <span class="meta-icon">📅</span>
+          <div>
+            <span class="meta-label">Date</span>
+            <span class="meta-value">{{ event.eventDate | date:'dd MMMM yyyy, HH:mm' }}</span>
+          </div>
+        </div>
+        <div class="meta-item">
+          <span class="meta-icon">📍</span>
+          <div>
+            <span class="meta-label">Lieu</span>
+            <span class="meta-value">{{ event.location }}</span>
+          </div>
+        </div>
+        <div class="meta-item">
+          <span class="meta-icon">🏷️</span>
+          <div>
+            <span class="meta-label">Catégorie</span>
+            <span class="meta-value">{{ event.category }}</span>
+          </div>
+        </div>
+        <div class="meta-item">
+          <span class="meta-icon">👥</span>
+          <div>
+            <span class="meta-label">Capacité</span>
+            <span class="meta-value">{{ event.totalRegistrations }} / {{ event.capacity }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="description">
+        <h3>Description</h3>
+        <p>{{ event.description }}</p>
+      </div>
+    </div>
+
+    <!-- Map section -->
+    <div class="map-card">
+      <h3>🗺️ Localisation de l'événement</h3>
+      <app-event-map
+        [latitude]="event.latitude"
+        [longitude]="event.longitude"
+        [locationName]="event.location"
+        [showRoute]="!isAdmin && !!myRegistration">
+      </app-event-map>
+    </div>
+
+    <div class="stats-card" *ngIf="stats">
+      <h3>📊 Statistiques</h3>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-value">{{ stats.totalRegistrations }}</span>
+          <span class="stat-label">Inscrits confirmés</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ stats.availableSpots }}</span>
+          <span class="stat-label">Places disponibles</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ stats.acceptedPartners }}</span>
+          <span class="stat-label">Partenaires</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ stats.totalContents }}</span>
+          <span class="stat-label">Contenus</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registration card: hidden for admins -->
+    <div class="register-card" *ngIf="event.status === EventStatus.PUBLISHED && !isAdmin">
+      <h3>🎟️ Inscription</h3>
+
+      <div *ngIf="myRegistration">
+        <div class="registration-status reg-pending" *ngIf="myRegistration.status === RegistrationStatus.PENDING">
+          ⏳ Votre inscription est <strong>en attente de validation</strong> par l'administrateur.
+        </div>
+        <div class="registration-status reg-confirmed" *ngIf="myRegistration.status === RegistrationStatus.CONFIRMED">
+          ✅ Votre inscription est <strong>confirmée</strong> ! Nous vous attendons.
+        </div>
+        <div class="registration-status reg-attended" *ngIf="myRegistration.status === RegistrationStatus.ATTENDED">
+          🎉 Vous avez <strong>participé</strong> à cet événement.
+        </div>
+        <div class="registration-status reg-cancelled" *ngIf="myRegistration.status === RegistrationStatus.CANCELLED">
+          ❌ Votre inscription a été <strong>refusée</strong>.
+        </div>
+
+        <div class="ticket-actions" *ngIf="myRegistration.status === RegistrationStatus.CONFIRMED">
+          <button class="btn-ical" (click)="downloadIcal()">📅 Ajouter au calendrier</button>
+          <button class="btn-ticket" (click)="goToTicket()">🎫 Mon ticket QR</button>
+        </div>
+
+        <button class="btn-cancel-reg"
+          *ngIf="myRegistration.status === RegistrationStatus.PENDING || myRegistration.status === RegistrationStatus.CONFIRMED"
+          (click)="cancelRegistration()">
+          Annuler mon inscription
+        </button>
+      </div>
+
+      <div *ngIf="!myRegistration">
+        <div class="form-group">
+          <label>Je suis :</label>
+          <select [(ngModel)]="selectedUserType">
+            <option [value]="UserType.FREELANCER">Freelancer</option>
+            <option [value]="UserType.CLIENT">Client</option>
+          </select>
+        </div>
+        <div class="quiz-hint">
+          <span class="quiz-badge">🧠 Quiz requis</span>
+          <span>Répondez à un quiz rapide sur le sujet de l'événement pour vous inscrire.</span>
+        </div>
+        <button class="btn-register" (click)="openQuiz()" [disabled]="registering">
+          {{ registering ? 'Inscription en cours...' : '🎟️ S\'inscrire' }}
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Registration Quiz Modal -->
+<app-registration-quiz
+  *ngIf="showQuiz && event"
+  [eventId]="event.id"
+  [eventTitle]="event.title"
+  (quizPassed)="onQuizPassed()"
+  (quizCancelled)="onQuizCancelled()">
+</app-registration-quiz>

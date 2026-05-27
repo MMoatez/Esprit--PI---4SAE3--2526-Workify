@@ -1,0 +1,123 @@
+<div class="min-h-screen bg-slate-50 py-12">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Loading State -->
+        <div *ngIf="loading" class="text-center py-20">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p class="text-slate-500 font-medium">Loading final assessment...</p>
+        </div>
+
+        <!-- Debug Info (Temporary) -->
+        <div *ngIf="alreadyPassed" class="bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 p-3 rounded-xl mb-6 text-sm font-bold flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            System state: ALREADY_PASSED detected. Quiz should be hidden.
+        </div>
+
+        <!-- Quiz Content -->
+        <div *ngIf="!loading && quiz && !result && !alreadyPassed">
+            <div class="mb-10 text-center">
+                <h1 class="text-3xl font-bold text-slate-900 mb-2">{{ quiz.title || 'Final Course Quiz' }}</h1>
+                <p class="text-slate-500">Pass this quiz with at least 50% to obtain your certificate.</p>
+            </div>
+
+            <div class="space-y-8">
+                <div *ngFor="let question of quiz.questions; let i = index" 
+                     class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                    <h3 class="text-xl font-bold text-slate-900 mb-6">
+                        <span class="text-indigo-600 mr-2">Q{{i + 1}}.</span>
+                        {{ question.text }}
+                    </h3>
+
+                    <div class="grid grid-cols-1 gap-4">
+                        <button *ngFor="let option of question.options"
+                                (click)="onSelectOption(question.id!, option.id!)"
+                                [class.bg-indigo-600]="answers[question.id!] === option.id"
+                                [class.text-white]="answers[question.id!] === option.id"
+                                [class.border-indigo-600]="answers[question.id!] === option.id"
+                                [class.bg-slate-50]="answers[question.id!] !== option.id"
+                                class="w-full text-left p-4 rounded-xl border border-transparent hover:border-indigo-200 transition-all font-medium">
+                            <span class="mr-3 opacity-50">•</span>
+                            {{ option.text }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 flex justify-center">
+                <button (click)="onSubmit()"
+                        [disabled]="submitting"
+                        class="px-12 py-4 bg-indigo-600 text-white rounded-2xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-lg active:scale-95 disabled:opacity-50">
+                    {{ submitting ? 'Submitting...' : 'Submit Assessment' }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Result State -->
+        <div *ngIf="result" class="text-center py-20 bg-white rounded-[3rem] shadow-xl border border-slate-100 p-12">
+            <div [class.bg-green-100]="result.passed" [class.bg-red-100]="!result.passed"
+                 class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-8">
+                <svg *ngIf="result.passed" class="w-12 h-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+                <svg *ngIf="!result.passed" class="w-12 h-12 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </div>
+
+            <h2 class="text-4xl font-extrabold text-slate-900 mb-4">
+                {{ result.passed ? 'Course Completed!' : 'Assessment Failed' }}
+            </h2>
+            <p class="text-xl text-slate-500 mb-2">Score: <span class="font-bold text-indigo-600">{{ result.score | number:'1.0-0' }}%</span></p>
+            <p class="text-lg text-slate-400 mb-10 max-w-md mx-auto">{{ result.message }}</p>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button *ngIf="result.passed" (click)="viewCertificate()"
+                        class="px-8 py-4 bg-green-600 text-white rounded-2xl font-bold hover:bg-green-700 transition-all">
+                    Download Certificate
+                </button>
+                <button *ngIf="!result.passed" (click)="result = undefined"
+                        class="px-8 py-4 bg-orange-600 text-white rounded-2xl font-bold hover:bg-orange-700 transition-all">
+                    Retry Quiz
+                </button>
+                <button (click)="goBack()"
+                        class="px-8 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">
+                    Back to Course
+                </button>
+            </div>
+        </div>
+        <!-- Already Passed State -->
+        <div *ngIf="!loading && alreadyPassed" class="text-center py-20 bg-white rounded-[3rem] shadow-xl border border-slate-100 p-12">
+            <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8 border-4 border-white shadow-lg">
+                <svg class="w-12 h-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+
+            <h2 class="text-4xl font-extrabold text-slate-900 mb-4">You Succeeded!</h2>
+            <p class="text-xl text-slate-500 mb-8 max-w-md mx-auto">
+                You have already passed this course assessment and received your certificate. 
+                There is no need to retake the quiz.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button (click)="viewCertificate()"
+                        class="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg hover:shadow-indigo-500/20 active:scale-95">
+                    View My Certificate
+                </button>
+                <button (click)="goBack()"
+                        class="px-10 py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all">
+                    Back to Course
+                </button>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!loading && !quiz && !result && !alreadyPassed" class="text-center py-20">
+            <h2 class="text-2xl font-bold text-slate-900">No Final Quiz Found</h2>
+            <p class="text-slate-500 mt-2 mb-8">This course does not currently have a final assessment.</p>
+            <button (click)="goBack()"
+                    class="px-8 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700">
+                Back to Lessons
+            </button>
+        </div>
+    </div>
+</div>

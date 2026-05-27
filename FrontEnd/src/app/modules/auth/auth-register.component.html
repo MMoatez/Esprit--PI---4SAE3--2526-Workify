@@ -1,0 +1,396 @@
+<div class="register-page">
+    <!-- Animated Background Orbs -->
+    <div class="reg-orb reg-orb--1"></div>
+    <div class="reg-orb reg-orb--2"></div>
+    <div class="reg-orb reg-orb--3"></div>
+
+    <!-- Left Branding Panel (Desktop) -->
+    <div class="reg-branding">
+        <div class="reg-brand-float-1"></div>
+        <div class="reg-brand-float-2"></div>
+        <div class="reg-brand-content">
+            <img src="/images/logo.png" alt="Workify Logo" class="reg-brand-logo" />
+            <h2 class="reg-brand-title">Join<br/>Workify</h2>
+            <p class="reg-brand-subtitle">Create your account and start connecting with top talent worldwide.</p>
+            <div class="reg-brand-steps">
+                <div class="reg-brand-step" [class.reg-brand-step--active]="currentStep >= 1">
+                    <div class="reg-brand-step-num">1</div>
+                    <div>
+                        <div class="reg-brand-step-label">Account Setup</div>
+                        <div class="reg-brand-step-desc">Basic information & profile</div>
+                    </div>
+                </div>
+                <div class="reg-brand-step" [class.reg-brand-step--active]="currentStep >= 2">
+                    <div class="reg-brand-step-num">2</div>
+                    <div>
+                        <div class="reg-brand-step-label">CV Analysis</div>
+                        <div class="reg-brand-step-desc">AI-powered skill extraction</div>
+                    </div>
+                </div>
+                <div class="reg-brand-step" [class.reg-brand-step--active]="currentStep >= 3">
+                    <div class="reg-brand-step-num">3</div>
+                    <div>
+                        <div class="reg-brand-step-label">Final Review</div>
+                        <div class="reg-brand-step-desc">Confirm & create account</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Form Panel -->
+    <div class="reg-form-side">
+        <div class="reg-card-wrapper">
+            <!-- Mobile Stepper -->
+            <div class="reg-stepper-mobile">
+                <div class="reg-stepper-track">
+                    <div class="reg-stepper-progress" [style.width.%]="(currentStep - 1) * 50"></div>
+                </div>
+                <div class="reg-stepper-dots">
+                    <div *ngFor="let step of [1, 2, 3]" class="reg-stepper-dot" [class.reg-stepper-dot--active]="currentStep >= step" [class.reg-stepper-dot--current]="currentStep === step">
+                        <span *ngIf="currentStep <= step">{{ step }}</span>
+                        <span *ngIf="currentStep > step">✓</span>
+                    </div>
+                </div>
+                <div class="reg-stepper-labels">
+                    <span [class.active]="currentStep === 1">Account</span>
+                    <span [class.active]="currentStep === 2">Experience</span>
+                    <span [class.active]="currentStep === 3">Summary</span>
+                </div>
+            </div>
+
+            <!-- Card -->
+            <div class="reg-card">
+                <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+
+                    <!-- Step 1: Basic Info -->
+                    <div *ngIf="currentStep === 1" class="reg-step-content">
+                        <div class="reg-step-header">
+                            <h2>Welcome! 👋</h2>
+                            <p>Let's start with your basic information.</p>
+                        </div>
+
+                        <div class="reg-grid-2">
+                            <div class="reg-input-group">
+                                <label class="reg-label">First Name</label>
+                                <div class="reg-input-wrapper">
+                                    <div class="reg-input-icon">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                    </div>
+                                    <input formControlName="firstName" type="text" class="reg-input" placeholder="John"
+                                        [class.reg-input--error]="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched">
+                                </div>
+                                <div *ngIf="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched" class="reg-error-text">
+                                    First name is required
+                                </div>
+                            </div>
+                            <div class="reg-input-group">
+                                <label class="reg-label">Last Name</label>
+                                <div class="reg-input-wrapper">
+                                    <div class="reg-input-icon">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                    </div>
+                                    <input formControlName="lastName" type="text" class="reg-input" placeholder="Doe"
+                                        [class.reg-input--error]="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched">
+                                </div>
+                                <div *ngIf="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched" class="reg-error-text">
+                                    Last name is required
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reg-input-group">
+                            <label class="reg-label">Professional Email</label>
+                            <div class="reg-input-wrapper">
+                                <div class="reg-input-icon">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </div>
+                                <input formControlName="email" type="email" class="reg-input" placeholder="name@example.com"
+                                    [class.reg-input--error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+                            </div>
+                            <div *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="reg-error-text">
+                                <span *ngIf="registerForm.get('email')?.errors?.['required']">Email is required</span>
+                                <span *ngIf="registerForm.get('email')?.errors?.['email']">Invalid email format</span>
+                            </div>
+                        </div>
+
+                        <div class="reg-input-group">
+                            <label class="reg-label">Password</label>
+                            <div class="reg-input-wrapper">
+                                <div class="reg-input-icon">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                                </div>
+                                <input [type]="showPassword ? 'text' : 'password'" formControlName="password" class="reg-input reg-input--pw" placeholder="Min. 8 characters"
+                                    [class.reg-input--error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+                                <button type="button" (click)="showPassword = !showPassword" class="reg-input-action">
+                                    <span *ngIf="!showPassword">👁️</span>
+                                    <span *ngIf="showPassword">🔒</span>
+                                </button>
+                            </div>
+                            <div *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" class="reg-error-text">
+                                <span *ngIf="registerForm.get('password')?.errors?.['required']">Password is required</span>
+                                <span *ngIf="registerForm.get('password')?.errors?.['minlength']">Password must be at least 8 characters</span>
+                            </div>
+                        </div>
+
+                        <div class="reg-input-group">
+                            <label class="reg-label">Profile Photo (optional)</label>
+                            <div class="reg-file-upload">
+                                <input type="file" accept="image/*" (change)="onAvatarSelected($event)" class="reg-file-input">
+                                <div class="reg-file-content">
+                                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <span>Choose a photo</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Organization/Company info for Client/Partner -->
+                        <div *ngIf="registerForm.get('role')?.value !== 'FREELANCER'" class="reg-org-section">
+                            <div class="reg-grid-2">
+                                <div class="reg-input-group">
+                                    <label class="reg-label">Organization Name</label>
+                                    <div class="reg-input-wrapper">
+                                        <div class="reg-input-icon">
+                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                                        </div>
+                                        <input formControlName="companyName" type="text" placeholder="e.g. Acme Corp" class="reg-input">
+                                    </div>
+                                </div>
+                                <div class="reg-input-group">
+                                    <label class="reg-label">Industry</label>
+                                    <div class="reg-input-wrapper">
+                                        <div class="reg-input-icon">
+                                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                        </div>
+                                        <input formControlName="industry" type="text" placeholder="e.g. Technology" class="reg-input">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="reg-input-group">
+                                <label class="reg-label">Website (optional)</label>
+                                <div class="reg-input-wrapper">
+                                    <div class="reg-input-icon">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                                    </div>
+                                    <input formControlName="website" type="url" placeholder="https://example.com" class="reg-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reg-input-group">
+                            <label class="reg-label">Your Profile</label>
+                            <div class="reg-role-grid">
+                                <button type="button" *ngFor="let r of roles"
+                                    (click)="registerForm.patchValue({role: r.value})"
+                                    class="reg-role-card"
+                                    [class.reg-role-card--active]="registerForm.get('role')?.value === r.value">
+                                    <span class="reg-role-icon">{{ r.icon }}</span>
+                                    <span class="reg-role-label">{{ r.label }}</span>
+                                    <div class="reg-role-check" *ngIf="registerForm.get('role')?.value === r.value">✓</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div *ngIf="error" class="reg-alert reg-alert--error">
+                            {{ error }}
+                        </div>
+
+                        <button type="button" (click)="nextStep()"
+                            [disabled]="registerForm.get('firstName')?.invalid || registerForm.get('lastName')?.invalid || registerForm.get('email')?.invalid || registerForm.get('password')?.invalid || isSubmitting"
+                            class="reg-submit">
+                            <span *ngIf="isSubmitting && currentStep === 1" class="reg-spinner"></span>
+                            <span>{{ isSubmitting && currentStep === 1 ? 'Checking...' : 'Continue' }}</span>
+                            <svg *ngIf="!isSubmitting" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        </button>
+
+                        <div class="reg-footer-link">
+                            Already have an account? <a routerLink="/auth/login">Sign in</a>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: CV Parsing -->
+                    <div *ngIf="currentStep === 2" class="reg-step-content">
+                        <div class="reg-step-header reg-step-header--center">
+                            <div class="reg-step-icon-badge">
+                                <span>📄</span>
+                            </div>
+                            <h2>Profile Analysis</h2>
+                            <p>Upload your CV to automatically complete your profile with AI, or build it from scratch.</p>
+                        </div>
+
+                        <div class="reg-upload-grid">
+                            <!-- Option 1: Upload -->
+                            <div class="reg-upload-card" [class.reg-upload-card--loading]="isExtracting">
+                                <input type="file" accept="application/pdf" (change)="onFileSelected($event)"
+                                    class="reg-upload-input" [disabled]="isExtracting">
+
+                                <div *ngIf="!isExtracting" class="reg-upload-content">
+                                    <div class="reg-upload-icon">📤</div>
+                                    <p class="reg-upload-title">Upload PDF</p>
+                                    <p class="reg-upload-desc">AI will extract your skills</p>
+                                </div>
+
+                                <div *ngIf="isExtracting" class="reg-upload-loading">
+                                    <div class="reg-spinner reg-spinner--teal"></div>
+                                    <p>Extracting...</p>
+                                </div>
+                            </div>
+
+                            <!-- Option 2: Build -->
+                            <div class="reg-upload-card reg-upload-card--alt" (click)="openResumeBuilder()">
+                                <div class="reg-upload-content">
+                                    <div class="reg-upload-icon">✨</div>
+                                    <p class="reg-upload-title">Build with Workify</p>
+                                    <p class="reg-upload-desc">Interactive resume builder</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reg-btn-row">
+                            <button type="button" (click)="prevStep()" class="reg-btn-outline">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path></svg>
+                                Back
+                            </button>
+                            <button type="button" (click)="nextStep()" class="reg-btn-ghost">
+                                Skip this step
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Review -->
+                    <div *ngIf="currentStep === 3" class="reg-step-content">
+                        <div class="reg-step-header">
+                            <h2>Final Review ✅</h2>
+                            <p>
+                                {{ registerForm.get('role')?.value === 'CLIENT' ? 'Review your information.' : 'Here\'s what we extracted from your CV.' }}
+                            </p>
+                        </div>
+
+                        <div class="reg-review-card">
+                            <div class="reg-review-row">
+                                <span class="reg-review-label">Full Name</span>
+                                <span class="reg-review-value">{{ registerForm.get('firstName')?.value }} {{ registerForm.get('lastName')?.value }}</span>
+                            </div>
+
+                            <ng-container *ngIf="registerForm.get('role')?.value !== 'FREELANCER'">
+                                <div class="reg-review-row" *ngIf="registerForm.get('companyName')?.value">
+                                    <span class="reg-review-label">Organization</span>
+                                    <span class="reg-review-value">{{ registerForm.get('companyName')?.value }}</span>
+                                </div>
+                                <div class="reg-review-row" *ngIf="registerForm.get('industry')?.value">
+                                    <span class="reg-review-label">Industry</span>
+                                    <span class="reg-review-value">{{ registerForm.get('industry')?.value }}</span>
+                                </div>
+                                <div class="reg-review-row" *ngIf="registerForm.get('website')?.value">
+                                    <span class="reg-review-label">Website</span>
+                                    <span class="reg-review-value">{{ registerForm.get('website')?.value }}</span>
+                                </div>
+                            </ng-container>
+
+                            <!-- Skills Section (Only for Freelancers) -->
+                            <div class="reg-skills-section" *ngIf="registerForm.get('role')?.value === 'FREELANCER'">
+                                <label class="reg-label">Skills</label>
+
+                                <!-- Add Skill Input -->
+                                <div class="reg-skill-add">
+                                    <input type="text" [(ngModel)]="newCompetence" [ngModelOptions]="{standalone: true}"
+                                        (keydown.enter)="$event.preventDefault(); addCompetence()"
+                                        placeholder="Add a skill..."
+                                        class="reg-skill-input">
+                                    <button type="button" (click)="addCompetence()" class="reg-skill-add-btn">
+                                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                    </button>
+                                </div>
+
+                                <div class="reg-skills-list">
+                                    <div *ngFor="let c of extractedCompetences; let i = index" class="reg-skill-tag">
+                                        <!-- View Mode -->
+                                        <ng-container *ngIf="editingIndex !== i">
+                                            <span>{{ c }}</span>
+                                            <div class="reg-skill-actions">
+                                                <button type="button" (click)="startEdit(i)" class="reg-skill-action-btn" title="Edit">✎</button>
+                                                <button type="button" (click)="removeCompetence(i)" class="reg-skill-action-btn reg-skill-action-btn--delete" title="Delete">×</button>
+                                            </div>
+                                        </ng-container>
+
+                                        <!-- Edit Mode -->
+                                        <ng-container *ngIf="editingIndex === i">
+                                            <input type="text" [(ngModel)]="editingValue"
+                                                [ngModelOptions]="{standalone: true}"
+                                                (keydown.enter)="$event.preventDefault(); saveEdit()"
+                                                class="reg-skill-edit-input">
+                                            <button type="button" (click)="saveEdit()" class="reg-skill-action-btn reg-skill-action-btn--save">✓</button>
+                                            <button type="button" (click)="cancelEdit()" class="reg-skill-action-btn reg-skill-action-btn--delete">×</button>
+                                        </ng-container>
+                                    </div>
+
+                                    <div *ngIf="extractedCompetences.length === 0" class="reg-skills-empty">
+                                        No skills yet. Add some above.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="error" class="reg-alert reg-alert--error">
+                            {{ error }}
+                        </div>
+
+                        <div class="reg-btn-row">
+                            <button type="button" (click)="prevStep()" class="reg-btn-outline">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"></path></svg>
+                                Back
+                            </button>
+                            <button type="submit" [disabled]="isSubmitting" class="reg-submit reg-submit--finish">
+                                <span *ngIf="isSubmitting" class="reg-spinner"></span>
+                                {{ isSubmitting ? 'Creating...' : '🚀 Create Account' }}
+                            </button>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resume Builder Modal -->
+    <div *ngIf="showResumeBuilder && safeCvBuilderUrl"
+        class="reg-modal-backdrop"
+        (click)="closeResumeBuilder()">
+        <div class="reg-modal" (click)="$event.stopPropagation()">
+            <!-- Modal Header -->
+            <div class="reg-modal-header">
+                <div class="reg-modal-header-left">
+                    <div class="reg-modal-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3>Workify Resume Builder</h3>
+                        <p>Build your professional profile in minutes</p>
+                    </div>
+                </div>
+                <button (click)="closeResumeBuilder()" class="reg-modal-close">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Builder Content -->
+            <div class="reg-modal-body">
+                <iframe [src]="safeCvBuilderUrl" class="reg-modal-iframe" title="Resume Builder"></iframe>
+                <div *ngIf="!safeCvBuilderUrl" class="reg-modal-loading">
+                    <div class="reg-spinner reg-spinner--lg"></div>
+                    <p>Initializing builder...</p>
+                </div>
+            </div>
+
+            <!-- Info Bar -->
+            <div class="reg-modal-hint">
+                Click "Export" in the builder when you are finished! 🚀
+            </div>
+        </div>
+    </div>
+</div>

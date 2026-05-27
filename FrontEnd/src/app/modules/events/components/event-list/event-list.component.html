@@ -1,0 +1,58 @@
+<div class="event-list-container">
+  <div class="header">
+    <h1>🎯 Gestion des Événements</h1>
+    <button class="btn-create" (click)="createEvent()">
+      + Créer un événement
+    </button>
+  </div>
+
+  <div class="error-msg" *ngIf="error">{{ error }}</div>
+
+  <div class="loading" *ngIf="loading">Chargement...</div>
+
+  <div class="table-container" *ngIf="!loading">
+    <table>
+      <thead>
+        <tr>
+          <th>Titre</th>
+          <th>Catégorie</th>
+          <th>Date</th>
+          <th>Lieu</th>
+          <th>Capacité</th>
+          <th>Inscrits</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let event of events">
+          <td>{{ event.title }}</td>
+          <td>{{ event.category }}</td>
+          <td>{{ event.eventDate | date:'dd/MM/yyyy' }}</td>
+          <td>{{ event.location }}</td>
+          <td>{{ event.capacity }}</td>
+          <td>{{ event.totalRegistrations }}</td>
+          <td>
+            <span [class]="'badge ' + getStatusClass(event.status)">
+              {{ event.status }}
+            </span>
+          </td>
+          <td class="actions">
+            <button class="btn-view" (click)="viewDetail(event.id)" title="Voir">👁</button>
+            <button class="btn-edit" (click)="editEvent(event.id)" title="Modifier">✏️</button>
+            <button class="btn-partners" (click)="managePartners(event.id)" title="Partenaires">🤝</button>
+            <button class="btn-registrations" (click)="manageRegistrations(event.id)" title="Inscriptions" *ngIf="event.status === EventStatus.PUBLISHED">👥</button>
+            <button class="btn-publish" *ngIf="event.status === EventStatus.DRAFT"
+              (click)="updateStatus(event.id, EventStatus.PUBLISHED)" title="Publier">🚀</button>
+            <button class="btn-archive" *ngIf="event.status === EventStatus.PUBLISHED"
+              (click)="updateStatus(event.id, EventStatus.ARCHIVED)" title="Archiver">📦</button>
+            <button class="btn-delete" (click)="deleteEvent(event.id)" title="Supprimer">🗑</button>
+          </td>
+        </tr>
+        <tr *ngIf="events.length === 0">
+          <td colspan="8" class="no-data">Aucun événement trouvé</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

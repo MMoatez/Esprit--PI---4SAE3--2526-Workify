@@ -26,6 +26,21 @@ public class SecurityConfig {
       .authorizeHttpRequests(auth -> auth
         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
         .requestMatchers("/api/public/**").permitAll()
+        .requestMatchers(org.springframework.http.HttpMethod.GET,
+          "/api/events/published",
+          "/api/events/category/**"
+        ).permitAll()
+        .requestMatchers(org.springframework.http.HttpMethod.GET,
+          "/api/events/{id:\\d+}",
+          "/api/events/{id:\\d+}/content",
+          "/api/events/{id:\\d+}/ical",
+          "/api/events/{id:\\d+}/stats"
+        ).permitAll()
+        .requestMatchers(
+          "/api/events/my-registrations",
+          "/api/events/*/my-registration",
+          "/api/events/*/register"
+        ).authenticated()
         .anyRequest().authenticated())
       .oauth2ResourceServer(oauth2 -> oauth2
         .jwt(jwt -> jwt.jwtAuthenticationConverter(new KeycloakJwtAuthenticationConverter())));

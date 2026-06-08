@@ -16,7 +16,7 @@ export interface MatchingResult {   // ✅ export obligatoire
 })
 export class MatchingService {   // ✅ export obligatoire
 
-  private apiUrl = 'http://localhost:8082/api/matching';
+  private apiUrl = 'http://localhost:8063/api/matching';
 
   constructor(private http: HttpClient) {}
 

@@ -21,7 +21,7 @@ export interface ContractRequest {
 @Injectable({ providedIn: 'root' })
 export class ContractService {
 
-  private readonly apiUrl = 'http://localhost:8082/api/contract/generate';
+  private readonly apiUrl = 'http://localhost:8063/api/contract/generate';
 
   constructor(private http: HttpClient) {}
 

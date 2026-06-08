@@ -28,8 +28,9 @@ export class AuthCallbackComponent implements OnInit {
     }
     const params = new URLSearchParams(hash);
     const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
     if (accessToken) {
-      this.auth.setToken(accessToken);
+      this.auth.setSession(accessToken, refreshToken);
       this.router.navigate(['/profile']);
     } else {
       this.router.navigate(['/auth/login']);

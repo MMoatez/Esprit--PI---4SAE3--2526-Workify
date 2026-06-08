@@ -5,7 +5,7 @@ import { ReviewRequest, FreelancerReplyRequest } from '../models/Review.model';
 @Injectable({ providedIn: 'root' })
 export class ReviewService {
 
-  private readonly base = 'http://localhost:8082/api/reviews';
+  private readonly base = 'http://localhost:8063/api/reviews';
 
   constructor(private http: HttpClient) {}
 

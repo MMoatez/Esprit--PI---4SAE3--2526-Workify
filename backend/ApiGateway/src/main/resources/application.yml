@@ -43,7 +43,7 @@ spring:
             - StripPrefix=0
 
         # ─────────────────────────────────────────────
-        # PROJECT SERVICE  (marketplace projects / offers, port 8082)
+        # PROJECT SERVICE  (marketplace projects / offers, port 8063)
         # ─────────────────────────────────────────────
         - id: project-service
           uri: lb://project-service

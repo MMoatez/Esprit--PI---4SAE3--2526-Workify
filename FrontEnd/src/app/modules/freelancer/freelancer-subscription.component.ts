@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PackService } from '../../core/services/pack.service';
 import { SubscriptionService } from '../../core/services/subscription.service';
+import { PaymentService } from '../../core/services/payment.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Pack, Duration, DurationDisplay, PackOption, UserType } from '../../core/models/pack.model';
 import {
@@ -54,7 +56,7 @@ export class FreelancerSubscriptionComponent implements OnInit {
   step = 1;
 
   selectedPaymentMethod: PaymentMethod = PaymentMethod.BANK_TRANSFER;
-  paymentMethods = [PaymentMethod.BANK_TRANSFER, PaymentMethod.BANK_DEPOSIT];
+  paymentMethods = [PaymentMethod.ONLINE_PAYMENT, PaymentMethod.BANK_DEPOSIT, PaymentMethod.BANK_TRANSFER];
   paymentMethodDisplay = PaymentMethodDisplay;
   PaymentMethod = PaymentMethod;
 
@@ -64,6 +66,12 @@ export class FreelancerSubscriptionComponent implements OnInit {
 
   submitting = false;
   submitError = '';
+
+  /** Stripe checkout redirect in progress */
+  stripeRedirecting = false;
+  /** Stripe return: confirming payment */
+  stripeConfirming = false;
+  stripeConfirmError = '';
 
   activeSubscription: SubscriptionResponse | null = null;
   activeDaysRemaining = 0;
@@ -96,19 +104,19 @@ export class FreelancerSubscriptionComponent implements OnInit {
       title: 'Pro',
       subtitle: 'Perfect for getting started and boosting your visibility',
       description: 'A solid foundation to launch your activity and attract the right opportunities.',
-      emoji: 'AI'
+      emoji: '⚡'
     },
     {
       title: 'Pro Max',
       subtitle: 'Ideal for professionals who want to scale faster',
       description: 'Built for users who need stronger performance, consistency, and growth tools.',
-      emoji: 'Growth'
+      emoji: '🚀'
     },
     {
       title: 'Workify Premium',
       subtitle: 'Full experience with maximum power and visibility',
       description: 'Our most complete plan for users seeking premium impact and maximum reach.',
-      emoji: 'Premium'
+      emoji: '🏆'
     }
   ];
 
@@ -123,29 +131,50 @@ export class FreelancerSubscriptionComponent implements OnInit {
   constructor(
     private packService: PackService,
     private subscriptionService: SubscriptionService,
-    private authService: AuthService
+    private paymentService: PaymentService,
+    private authService: AuthService,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
+
+  get roleName(): string {
+    const role = (this.authService.getUserRole() || '').toUpperCase();
+    if (role === 'PARTNER') return 'Partner';
+    if (role === 'CLIENT') return 'Client';
+    return 'Freelancer';
+  }
 
   ngOnInit(): void {
     this.initializeQuizRole();
     this.loadPacks();
     this.loadActiveSubscription();
+    this.handleStripeReturn();
   }
 
   loadPacks(): void {
     this.loading = true;
     this.packService.getAllPacks().subscribe({
       next: (packs) => {
-        const allowedUserTypes = new Set<UserType>([
+        const role = (this.authService.getUserRole() || '').toUpperCase();
+        let allowedUserTypes = new Set<UserType>([
           UserType.FREELANCER,
           UserType.FREELANCER_CLIENT
         ]);
+
+        if (role === 'PARTNER') {
+          allowedUserTypes = new Set<UserType>([UserType.PARTNER]);
+        } else if (role === 'CLIENT') {
+          allowedUserTypes = new Set<UserType>([
+            UserType.CLIENT,
+            UserType.FREELANCER_CLIENT
+          ]);
+        }
 
         this.packs = packs
           .filter((p) => allowedUserTypes.has(p.userType))
           .map((p) => this.normalizePack(p));
 
-        this.packs.sort((a, b) => this.getDisplayPrice(a) - this.getDisplayPrice(b));
+        this.packs.sort((a, b) => this.getDisplayPrice(a, this.selectedDuration) - this.getDisplayPrice(b, this.selectedDuration));
         this.loading = false;
       },
       error: () => { this.error = 'Unable to load subscription plans.'; this.loading = false; }
@@ -188,7 +217,7 @@ export class FreelancerSubscriptionComponent implements OnInit {
   }
 
   get displayPacks(): Pack[] {
-    return [...this.packs];
+    return [...this.packs].sort((a, b) => this.getDisplayPrice(a, this.selectedDuration) - this.getDisplayPrice(b, this.selectedDuration));
   }
 
   getDurationText(duration?: Duration): string {
@@ -196,15 +225,80 @@ export class FreelancerSubscriptionComponent implements OnInit {
     return DurationDisplay[resolved] || resolved;
   }
 
-  getMonthlyPrice(pack: Pack): number {
-    const duration = this.getDisplayDuration(pack);
+  getMonthlyPrice(pack: Pack, duration: Duration = this.selectedDuration): number {
+    const resolvedDuration = this.getDisplayDuration(pack, duration);
     const months: Record<Duration, number> = {
       [Duration.ONE_MONTH]: 1,
       [Duration.THREE_MONTHS]: 3,
       [Duration.SIX_MONTHS]: 6,
       [Duration.ONE_YEAR]: 12
     };
-    return this.getDisplayPrice(pack) / (months[duration] || 1);
+    return this.getDisplayPrice(pack, duration) / (months[resolvedDuration] || 1);
+  }
+
+  onDurationChange(duration: Duration): void {
+    this.selectedDuration = duration;
+  }
+
+  getSelectedPackPrice(): number {
+    if (!this.selectedPack) {
+      return 0;
+    }
+
+    return this.getDisplayPrice(this.selectedPack, this.selectedDuration);
+  }
+
+  getSelectedPackMonthlyPrice(): number {
+    if (!this.selectedPack) {
+      return 0;
+    }
+
+    return this.getMonthlyPrice(this.selectedPack, this.selectedDuration);
+  }
+
+  getPaymentMethodLabel(method: PaymentMethod): string {
+    return this.paymentMethodDisplay[method] || method;
+  }
+
+  getPaymentMethodDescription(method: PaymentMethod): string {
+    if (method === PaymentMethod.ONLINE_PAYMENT) {
+      return 'Instant activation';
+    }
+
+    return 'Requires receipt upload — verified within 24-48h';
+  }
+
+  getPaymentMethodIcon(method: PaymentMethod): string {
+    switch (method) {
+      case PaymentMethod.ONLINE_PAYMENT:
+        return '💳';
+      case PaymentMethod.BANK_DEPOSIT:
+        return '🏛️';
+      case PaymentMethod.BANK_TRANSFER:
+        return '🏦';
+      default:
+        return '•';
+    }
+  }
+
+  isSelectedPaymentMethod(method: PaymentMethod): boolean {
+    return this.selectedPaymentMethod === method;
+  }
+
+  isOnlinePaymentSelected(): boolean {
+    return this.selectedPaymentMethod === PaymentMethod.ONLINE_PAYMENT;
+  }
+
+  getStepOneActionLabel(): string {
+    return this.isOnlinePaymentSelected() ? 'Continue to Card' : 'Continue';
+  }
+
+  getStepTwoActionLabel(): string {
+    return this.isOnlinePaymentSelected() ? 'Pay Now' : 'Submit Subscription';
+  }
+
+  requiresReceiptUpload(): boolean {
+    return !this.isOnlinePaymentSelected();
   }
 
   isProfessional(pack: Pack): boolean {
@@ -379,30 +473,47 @@ export class FreelancerSubscriptionComponent implements OnInit {
   }
 
   private startPurchaseFlow(pack: Pack): void {
-    this.selectedDuration = this.getDisplayDuration(pack);
+    const availableDuration = this.getOption(pack, this.selectedDuration)?.duration;
+    this.selectedDuration = availableDuration ?? this.getDisplayDuration(pack);
     this.openModal(pack);
   }
 
-  getDisplayPrice(pack: Pack): number {
-    if (pack.price != null) {
-      return pack.price;
-    }
-    const option = this.resolveDisplayOption(pack);
+  getDisplayPrice(pack: Pack, duration: Duration = this.selectedDuration): number {
+    const option = this.getOption(pack, duration) ?? this.resolveDisplayOption(pack);
     return option?.price ?? 0;
   }
 
-  getDisplayDuration(pack: Pack): Duration {
-    if (pack.duration) {
-      return pack.duration;
-    }
-    const option = this.resolveDisplayOption(pack);
+  getDisplayDuration(pack: Pack, duration: Duration = this.selectedDuration): Duration {
+    const option = this.getOption(pack, duration) ?? this.resolveDisplayOption(pack);
     return option?.duration ?? Duration.ONE_MONTH;
+  }
+
+  getPackEmoji(pack: Pack): string {
+    const name = (pack.name || '').toLowerCase();
+
+    if (name.includes('enterprise') || name.includes('premium')) {
+      return '🏆';
+    }
+
+    if (name.includes('max')) {
+      return '🚀';
+    }
+
+    if (name.includes('pro')) {
+      return '⚡';
+    }
+
+    if (name.includes('starter') || name.includes('free') || name.includes('basic')) {
+      return '🌱';
+    }
+
+    return '✨';
   }
 
   openModal(pack: Pack): void {
     this.selectedPack = pack;
     this.step = 1;
-    this.selectedPaymentMethod = PaymentMethod.BANK_TRANSFER;
+    this.selectedPaymentMethod = PaymentMethod.ONLINE_PAYMENT;
     this.transactionReference = '';
     this.selectedFile = null;
     this.receiptError = '';
@@ -420,6 +531,10 @@ export class FreelancerSubscriptionComponent implements OnInit {
   }
 
   goToDetails(): void {
+    if (this.isOnlinePaymentSelected()) {
+      this.initiateStripeCheckout();
+      return;
+    }
     this.step = 2;
   }
 
@@ -439,11 +554,13 @@ export class FreelancerSubscriptionComponent implements OnInit {
     }
 
     if (!this.transactionReference.trim()) {
-      this.submitError = 'Transaction reference number is required.';
-      return;
+      if (this.requiresReceiptUpload()) {
+        this.submitError = 'Transaction reference number is required.';
+        return;
+      }
     }
 
-    if (!this.selectedFile) {
+    if (this.requiresReceiptUpload() && !this.selectedFile) {
       this.submitError = 'Please upload your payment receipt.';
       return;
     }
@@ -474,11 +591,113 @@ export class FreelancerSubscriptionComponent implements OnInit {
       });
     };
 
+    if (!this.requiresReceiptUpload()) {
+      // For online payment, we should never reach here (handled by Stripe checkout)
+      // but keep as fallback
+      submit();
+      return;
+    }
+
+    if (!this.selectedFile) {
+      this.submitError = 'Please upload your payment receipt.';
+      this.submitting = false;
+      return;
+    }
+
     this.subscriptionService.uploadReceipt(this.selectedFile).subscribe({
       next: (res) => submit(res.receiptPath),
       error: (err) => {
         this.submitError = err?.error?.message || 'Failed to upload receipt.';
         this.submitting = false;
+      }
+    });
+  }
+
+  /**
+   * Initiate Stripe Checkout: create a checkout session and redirect to Stripe.
+   */
+  private initiateStripeCheckout(): void {
+    if (!this.selectedPack) return;
+
+    const userId = this.authService.getNumericUserId();
+    if (!userId) {
+      this.submitError = 'You must be logged in to subscribe.';
+      return;
+    }
+
+    this.stripeRedirecting = true;
+    this.submitError = '';
+
+    const currentUrl = window.location.origin + this.router.url.split('?')[0];
+    const successUrl = `${currentUrl}?session_id={CHECKOUT_SESSION_ID}&payment=success`;
+    const cancelUrl = `${currentUrl}?payment=cancelled`;
+
+    this.paymentService.createCheckoutSession({
+      userId,
+      packId: this.selectedPack.id!,
+      selectedDuration: this.selectedDuration,
+      successUrl,
+      cancelUrl
+    }).subscribe({
+      next: (response) => {
+        // Redirect to Stripe hosted checkout page
+        window.location.href = response.checkoutUrl;
+      },
+      error: (err) => {
+        this.stripeRedirecting = false;
+        this.submitError = err?.error?.message || err?.error?.detail || 'Failed to initialize payment. Please try again.';
+      }
+    });
+  }
+
+  /**
+   * Handle Stripe return: if session_id is in the URL query params,
+   * confirm the checkout session and show success.
+   */
+  private handleStripeReturn(): void {
+    this.route.queryParams.subscribe(params => {
+      const sessionId = params['session_id'];
+      const paymentStatus = params['payment'];
+
+      if (paymentStatus === 'cancelled') {
+        this.submitError = 'Payment was cancelled. You can try again.';
+        // Clean URL
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true
+        });
+        return;
+      }
+
+      if (sessionId && paymentStatus === 'success') {
+        this.stripeConfirming = true;
+        this.stripeConfirmError = '';
+
+        this.paymentService.confirmCheckoutSession(sessionId).subscribe({
+          next: () => {
+            this.stripeConfirming = false;
+            this.showModal = true;
+            this.step = 3;
+            this.loadActiveSubscription();
+            // Clean URL
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: {},
+              replaceUrl: true
+            });
+          },
+          error: (err) => {
+            this.stripeConfirming = false;
+            this.stripeConfirmError = err?.error?.message || 'Payment confirmation failed. Please contact support.';
+            // Clean URL
+            this.router.navigate([], {
+              relativeTo: this.route,
+              queryParams: {},
+              replaceUrl: true
+            });
+          }
+        });
       }
     });
   }
@@ -553,6 +772,10 @@ export class FreelancerSubscriptionComponent implements OnInit {
 
     if (!role) {
       return true;
+    }
+
+    if (role === 'PARTNER') {
+      return userType === UserType.PARTNER;
     }
 
     if (role === 'CLIENT') {

@@ -1,0 +1,99 @@
+server:
+  port: ${SERVER_PORT:8084}
+
+spring:
+  application:
+    name: communication-service
+
+  # ==========================================
+  # 🗄️ MySQL DATABASE
+  # ==========================================
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3307}/workify_communication?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    database-platform: org.hibernate.dialect.MySQLDialect
+
+  # ==========================================
+  # 📧 MAIL — Content Moderation Notifications
+  #
+  # ONE-TIME SETUP (no per-user env vars required):
+  #   1. Create a dedicated Gmail account, e.g.  workify.alerts@gmail.com
+  #   2. Enable 2-Step Verification on that account.
+  #   3. Go to: Google Account → Security → App Passwords
+  #      → generate a password for "Mail / Windows Computer"
+  #   4. Paste the generated 16-character password below (spaces are fine).
+  #
+  #   username  → the Gmail address of the SENDER account
+  #   password  → the 16-char App Password (NOT your Gmail login password)
+  # ==========================================
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: workify.moderation@gmail.com
+    password: qahq zbin srhh fyea
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+# ==========================================
+# 🔍 EUREKA CLIENT
+# ==========================================
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+# ==========================================
+# 📝 LOGGING
+# ==========================================
+logging:
+  level:
+    com.workify.communication: DEBUG
+    org.hibernate.SQL: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %clr(%-5level) %clr(%logger{36}){cyan} : %msg%n"
+
+# RAG service configuration
+rag:
+  service:
+    url: ${RAG_SERVICE_URL:http://localhost:8097/api/rag}
+    ingest-endpoint: ${RAG_INGEST_ENDPOINT:${rag.service.url}/ingest}
+    suggest-endpoint: ${RAG_SUGGEST_ENDPOINT:${rag.service.url}/suggest}
+
+# ==========================================
+# 🛡️ CONTENT MODERATION
+# ==========================================
+app:
+  user-service-url: ${USER_SERVICE_URL:http://localhost:8081}
+  upload:
+    messages-dir: ${MESSAGES_UPLOAD_DIR:./uploads/messages}
+  moderation:
+    ban-duration-minutes: ${MODERATION_BAN_MINUTES:5}
+    max-violations-before-ban: ${MODERATION_MAX_VIOLATIONS:3}

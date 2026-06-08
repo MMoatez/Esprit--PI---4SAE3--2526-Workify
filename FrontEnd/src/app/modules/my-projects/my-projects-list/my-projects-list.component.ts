@@ -48,7 +48,7 @@ export class MyProjectsListComponent implements OnInit {
   pendingDelete: ProjectCard | null = null;
   private nextId = 1;
   createMode: 'auto' | 'manual' | null = null;
-  complexityOptions = ['LOW', 'MEDIUM', 'HIGH'];
+  complexityOptions = ['SIMPLE', 'MEDIUM', 'COMPLEX'];
 
   // ML Budget Prediction
   budgetPrediction: PredictResponse | null = null;
@@ -373,7 +373,7 @@ submitForm(): void {
         : null,
     complexity:
       this.createMode === 'manual'
-        ? (this.formModel.complexity ?? null)
+        ? this.mapComplexity(this.formModel.complexity)
         : null,
     clientName: this.formModel.clientName || null,
     clientEmail: this.formModel.clientEmail || null,
@@ -510,5 +510,19 @@ submitForm(): void {
       clientEmail: '',
       clientPhone: '',
     };
+  }
+
+  private mapComplexity(value: string | null | undefined): string | null {
+    if (!value) {
+      return null;
+    }
+    const normalized = value.trim().toUpperCase();
+    if (normalized === 'LOW') {
+      return 'SIMPLE';
+    }
+    if (normalized === 'HIGH') {
+      return 'COMPLEX';
+    }
+    return normalized;
   }
 }

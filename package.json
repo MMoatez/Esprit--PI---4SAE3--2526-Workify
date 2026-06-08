@@ -1,43 +1,48 @@
 {
-  "name": "workify-frant-office",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
-  },
+  "name": "smart-free-gestion-mess",
+  "version": "1.0.0",
+  "description": "Workify (SmartFreelance) — Plateforme intelligente de mise en relation freelance, basée sur une architecture microservices avec Angular, Spring Boot, FastAPI et Next.js.",
   "private": true,
-  "dependencies": {
-    "@angular/animations": "^18.2.0",
-    "@angular/cdk": "^18.2.14",
-    "@angular/common": "^18.2.0",
-    "@angular/compiler": "^18.2.0",
-    "@angular/core": "^18.2.0",
-    "@angular/forms": "^18.2.0",
-    "@angular/platform-browser": "^18.2.0",
-    "@angular/platform-browser-dynamic": "^18.2.0",
-    "@angular/router": "^18.2.0",
-    "lottie-web": "^5.13.0",
-    "rxjs": "~7.8.0",
-    "tslib": "^2.3.0",
-    "zone.js": "~0.14.10"
+  "scripts": {
+    "install:frontend": "cd FrontEnd && npm install",
+    "install:open-resume": "cd open-resume && npm install",
+    "install:ml": "cd ml-service && pip install -r requirements.txt",
+    "install:all": "npm run install:frontend && npm run install:open-resume",
+
+    "start:frontend": "cd FrontEnd && npm start",
+    "start:open-resume": "cd open-resume && npm run dev",
+    "start:ml": "cd ml-service && uvicorn api.main:app --reload",
+    "start:backend": "cd backend && docker-compose up -d",
+    "start:infra": "docker-compose up -d",
+
+    "stop:backend": "cd backend && docker-compose down",
+    "stop:infra": "docker-compose down",
+
+    "build:frontend": "cd FrontEnd && npm run build",
+    "build:open-resume": "cd open-resume && npm run build"
   },
-  "devDependencies": {
-    "@angular-devkit/build-angular": "^18.2.21",
-    "@angular/cli": "^18.2.21",
-    "@angular/compiler-cli": "^18.2.0",
-    "@types/jasmine": "~5.1.0",
-    "autoprefixer": "^10.4.24",
-    "jasmine-core": "~5.2.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.19",
-    "typescript": "~5.5.2"
+  "workspaces": [
+    "FrontEnd",
+    "open-resume"
+  ],
+  "keywords": [
+    "freelance",
+    "microservices",
+    "angular",
+    "spring-boot",
+    "fastapi",
+    "nextjs",
+    "keycloak",
+    "machine-learning"
+  ],
+  "author": "Safa Hajji, Moatez Mathlouthi, Nour Jbeli, Oumaima Ouerfelli, Louay Krouna",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MMoatez/WebDistribueesProject.git"
   }
 }

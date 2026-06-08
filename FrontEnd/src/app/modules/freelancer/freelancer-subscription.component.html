@@ -14,11 +14,11 @@
       </div>
 
       <h1 class="text-5xl md:text-6xl font-bold text-slate-900 mb-5">
-        Freelancer <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600">Subscription Plans</span>
+        {{ roleName }} <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600">Subscription Plans</span>
       </h1>
 
       <p class="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-        Unlock your full potential with our flexible subscription plans designed for freelancers at every stage of their career
+        Unlock your full potential with our flexible subscription plans designed for {{ roleName.toLowerCase() }}s at every stage of their career
       </p>
     </div>
   </div>
@@ -42,6 +42,30 @@
       <button (click)="loadPacks()" class="px-8 py-4 bg-gradient-to-r from-teal-600 to-cyan-600 text-white font-semibold rounded-xl hover:from-teal-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl">
         Try Again
       </button>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !error" class="max-w-7xl mx-auto px-4 pt-4 pb-2">
+    <div class="flex flex-col items-center gap-4 rounded-3xl border border-cyan-100 bg-white/90 px-6 py-5 shadow-lg shadow-cyan-100/40 backdrop-blur-sm">
+      <div class="inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-5 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+        <svg class="h-4 w-4 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>Choose a duration</span>
+      </div>
+
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        <button
+          *ngFor="let duration of durations"
+          (click)="onDurationChange(duration)"
+          [class]="'rounded-full px-5 py-3 text-sm font-semibold transition-all duration-300 border min-w-[110px] ' +
+                   (selectedDuration === duration
+                     ? 'border-teal-600 bg-teal-600 text-white shadow-lg shadow-teal-500/25 scale-105'
+                     : 'border-slate-200 bg-white text-slate-600 hover:border-teal-300 hover:text-teal-700 hover:shadow-md')"
+        >
+          {{ getDurationText(duration) }}
+        </button>
+      </div>
     </div>
   </div>
 
@@ -78,15 +102,15 @@
             <div class="mb-8">
               <div class="flex items-baseline gap-2 mb-2">
                 <span [class]="'text-6xl font-bold ' + (isProfessional(pack) ? 'text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-cyan-600' : 'text-slate-900')">
-                  {{ getDisplayPrice(pack) }}
+                  {{ getDisplayPrice(pack, selectedDuration) }}
                 </span>
                 <div class="flex flex-col">
                   <span class="text-2xl font-bold text-slate-700">TND</span>
-                  <span class="text-sm text-slate-500">/{{ getDurationText(getDisplayDuration(pack)) }}</span>
+                  <span class="text-sm text-slate-500">/{{ getDurationText(selectedDuration) }}</span>
                 </div>
               </div>
               <p class="text-sm text-slate-500 font-medium">
-                ~{{ getMonthlyPrice(pack).toFixed(2) }} TND per month
+                ~{{ getMonthlyPrice(pack, selectedDuration).toFixed(2) }} TND per month
               </p>
             </div>
 
@@ -115,7 +139,7 @@
       </div>
     </div>
 
-    <section class="strategy-shell strategy-fade-in mt-20">
+    <section *ngIf="roleName !== 'Partner'" class="strategy-shell strategy-fade-in mt-20">
       <div class="strategy-intro text-center mb-8 max-w-3xl mx-auto">
         <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-3">Choose the plan that grows with you</h2>
         <p class="text-slate-600 text-base md:text-lg leading-relaxed">
@@ -324,81 +348,181 @@
   </div>
 </div>
 
+<!-- Stripe return: confirming payment -->
+<div *ngIf="stripeConfirming" class="fixed inset-0 bg-black/60 z-[80] flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl p-10 text-center max-w-md w-full">
+    <div class="relative w-20 h-20 mx-auto mb-6">
+      <div class="w-20 h-20 border-4 border-teal-100 rounded-full"></div>
+      <div class="w-20 h-20 border-4 border-teal-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+    </div>
+    <h3 class="text-2xl font-bold text-slate-900 mb-3">Confirming Your Payment</h3>
+    <p class="text-slate-600">Please wait while we verify your payment with Stripe...</p>
+  </div>
+</div>
+
+<!-- Stripe confirmation error -->
+<div *ngIf="stripeConfirmError" class="fixed inset-0 bg-black/60 z-[80] flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl p-10 text-center max-w-md w-full">
+    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </div>
+    <h3 class="text-xl font-bold text-slate-900 mb-2">Payment Confirmation Failed</h3>
+    <p class="text-sm text-slate-500 mb-6">{{ stripeConfirmError }}</p>
+    <button (click)="stripeConfirmError = ''" class="px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition">Close</button>
+  </div>
+</div>
+
 <div *ngIf="showModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden">
+  <div class="bg-white rounded-[28px] shadow-2xl w-full max-w-[760px] relative overflow-hidden border border-slate-100">
     <button (click)="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 transition">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
     </button>
 
-    <div *ngIf="step === 1" class="p-6">
-      <h3 class="text-lg font-bold text-slate-900 mb-1">
-        Subscribe to {{ selectedPack?.name }}
-      </h3>
-      <p class="text-sm text-slate-500 mb-5">
-        {{ getDisplayPrice(selectedPack!) }} TND and {{ getDurationText(selectedDuration) }}
-      </p>
+    <div *ngIf="step === 1" class="px-6 pt-6 pb-7 md:px-8 md:pt-7">
+      <div class="mb-6 text-center">
+        <h3 class="text-2xl md:text-[28px] font-bold text-slate-900 mb-2">Select Payment Method</h3>
+        <p class="text-sm md:text-base text-slate-500">Choose how you want to complete your subscription.</p>
+      </div>
 
-      <p class="text-sm font-semibold text-slate-700 mb-3">Select payment method</p>
-      <div class="space-y-2 mb-6">
+      <div class="rounded-[22px] border border-slate-200 bg-slate-50/80 p-5 md:p-6 mb-6 shadow-sm">
+        <div class="flex items-start justify-between gap-4 mb-3">
+          <div>
+            <p class="text-xs font-bold tracking-[0.16em] text-slate-400 uppercase mb-2">Order Summary</p>
+            <h4 class="text-xl font-semibold text-slate-900">{{ selectedPack?.name }}</h4>
+            <p class="text-sm text-slate-500 mt-1">Billing Period</p>
+          </div>
+          <div class="text-right">
+            <p class="text-xl font-bold text-slate-900">{{ getSelectedPackPrice() }} TND</p>
+            <p class="text-sm text-slate-500">{{ getDurationText(selectedDuration) }}</p>
+          </div>
+        </div>
+
+        <div class="h-px bg-slate-200 my-4"></div>
+
+        <div class="flex items-center justify-between gap-4">
+          <p class="text-lg font-semibold text-slate-900">Total Amount</p>
+          <p class="text-lg md:text-xl font-bold text-teal-600">{{ getSelectedPackPrice() }} TND</p>
+        </div>
+      </div>
+
+      <div class="space-y-3">
         <button *ngFor="let method of paymentMethods"
                 (click)="selectMethod(method)"
-                [class]="'w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition ' +
-                         (selectedPaymentMethod === method
-                           ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                           : 'border-slate-200 text-slate-600 hover:border-indigo-300')">
-          <span *ngIf="method === PaymentMethod.BANK_TRANSFER">Bank transfer</span>
-          <span *ngIf="method === PaymentMethod.BANK_DEPOSIT">Bank deposit</span>
-          {{ paymentMethodDisplay[method] }}
+                [class]="'w-full text-left rounded-[22px] border-2 p-4 md:p-5 transition-all duration-300 flex items-center gap-4 ' +
+                         (isSelectedPaymentMethod(method)
+                           ? 'border-teal-500 bg-teal-50 shadow-[0_0_0_1px_rgba(20,184,166,0.12)]'
+                           : 'border-slate-200 bg-white hover:border-teal-300 hover:bg-slate-50')">
+          <div class="flex items-center gap-4 w-full">
+            <div [class]="'flex h-10 w-10 items-center justify-center rounded-xl text-lg ' +
+                          (isSelectedPaymentMethod(method) ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-500')">
+              {{ getPaymentMethodIcon(method) }}
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-base md:text-lg font-semibold text-slate-900">{{ getPaymentMethodLabel(method) }}</p>
+                  <p class="text-sm text-slate-500">{{ getPaymentMethodDescription(method) }}</p>
+                </div>
+                <div [class]="'flex h-5 w-5 items-center justify-center rounded-full border-2 ' +
+                              (isSelectedPaymentMethod(method) ? 'border-teal-600 bg-teal-600' : 'border-slate-300 bg-white')">
+                  <div *ngIf="isSelectedPaymentMethod(method)" class="h-2.5 w-2.5 rounded-full bg-white"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </button>
       </div>
 
-      <button (click)="goToDetails()"
-              class="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition">
-        Continue
-      </button>
+      <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+        <button (click)="closeModal()" class="w-full sm:w-auto px-6 py-3 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition" [disabled]="stripeRedirecting">Cancel</button>
+        <button (click)="goToDetails()" [disabled]="stripeRedirecting" class="w-full sm:w-auto px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 transition shadow-lg shadow-teal-500/20 disabled:opacity-50">
+          <span *ngIf="!stripeRedirecting">{{ getStepOneActionLabel() }}</span>
+          <span *ngIf="stripeRedirecting" class="flex items-center justify-center gap-2">
+            <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Redirecting to Stripe...
+          </span>
+        </button>
+      </div>
+
+      <div *ngIf="submitError && !stripeRedirecting" class="mt-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">{{ submitError }}</div>
     </div>
 
-    <div *ngIf="step === 2" class="p-6">
-      <button (click)="step = 1" class="flex items-center gap-1 text-sm text-slate-500 hover:text-slate-700 mb-4 transition">
+    <div *ngIf="step === 2" class="px-6 pt-6 pb-7 md:px-8 md:pt-7">
+      <button (click)="step = 1" class="mb-5 flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-700 transition">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
         Back
       </button>
 
-      <h3 class="text-lg font-bold text-slate-900 mb-4">Bank Details</h3>
-      <div class="bg-slate-50 rounded-xl p-4 mb-5 space-y-2">
-        <div *ngFor="let field of BANK_FIELDS" class="flex justify-between text-sm">
-          <span class="text-slate-500">{{ field.label }}</span>
-          <span class="font-semibold text-slate-800">{{ field.value }}</span>
+      <div *ngIf="isOnlinePaymentSelected()" class="rounded-[22px] border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 p-6 md:p-7 shadow-sm">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-600 text-white text-2xl shadow-lg shadow-teal-500/20">{{ getPaymentMethodIcon(selectedPaymentMethod) }}</div>
+          <div>
+            <h3 class="text-2xl font-bold text-slate-900">Online Payment</h3>
+            <p class="text-sm text-slate-500">Instant activation</p>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-white/90 border border-teal-100 p-4 mb-5">
+          <p class="text-sm text-slate-600 leading-relaxed">Your card payment can be processed securely from here. In the current version, this action will continue the subscription flow immediately.</p>
+        </div>
+
+        <div *ngIf="submitError" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs">{{ submitError }}</div>
+
+        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+          <button (click)="step = 1" class="px-6 py-3 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition">Cancel</button>
+          <button (click)="submitSubscription()" [disabled]="submitting" class="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 transition disabled:opacity-50 shadow-lg shadow-teal-500/20">
+            {{ submitting ? 'Processing...' : getStepTwoActionLabel() }}
+          </button>
         </div>
       </div>
 
-      <div class="space-y-4 mb-5">
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Transaction Reference Number *</label>
-          <input type="text" [(ngModel)]="transactionReference"
-                 placeholder="Enter the reference number from your receipt"
-                 class="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+      <div *ngIf="!isOnlinePaymentSelected()" class="rounded-[22px] border border-slate-200 bg-slate-50/80 p-5 md:p-6 shadow-sm">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600 text-lg">{{ getPaymentMethodIcon(selectedPaymentMethod) }}</div>
+          <div>
+            <h3 class="text-lg font-bold text-slate-900">{{ getPaymentMethodLabel(selectedPaymentMethod) }}</h3>
+            <p class="text-sm text-slate-500">{{ getPaymentMethodDescription(selectedPaymentMethod) }}</p>
+          </div>
         </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Upload receipt *</label>
-          <input type="file" accept="image/*,.pdf" (change)="onFileChange($event)"
-                 class="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
-          <p *ngIf="receiptError" class="text-red-500 text-xs mt-1">{{ receiptError }}</p>
+
+        <div class="bg-white rounded-2xl p-4 mb-5 space-y-2 border border-slate-200">
+          <div *ngFor="let field of BANK_FIELDS" class="flex justify-between gap-4 text-sm">
+            <span class="text-slate-500">{{ field.label }}</span>
+            <span class="font-semibold text-slate-800 text-right">{{ field.value }}</span>
+          </div>
+        </div>
+
+        <div class="space-y-4 mb-5">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Transaction Reference Number *</label>
+            <input type="text" [(ngModel)]="transactionReference" placeholder="Enter the reference number from your receipt" class="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Upload receipt *</label>
+            <input type="file" accept="image/*,.pdf" (change)="onFileChange($event)" class="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+            <p *ngIf="receiptError" class="text-red-500 text-xs mt-1">{{ receiptError }}</p>
+          </div>
+        </div>
+
+        <div *ngIf="submitError" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs">{{ submitError }}</div>
+
+        <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+          <button (click)="step = 1" class="px-6 py-3 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition">Cancel</button>
+          <button (click)="submitSubscription()" [disabled]="submitting" class="px-6 py-3 rounded-xl font-semibold text-white bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 transition disabled:opacity-50 shadow-lg shadow-teal-500/20">
+            {{ submitting ? 'Submitting...' : getStepTwoActionLabel() }}
+          </button>
         </div>
       </div>
-
-      <div *ngIf="submitError" class="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-xs">
-        {{ submitError }}
-      </div>
-
-      <button (click)="submitSubscription()" [disabled]="submitting"
-              class="w-full py-3 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 transition disabled:opacity-50">
-        {{ submitting ? 'Submitting...' : 'Submit Subscription' }}
-      </button>
     </div>
 
     <div *ngIf="step === 3" class="p-8 text-center">
@@ -407,12 +531,10 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
         </svg>
       </div>
-      <h3 class="text-xl font-bold text-slate-900 mb-2">Subscription Submitted</h3>
-      <p class="text-sm text-slate-500 mb-6">Your subscription is pending admin approval. You will be notified once it is activated.</p>
-      <button (click)="closeModal()"
-              class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition">
-        Done
-      </button>
+      <h3 class="text-xl font-bold text-slate-900 mb-2">Subscription Activated!</h3>
+      <p class="text-sm text-slate-500 mb-6">Your payment was processed successfully and your subscription is now active. Enjoy your plan!</p>
+      <button (click)="closeModal()" class="px-6 py-2.5 bg-teal-600 text-white rounded-xl text-sm font-semibold hover:bg-teal-700 transition">Done</button>
     </div>
   </div>
 </div>
+

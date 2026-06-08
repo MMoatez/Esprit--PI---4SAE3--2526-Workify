@@ -179,26 +179,27 @@ public class UserProfileService {
       ImportCvRequest.Profile profile = request.getProfile();
       if (profile.getName() != null && !profile.getName().isBlank()) {
         String[] parts = profile.getName().split(" ", 2);
-        user.setFirstName(parts[0]);
+        user.setFirstName(truncate(parts[0], 255));
         if (parts.length > 1)
-          user.setLastName(parts[1]);
+          user.setLastName(truncate(parts[1], 255));
       }
       if (profile.getSummary() != null)
-        user.setBio(profile.getSummary());
+        user.setBio(truncate(profile.getSummary(), 1000));
       if (profile.getLocation() != null)
-        user.setLocation(profile.getLocation());
+        user.setLocation(truncate(profile.getLocation(), 255));
       if (profile.getPhone() != null)
-        user.setPhone(profile.getPhone());
+        user.setPhone(truncate(profile.getPhone(), 50));
     }
 
     // 2. Map Skills into Competences
     if (request.getSkills() != null && request.getSkills().getFeaturedSkills() != null) {
       request.getSkills().getFeaturedSkills().forEach(skillItem -> {
         if (skillItem.getSkill() != null && !skillItem.getSkill().isBlank()) {
+          String cleanSkill = truncate(skillItem.getSkill().trim(), 255);
           boolean exists = user.getCompetences().stream()
-            .anyMatch(c -> c.getName().equalsIgnoreCase(skillItem.getSkill().trim()));
+            .anyMatch(c -> c.getName().equalsIgnoreCase(cleanSkill));
           if (!exists) {
-            user.addCompetence(Competence.builder().name(skillItem.getSkill().trim()).build());
+            user.addCompetence(Competence.builder().name(cleanSkill).build());
           }
         }
       });
@@ -212,9 +213,9 @@ public class UserProfileService {
           String desc = eduItem.getDescriptions() != null ? String.join("\n", eduItem.getDescriptions())
             : null;
           Education e = Education.builder()
-            .institution(eduItem.getSchool().trim())
-            .degree(eduItem.getDegree() != null ? eduItem.getDegree().trim() : "Degree")
-            .description(desc)
+            .institution(truncate(eduItem.getSchool().trim(), 255))
+            .degree(eduItem.getDegree() != null ? truncate(eduItem.getDegree().trim(), 255) : "Degree")
+            .description(truncate(desc, 2000))
             .startDate(eduItem.getDate())
             .endDate(null)
             .build();
@@ -231,9 +232,9 @@ public class UserProfileService {
           String desc = expItem.getDescriptions() != null ? String.join("\n", expItem.getDescriptions())
             : null;
           Experience e = Experience.builder()
-            .company(expItem.getCompany().trim())
-            .position(expItem.getJobTitle() != null ? expItem.getJobTitle().trim() : "Employee")
-            .description(desc)
+            .company(truncate(expItem.getCompany().trim(), 255))
+            .position(expItem.getJobTitle() != null ? truncate(expItem.getJobTitle().trim(), 255) : "Employee")
+            .description(truncate(desc, 2000))
             .startDate(expItem.getDate())
             .endDate(null)
             .build();
@@ -245,6 +246,11 @@ public class UserProfileService {
     user.setUpdatedAt(java.time.Instant.now());
     userRepository.save(user);
     return toDto(user);
+  }
+
+  private String truncate(String value, int length) {
+    if (value == null) return null;
+    return value.length() > length ? value.substring(0, length) : value;
   }
 
   @Transactional

@@ -1,0 +1,101 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: workify-postgres
+    environment:
+      POSTGRES_USER: workify
+      POSTGRES_PASSWORD: workify
+      POSTGRES_DB: workify_users
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U workify -d workify_users"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MySQL pour communication-service
+  mysql:
+    image: mysql:8.0
+    container_name: workify-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: workify_communication
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Keycloak
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    container_name: workify-keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/workify_users
+      KC_DB_USERNAME: workify
+      KC_DB_PASSWORD: workify
+    command: start-dev --import-realm
+    ports:
+      - "8180:8080"
+    volumes:
+      - ./keycloak/workify-realm.json:/opt/keycloak/data/import/realm.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # User Service
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    container_name: workify-user-service
+    environment:
+      - KEYCLOAK_SERVER_URL=http://keycloak:8080
+      - KEYCLOAK_ISSUER_URI=http://keycloak:8080/realms/workify
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/workify_users
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_DATASOURCE_USERNAME=workify
+      - SPRING_DATASOURCE_PASSWORD=workify
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - DB_PASSWORD=workify
+      - USER_PROFILE_UPLOAD_DIR=/app/uploads
+    ports:
+      - "8083:8081"
+    volumes:
+      - ./backend/user-service/uploads:/app/uploads
+    depends_on:
+      - keycloak
+      - postgres
+
+  # Communication Service
+  communication-service:
+    build:
+      context: ./backend/communication-service
+      dockerfile: Dockerfile
+    container_name: workify-communication-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/workify_communication?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=
+    ports:
+      - "8084:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  mysql_data:

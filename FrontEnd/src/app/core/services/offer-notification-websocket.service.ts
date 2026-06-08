@@ -12,7 +12,7 @@ const MAX_STORED  = 50;
 })
 export class OfferNotificationWebsocketService {
 
-  private readonly socketUrl = 'http://localhost:8082/ws-notifications-sockjs';
+  private readonly socketUrl = 'http://localhost:8063/ws-notifications-sockjs';
 
   private client: Client | null = null;
   private topicSubscription: StompSubscription | null = null;

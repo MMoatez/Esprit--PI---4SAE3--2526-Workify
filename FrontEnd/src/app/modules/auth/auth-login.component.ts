@@ -576,7 +576,7 @@ export class AuthLoginComponent {
 
     this.auth.loginWithCredentials(loginData).subscribe({
       next: (res) => {
-        this.auth.setToken(res.access_token);
+        this.auth.setSession(res.access_token, res.refresh_token);
         sessionStorage.setItem('pending_login_scan', '1');
         this.userProfileService.getMe().subscribe({
           next: profile => {

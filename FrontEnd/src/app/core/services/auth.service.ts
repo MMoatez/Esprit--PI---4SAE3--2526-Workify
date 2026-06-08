@@ -1,31 +1,129 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, of, shareReplay, tap, catchError, map, finalize } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { jwtDecode } from 'jwt-decode';
 
 const TOKEN_KEY = 'workify_access_token';
+const REFRESH_TOKEN_KEY = 'workify_refresh_token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private refreshInProgress$: Observable<string | null> | null = null;
+  private refreshTimer: ReturnType<typeof setInterval> | null = null;
+
   constructor(private router: Router, private http: HttpClient) { }
 
   getToken(): string | null {
     return localStorage.getItem(TOKEN_KEY);
   }
 
+  getRefreshToken(): string | null {
+    return localStorage.getItem(REFRESH_TOKEN_KEY);
+  }
+
   setToken(token: string): void {
     localStorage.setItem(TOKEN_KEY, token);
+    this.startSessionKeeper();
+  }
+
+  setRefreshToken(token: string): void {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+  }
+
+  setSession(accessToken: string, refreshToken?: string | null): void {
+    this.setToken(accessToken);
+    if (refreshToken) {
+      this.setRefreshToken(refreshToken);
+    }
   }
 
   removeToken(): void {
-    localStorage.removeItem(TOKEN_KEY); 
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem('workify_role');
+    this.stopSessionKeeper();
   }
 
   isLoggedIn(): boolean {
     return !!this.getToken();
+  }
+
+  isTokenExpired(bufferSeconds = 60): boolean {
+    const token = this.getToken();
+    if (!token) {
+      return true;
+    }
+
+    try {
+      const decoded: any = jwtDecode(token);
+      if (!decoded?.exp) {
+        return false;
+      }
+      return Date.now() >= (decoded.exp * 1000) - (bufferSeconds * 1000);
+    } catch {
+      return true;
+    }
+  }
+
+  refreshTokenIfNeeded(): Observable<string | null> {
+    if (!this.isTokenExpired() && this.getToken()) {
+      return of(this.getToken());
+    }
+
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      return of(null);
+    }
+
+    if (!this.refreshInProgress$) {
+      this.refreshInProgress$ = this.http.post<{
+        access_token: string;
+        refresh_token?: string;
+      }>(`${this.getApiUrl()}/api/auth/refresh`, { refresh_token: refreshToken }).pipe(
+        tap((response) => {
+          if (response?.access_token) {
+            this.setToken(response.access_token);
+            if (response.refresh_token) {
+              this.setRefreshToken(response.refresh_token);
+            }
+          }
+        }),
+        map((response) => response?.access_token || null),
+        catchError(() => of(null)),
+        finalize(() => {
+          this.refreshInProgress$ = null;
+        }),
+        shareReplay(1)
+      );
+    }
+
+    return this.refreshInProgress$;
+  }
+
+  startSessionKeeper(): void {
+    this.stopSessionKeeper();
+    if (!this.getToken()) {
+      return;
+    }
+
+    this.refreshTimer = setInterval(() => {
+      if (this.isTokenExpired(120)) {
+        this.refreshTokenIfNeeded().subscribe((token) => {
+          if (!token) {
+            this.logout();
+          }
+        });
+      }
+    }, 30000);
+  }
+
+  stopSessionKeeper(): void {
+    if (this.refreshTimer) {
+      clearInterval(this.refreshTimer);
+      this.refreshTimer = null;
+    }
   }
 
   logout(): void {
@@ -61,15 +159,12 @@ export class AuthService {
     try {
       const decoded: any = jwtDecode(token);
 
-      // 1. realm_access.roles (Keycloak standard)
       const realmRoles: string[] = (decoded.realm_access?.roles || []).map((r: string) => r.toLowerCase());
 
-      // 2. resource_access roles (Keycloak client-level roles)
       const resourceRoles: string[] = Object.values(decoded.resource_access || {})
         .flatMap((v: any) => v?.roles || [])
         .map((r: string) => r.toLowerCase());
 
-      // 3. Direct "role" or "roles" field (custom JWT)
       const directRole = (decoded.role || '').toString().toLowerCase();
 
       const all = [...realmRoles, ...resourceRoles, directRole];
@@ -79,7 +174,6 @@ export class AuthService {
       if (all.includes('client')) return 'CLIENT';
       if (all.includes('freelancer')) return 'FREELANCER';
 
-      // 4. Last fallback: store role at login time
       const stored = localStorage.getItem('workify_role');
       if (stored) return stored;
 
@@ -89,12 +183,10 @@ export class AuthService {
     }
   }
 
-  /** Alias lowercase for components using getCurrentRole() */
   getCurrentRole(): string | null {
     return this.getRole()?.toLowerCase() || null;
   }
 
-  /** Get email from JWT */
   getUserEmail(): string | null {
     const token = this.getToken();
     if (!token) return null;
@@ -106,7 +198,6 @@ export class AuthService {
     }
   }
 
-  /** Get numeric user ID stored in profile (from localStorage after login) */
   getNumericUserId(): number | null {
     const stored = localStorage.getItem('workify_numeric_id');
     return stored ? parseInt(stored, 10) : null;
@@ -116,12 +207,10 @@ export class AuthService {
     localStorage.setItem('workify_numeric_id', id.toString());
   }
 
-  /** Alias used by communication components */
   getUserRole(): string | null {
     return this.getRole();
   }
 
-  /** Navigate to internal login page. */
   login(): void {
     this.router.navigate(['/auth/login']);
   }
@@ -130,13 +219,10 @@ export class AuthService {
     return this.http.post(`${this.getApiUrl()}/api/auth/login`, credentials);
   }
 
-  /** Navigate to internal registration page. */
   register(): void {
     this.router.navigate(['/auth/register']);
   }
 
-  // New methods for custom registration
-  // New methods for custom registration
   registerUser(data: any, file: File | null = null) {
     const formData = new FormData();
     formData.append('data', new Blob([JSON.stringify(data)], { type: 'application/json' }));
@@ -162,5 +248,4 @@ export class AuthService {
   private getApiUrl(): string {
     return environment.apiBaseUrl;
   }
-
 }

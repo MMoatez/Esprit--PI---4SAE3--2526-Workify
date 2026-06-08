@@ -17,7 +17,7 @@ import {
 })
 export class MyProjectsService {
   private apiUrl = 'http://localhost:8089/api';
-  private projectsApiUrl = 'http://localhost:8082/api/projects';
+  private projectsApiUrl = 'http://localhost:8063/api/projects';
 
   constructor(private http: HttpClient) {}
 

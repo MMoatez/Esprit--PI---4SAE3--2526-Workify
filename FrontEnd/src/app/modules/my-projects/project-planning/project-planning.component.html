@@ -112,24 +112,22 @@
 
         <!-- Tasks Drop Zone -->
         <div
-          cdkDropList
-          [id]="'column-' + colonne.id"
-          [cdkDropListData]="colonne.taches || []"
-          [cdkDropListConnectedTo]="getConnectedLists()"
-          (cdkDropListDropped)="drop($event, colonne.id!)"
+          (dragover)="onDragOver($event)"
+          (drop)="onDrop($event, colonne.id!)"
           class="p-3 min-h-[200px] space-y-2"
         >
           <!-- Task Card -->
           <div
             *ngFor="let tache of colonne.taches || []; trackBy: trackByTaskId"
-            cdkDrag
+            draggable="true"
+            (dragstart)="onDragStart(tache, colonne)"
             [class]="'border rounded-lg p-3 cursor-move transition-all group ' + 
                      (isDarkMode 
-                       ? 'bg-slate-700 border-slate-600 hover:border-slate-500 hover:shadow-lg' 
-                       : 'bg-gray-50 border-gray-300 hover:border-gray-400 hover:shadow-md')"
+                       ? 'bg-slate-700 border-slate-600 hover:border-slate-500 hover:shadow-lg text-white' 
+                       : 'bg-gray-50 border-gray-300 hover:border-gray-400 hover:shadow-md text-gray-900')"
           >
             <div class="flex items-start justify-between gap-2">
-              <p class="text-sm flex-1">{{ tache.task }}</p>
+              <p class="text-sm flex-1 break-words" [class.text-white]="isDarkMode" [class.text-gray-900]="!isDarkMode">{{ tache.task }}</p>
               <button
                 (click)="deleteTask(tache.id!, colonne.id!)"
                 class="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-600 hover:text-white rounded transition-all"
@@ -182,34 +180,99 @@
   </div>
 
   <!-- Statistics -->
-  <div *ngIf="!loading && planning" class="max-w-screen-2xl mx-auto px-6 pb-8">
-    <h2 class="text-xl font-bold mb-4">Project Statistics</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
-      <div [class]="'rounded-xl p-5 border ' + (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200')">
-        <p [class]="isDarkMode ? 'text-slate-400 text-sm' : 'text-gray-500 text-sm'">Total Tasks</p>
-        <p class="text-3xl font-bold mt-1">{{ getTotalTasks() }}</p>
-      </div>
-      <div [class]="'rounded-xl p-5 border ' + (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200')">
-        <p [class]="isDarkMode ? 'text-slate-400 text-sm' : 'text-gray-500 text-sm'">To Do</p>
-        <p class="text-3xl font-bold mt-1">{{ getTaskCountByColumnName('To do') }}</p>
-      </div>
-      <div [class]="'rounded-xl p-5 border ' + (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200')">
-        <p [class]="isDarkMode ? 'text-slate-400 text-sm' : 'text-gray-500 text-sm'">In Progress</p>
-        <p class="text-3xl font-bold mt-1">{{ getTaskCountByColumnName('In Progress') }}</p>
-      </div>
-      <div [class]="'rounded-xl p-5 border ' + (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200')">
-        <p [class]="isDarkMode ? 'text-slate-400 text-sm' : 'text-gray-500 text-sm'">Done</p>
-        <p class="text-3xl font-bold mt-1">{{ getTaskCountByColumnName('Done') }}</p>
-      </div>
-    </div>
+  <div *ngIf="!loading && planning && !showCalendar" class="px-6 pb-8">
+    <div class="max-w-screen-2xl mx-auto">
+      
+      <h3 [class]="'text-lg font-semibold mb-4 flex items-center gap-2 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        Project Statistics
+      </h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-4">
+        <div [class]="'rounded-2xl p-6 border transition-all ' + (isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:bg-slate-800/70' : 'bg-white border-gray-200 hover:shadow-md')">
+          <div class="flex items-center justify-between mb-4">
+            <div [class]="'w-12 h-12 rounded-xl flex items-center justify-center ' + (isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100')">
+              <svg [class]="'w-6 h-6 ' + (isDarkMode ? 'text-blue-400' : 'text-blue-600')" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+          </div>
+          <p [class]="'text-3xl font-bold mb-1 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">{{ getTotalTasksCount() }}</p>
+          <p [class]="'text-sm ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">Total Tasks</p>
+          <div [class]="'mt-3 h-1 rounded-full overflow-hidden ' + (isDarkMode ? 'bg-slate-700' : 'bg-gray-200')">
+            <div class="h-full bg-blue-500 rounded-full" style="width: 100%"></div>
+          </div>
+        </div>
 
-    <div [class]="'rounded-xl p-5 border ' + (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200')">
-      <div class="flex items-center justify-between mb-2">
-        <p class="font-semibold">Overall Progress</p>
-        <p class="font-semibold text-blue-500">{{ getDonePercentage() }}%</p>
+        <div [class]="'rounded-2xl p-6 border transition-all ' + (isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:bg-slate-800/70' : 'bg-white border-gray-200 hover:shadow-md')">
+          <div class="flex items-center justify-between mb-4">
+            <div [class]="'w-12 h-12 rounded-xl flex items-center justify-center ' + (isDarkMode ? 'bg-emerald-500/20' : 'bg-emerald-100')">
+              <svg [class]="'w-6 h-6 ' + (isDarkMode ? 'text-emerald-400' : 'text-emerald-600')" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </div>
+            <span [class]="'px-3 py-1 text-xs font-bold rounded-full ' + (isDarkMode ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-100 text-emerald-600')">
+              {{ getColumnTasksPercentage('Todo') }}%
+            </span>
+          </div>
+          <p [class]="'text-3xl font-bold mb-1 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">{{ getColumnTasksCount('Todo') }}</p>
+          <p [class]="'text-sm ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">To Do</p>
+          <div [class]="'mt-3 h-1 rounded-full overflow-hidden ' + (isDarkMode ? 'bg-slate-700' : 'bg-gray-200')">
+            <div class="h-full bg-emerald-500 rounded-full transition-all" [style.width.%]="getColumnTasksPercentage('Todo')"></div>
+          </div>
+        </div>
+
+        <div [class]="'rounded-2xl p-6 border transition-all ' + (isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:bg-slate-800/70' : 'bg-white border-gray-200 hover:shadow-md')">
+          <div class="flex items-center justify-between mb-4">
+            <div [class]="'w-12 h-12 rounded-xl flex items-center justify-center ' + (isDarkMode ? 'bg-amber-500/20' : 'bg-amber-100')">
+              <svg [class]="'w-6 h-6 ' + (isDarkMode ? 'text-amber-400' : 'text-amber-600')" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <span [class]="'px-3 py-1 text-xs font-bold rounded-full ' + (isDarkMode ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-100 text-amber-600')">
+              {{ getColumnTasksPercentage('In Progress') }}%
+            </span>
+          </div>
+          <p [class]="'text-3xl font-bold mb-1 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">{{ getColumnTasksCount('In Progress') }}</p>
+          <p [class]="'text-sm ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">In Progress</p>
+          <div [class]="'mt-3 h-1 rounded-full overflow-hidden ' + (isDarkMode ? 'bg-slate-700' : 'bg-gray-200')">
+            <div class="h-full bg-amber-500 rounded-full transition-all" [style.width.%]="getColumnTasksPercentage('In Progress')"></div>
+          </div>
+        </div>
+
+        <div [class]="'rounded-2xl p-6 border transition-all ' + (isDarkMode ? 'bg-slate-800/50 border-slate-700 hover:bg-slate-800/70' : 'bg-white border-gray-200 hover:shadow-md')">
+          <div class="flex items-center justify-between mb-4">
+            <div [class]="'w-12 h-12 rounded-xl flex items-center justify-center ' + (isDarkMode ? 'bg-blue-500/20' : 'bg-blue-100')">
+              <svg [class]="'w-6 h-6 ' + (isDarkMode ? 'text-blue-400' : 'text-blue-600')" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <span [class]="'px-3 py-1 text-xs font-bold rounded-full ' + (isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-600')">
+              {{ getColumnTasksPercentage('Done') }}%
+            </span>
+          </div>
+          <p [class]="'text-3xl font-bold mb-1 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">{{ getColumnTasksCount('Done') }}</p>
+          <p [class]="'text-sm ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">Done</p>
+          <div [class]="'mt-3 h-1 rounded-full overflow-hidden ' + (isDarkMode ? 'bg-slate-700' : 'bg-gray-200')">
+            <div class="h-full bg-blue-500 rounded-full transition-all" [style.width.%]="getColumnTasksPercentage('Done')"></div>
+          </div>
+        </div>
       </div>
-      <div [class]="'w-full h-3 rounded-full overflow-hidden ' + (isDarkMode ? 'bg-slate-700' : 'bg-gray-200')">
-        <div class="h-3 bg-gradient-to-r from-cyan-500 to-blue-600" [style.width.%]="getDonePercentage()"></div>
+
+      <div [class]="'mt-6 rounded-2xl p-6 border ' + (isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-white border-gray-200')">
+        <div class="flex items-center justify-between mb-3">
+          <h4 [class]="'text-sm font-semibold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">Overall Progress</h4>
+          <span [class]="'text-sm font-bold ' + (isDarkMode ? 'text-blue-400' : 'text-blue-600')">{{ getCompletionPercentage() }}% Complete</span>
+        </div>
+        <div [class]="'h-3 rounded-full overflow-hidden ' + (isDarkMode ? 'bg-slate-700' : 'bg-gray-200')">
+          <div class="h-full bg-gradient-to-r from-emerald-500 via-blue-500 to-purple-500 rounded-full transition-all duration-500" [style.width.%]="getCompletionPercentage()"></div>
+        </div>
+        <div [class]="'flex items-center justify-between mt-3 text-xs ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">
+          <span>{{ getColumnTasksCount('Done') }} of {{ getTotalTasksCount() }} tasks completed</span>
+          <span>{{ getTotalTasksCount() - getColumnTasksCount('Done') }} remaining</span>
+        </div>
       </div>
     </div>
   </div>
@@ -405,30 +468,49 @@
 
 <!-- Calendar / Meetings Modal -->
 <div
-  *ngIf="isCalendarOpen"
-  class="fixed inset-0 bg-slate-950/40 backdrop-blur-md flex items-center justify-center z-50 p-6"
+  *ngIf="showCalendar"
+  class="fixed inset-0 bg-slate-950/40 backdrop-blur-md flex items-center justify-center z-50 p-6 animate-fadeIn"
   (click)="toggleCalendar()"
 >
   <div
-    [class]="'relative rounded-2xl shadow-2xl w-full max-w-6xl max-h-[85vh] overflow-hidden ' +
-             (isDarkMode ? 'bg-slate-900 border border-slate-800' : 'bg-white border border-gray-200')"
+    [class]="'relative rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] w-full max-w-[1400px] max-h-[85vh] overflow-hidden animate-slideUp ' +
+             (isDarkMode ? 'bg-slate-900' : 'bg-white')"
     (click)="$event.stopPropagation()"
   >
-    <div [class]="'px-6 py-4 border-b flex items-center justify-between ' + (isDarkMode ? 'border-slate-800' : 'border-gray-200')">
-      <div>
-        <h2 class="text-2xl font-semibold">Meeting Calendar</h2>
-        <p [class]="isDarkMode ? 'text-slate-400 text-sm mt-1' : 'text-gray-500 text-sm mt-1'">Manage and schedule team meetings</p>
+    <div [class]="'px-8 py-6 border-b flex items-center justify-between ' +
+                 (isDarkMode ? 'border-slate-800 bg-slate-900/50' : 'border-gray-100 bg-gray-50/50')">
+      <div class="flex items-center gap-4">
+        <div [class]="'w-12 h-12 rounded-xl flex items-center justify-center ' +
+                     (isDarkMode ? 'bg-blue-500/10' : 'bg-blue-50')">
+          <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <div>
+          <h2 [class]="'text-2xl font-semibold tracking-tight ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+            Meeting Calendar
+          </h2>
+          <p [class]="'text-sm mt-0.5 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-500')">
+            Manage and schedule team meetings
+          </p>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
+
+      <div class="flex items-center gap-3">
         <button
           (click)="openCreateMeetingModal()"
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold"
+          class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-blue-500/25 flex items-center gap-2"
         >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
           New Meeting
         </button>
+
         <button
           (click)="toggleCalendar()"
-          [class]="'p-2 rounded-lg ' + (isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-gray-100')"
+          [class]="'w-10 h-10 rounded-lg flex items-center justify-center transition-all ' +
+                   (isDarkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900')"
         >
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -437,88 +519,382 @@
       </div>
     </div>
 
-    <div class="overflow-y-auto max-h-[calc(85vh-80px)] p-6 space-y-6">
-      <div [class]="'rounded-xl border p-5 ' + (isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-gray-200')">
-        <h3 class="font-semibold text-lg mb-3">Pending Approvals</h3>
-        <div class="space-y-3" *ngIf="getPendingMeetings().length; else noPending">
-          <div *ngFor="let meeting of getPendingMeetings(); trackBy: trackByMeetingId" [class]="'rounded-lg p-4 border ' + (isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50')">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="font-semibold">{{ meeting.title }}</p>
-                <p [class]="isDarkMode ? 'text-slate-400 text-sm' : 'text-gray-600 text-sm'">{{ meeting.description }}</p>
-                <p [class]="isDarkMode ? 'text-slate-400 text-xs mt-2' : 'text-gray-500 text-xs mt-2'">Duration: {{ meeting.durationMinutes }} min</p>
-              </div>
-              <div class="flex gap-2">
-                <button
-                  (click)="openRejectModal(meeting)"
-                  class="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm"
-                >
-                  Reject
-                </button>
-              </div>
+    <div class="overflow-y-auto max-h-[calc(85vh-88px)] elegant-scrollbar">
+      <div class="p-6 space-y-6">
+        <div [class]="'rounded-2xl border overflow-hidden shadow-sm ' +
+                     (isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-gray-200')">
+          <div [class]="'px-5 py-4 border-b flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between ' +
+                       (isDarkMode ? 'border-slate-700/70' : 'border-gray-100')">
+            <div>
+              <h3 [class]="'text-lg font-semibold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">Meeting Calendar</h3>
+              <p [class]="'text-sm mt-1 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">
+                Browse the month, spot scheduled meetings, and open the planning modal when you need a new slot.
+              </p>
             </div>
 
-            <div class="mt-3 grid gap-2" *ngIf="meeting.proposals.length">
-              <div *ngFor="let proposal of meeting.proposals" [class]="'rounded-lg p-3 border flex items-center justify-between ' + (isDarkMode ? 'border-slate-600 bg-slate-700/50' : 'border-gray-200 bg-white')">
-                <div>
-                  <p class="font-medium">{{ proposal.proposedDate | date:'EEEE, MMM d, y' }}</p>
-                  <p [class]="isDarkMode ? 'text-slate-400 text-xs' : 'text-gray-500 text-xs'">{{ proposal.proposedDate | date:'h:mm a' }}</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                (click)="navigateCalendarMonth(-1)"
+                [class]="'h-10 w-10 rounded-lg flex items-center justify-center transition-all ' +
+                         (isDarkMode ? 'bg-slate-700/70 text-slate-200 hover:bg-slate-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
+                aria-label="Previous month"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              <button
+                (click)="goToToday()"
+                [class]="'px-4 h-10 rounded-lg text-sm font-medium transition-all ' +
+                         (isDarkMode ? 'bg-slate-700/70 text-white hover:bg-slate-700' : 'bg-gray-100 text-gray-800 hover:bg-gray-200')"
+              >
+                Today
+              </button>
+
+              <button
+                (click)="navigateCalendarMonth(1)"
+                [class]="'h-10 w-10 rounded-lg flex items-center justify-center transition-all ' +
+                         (isDarkMode ? 'bg-slate-700/70 text-slate-200 hover:bg-slate-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')"
+                aria-label="Next month"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              <div [class]="'ml-1 px-4 h-10 inline-flex items-center rounded-lg text-sm font-semibold border ' +
+                           (isDarkMode ? 'bg-slate-900/70 border-slate-700 text-white' : 'bg-gray-50 border-gray-200 text-gray-900')">
+                {{ calendarTitle }}
+              </div>
+
+              <div class="hidden xl:flex items-center gap-1 ml-2">
+                <button class="px-3 h-10 rounded-lg text-sm font-medium bg-blue-600 text-white">Month</button>
+                <button [class]="'px-3 h-10 rounded-lg text-sm font-medium transition-colors ' + (isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-gray-600 hover:bg-gray-100')">Week</button>
+                <button [class]="'px-3 h-10 rounded-lg text-sm font-medium transition-colors ' + (isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-gray-600 hover:bg-gray-100')">Day</button>
+                <button [class]="'px-3 h-10 rounded-lg text-sm font-medium transition-colors ' + (isDarkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-gray-600 hover:bg-gray-100')">List</button>
+              </div>
+            </div>
+          </div>
+
+          <div [class]="'grid grid-cols-7 border-b text-[11px] font-semibold uppercase tracking-[0.22em] ' +
+                       (isDarkMode ? 'border-slate-700/70 text-slate-400 bg-slate-900/40' : 'border-gray-100 text-gray-500 bg-gray-50/70')">
+            <div *ngFor="let weekday of calendarWeekdays" class="px-3 py-3 text-center">
+              {{ weekday }}
+            </div>
+          </div>
+
+          <div [class]="'grid grid-cols-7 gap-px ' + (isDarkMode ? 'bg-slate-700/70' : 'bg-gray-200')">
+            <ng-container *ngFor="let week of calendarWeeks">
+              <div
+                *ngFor="let day of week"
+                [class]="'min-h-[150px] p-3 transition-colors ' +
+                         (isDarkMode ? 'bg-slate-900/90 hover:bg-slate-800/90' : 'bg-white hover:bg-slate-50') + ' ' +
+                         (!day.inCurrentMonth ? (isDarkMode ? 'text-slate-600' : 'text-gray-400') : '') + ' ' +
+                         (day.isToday ? (isDarkMode ? 'ring-1 ring-blue-400/70 ring-inset' : 'ring-1 ring-blue-500/70 ring-inset') : '')"
+              >
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <span [class]="'inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ' +
+                                   (day.isToday
+                                     ? 'bg-blue-600 text-white shadow-sm'
+                                     : day.inCurrentMonth
+                                     ? (isDarkMode ? 'text-white' : 'text-gray-900')
+                                     : (isDarkMode ? 'text-slate-500' : 'text-gray-400'))">
+                      {{ day.dayNumber }}
+                    </span>
+                  </div>
+
+                  <span *ngIf="day.meetings.length" [class]="'inline-flex min-w-[1.5rem] items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold ' +
+                                                         (isDarkMode ? 'bg-slate-700 text-slate-200' : 'bg-gray-100 text-gray-600')">
+                    {{ day.meetings.length }}
+                  </span>
                 </div>
-                <button
-                  (click)="voteForProposal(proposal.id!)"
-                  [disabled]="hasUserVoted(proposal) || !canUserVote(meeting)"
-                  [class]="'px-3 py-2 rounded-lg text-sm font-semibold ' + ((hasUserVoted(proposal) || !canUserVote(meeting)) ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white')"
+
+                <div class="mt-3 space-y-1.5">
+                  <div
+                    *ngFor="let meeting of day.meetings | slice:0:2"
+                    [class]="'flex items-center gap-2 rounded-lg border px-2.5 py-2 text-[11px] font-medium ' + getCalendarEventBadgeClass(meeting)"
+                  >
+                    <span [class]="'h-2 w-2 rounded-full ' + getCalendarEventDotClass(meeting)"></span>
+                    <span class="truncate">{{ meeting.title }}</span>
+                  </div>
+
+                  <div
+                    *ngIf="day.meetings.length > 2"
+                    [class]="'rounded-lg px-2.5 py-2 text-[11px] font-medium ' + (isDarkMode ? 'bg-slate-800 text-slate-300' : 'bg-gray-50 text-gray-600')"
+                  >
+                    +{{ day.meetings.length - 2 }} more
+                  </div>
+
+                  <div
+                    *ngIf="!day.meetings.length"
+                    [class]="'rounded-lg border border-dashed px-2.5 py-3 text-[11px] ' + (isDarkMode ? 'border-slate-700 text-slate-500' : 'border-gray-200 text-gray-400')"
+                  >
+                    No meetings
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+
+      <div class="px-8 pb-8">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div [class]="'w-1 h-6 rounded-full ' + (isDarkMode ? 'bg-blue-500' : 'bg-blue-600')"></div>
+            <h3 [class]="'text-lg font-semibold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+              Pending Approvals
+            </h3>
+            <span [class]="'px-2.5 py-0.5 text-xs font-medium rounded-full ' +
+              (isDarkMode ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-700')">
+              {{ getPendingMeetingsCount() }}
+            </span>
+          </div>
+        </div>
+
+        <div class="space-y-4" *ngIf="getPendingMeetings().length; else noPending">
+          <div
+            *ngFor="let meeting of getPendingMeetings(); trackBy: trackByMeetingId"
+            [class]="'rounded-xl border p-6 hover:shadow-lg transition-all duration-200 ' +
+                     (isDarkMode ? 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600' : 'bg-white border-gray-200 hover:border-gray-300')"
+          >
+            <div class="flex items-start justify-between mb-5">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <h4 [class]="'text-lg font-semibold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+                    {{ meeting.title }}
+                  </h4>
+                  <span class="px-2.5 py-0.5 bg-amber-500/10 text-amber-600 text-xs font-medium rounded-full">
+                    Pending
+                  </span>
+                  <span *ngIf="meeting.isOnline !== undefined"
+                        [class]="'px-2.5 py-0.5 text-xs font-medium rounded-full flex items-center gap-1 ' +
+                                (meeting.isOnline ? 'bg-blue-500/10 text-blue-600' : 'bg-green-500/10 text-green-600')">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path *ngIf="meeting.isOnline" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      <path *ngIf="!meeting.isOnline" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    {{ meeting.isOnline ? 'Online' : 'In-Person' }}
+                  </span>
+                </div>
+                <p [class]="'text-sm mb-3 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">
+                  {{ meeting.description }}
+                </p>
+                <div class="flex items-center gap-2 mb-3">
+                  <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-xs font-semibold">
+                    #{{ meeting.createdByUserId }}
+                  </div>
+                  <span [class]="'text-xs ' + (isDarkMode ? 'text-slate-400' : 'text-gray-500')">
+                    Created by user #{{ meeting.createdByUserId }}
+                  </span>
+                </div>
+                <div [class]="'px-3 py-1 rounded-lg text-xs font-medium inline-flex ' +
+                             (isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-700')">
+                  {{ meeting.durationMinutes }} min
+                </div>
+              </div>
+
+              <button
+                (click)="openRejectModal(meeting)"
+                class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium"
+              >
+                Reject
+              </button>
+            </div>
+
+            <div class="space-y-3">
+              <p [class]="'text-xs font-semibold uppercase tracking-wider mb-3 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-500')">
+                Proposed Dates
+              </p>
+
+              <div class="grid gap-3" *ngIf="meeting.proposals.length; else noProposals">
+                <div
+                  *ngFor="let proposal of meeting.proposals"
+                  [class]="'flex items-center justify-between p-4 rounded-lg border transition-all hover:shadow-md ' +
+                           (isDarkMode ? 'bg-slate-700/30 border-slate-600/50 hover:border-blue-500/50' : 'bg-gray-50 border-gray-200 hover:border-blue-300')"
                 >
-                  {{ hasUserVoted(proposal) ? 'Confirmed' : 'Confirm' }}
+                  <div class="flex items-center gap-4 flex-1">
+                    <div [class]="'w-14 h-14 rounded-xl flex flex-col items-center justify-center ' +
+                                 (isDarkMode ? 'bg-slate-600' : 'bg-white border-2 border-gray-200')">
+                      <span [class]="'text-xs font-medium uppercase ' + (isDarkMode ? 'text-slate-400' : 'text-gray-500')">
+                        {{ proposal.proposedDate | date:'MMM' }}
+                      </span>
+                      <span [class]="'text-xl font-bold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+                        {{ proposal.proposedDate | date:'d' }}
+                      </span>
+                    </div>
+                    <div class="flex-1">
+                      <p [class]="'font-semibold text-base ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+                        {{ proposal.proposedDate | date:'EEEE' }}
+                      </p>
+                      <p [class]="'text-sm ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">
+                        {{ proposal.proposedDate | date:'h:mm a' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    (click)="voteForProposal(proposal.id!)"
+                    [disabled]="hasUserVoted(proposal) || !canUserVote(meeting)"
+                    [class]="'px-6 py-3 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 shadow-sm ' +
+                            (hasUserVoted(proposal)
+                              ? 'bg-green-500 text-white cursor-default border-2 border-green-400 shadow-green-500/25'
+                              : !canUserVote(meeting)
+                              ? 'bg-gray-300 cursor-not-allowed text-gray-500'
+                              : (isDarkMode
+                                ? 'bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-600/30 hover:border-blue-600 hover:shadow-blue-500/25'
+                                : 'bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 hover:border-blue-600 hover:shadow-blue-500/25'))"
+                  >
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"/>
+                    </svg>
+                    {{ hasUserVoted(proposal) ? 'Confirmed ✓' : (canUserVote(meeting) ? 'Confirm' : 'Cannot Confirm') }}
+                  </button>
+                </div>
+              </div>
+
+              <ng-template #noProposals>
+                <p [class]="'text-sm ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">No proposed dates yet.</p>
+              </ng-template>
+            </div>
+
+            <div class="mt-6 pt-6 border-t" [class]="isDarkMode ? 'border-slate-700' : 'border-gray-200'">
+              <div class="flex items-center gap-3 flex-wrap">
+                <button
+                  (click)="openRejectModal(meeting)"
+                  [disabled]="meeting.status !== MeetingStatus.PROPOSED"
+                  [class]="'px-5 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ' +
+                           (meeting.status === MeetingStatus.PROPOSED
+                             ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-lg shadow-orange-500/25 cursor-pointer'
+                             : 'bg-gray-300 text-gray-500 cursor-not-allowed')"
+                >
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  REJECTED
                 </button>
               </div>
             </div>
           </div>
         </div>
+
+        <ng-template #noPending>
+          <div [class]="'text-center py-16 rounded-xl border-2 border-dashed ' + (isDarkMode ? 'border-slate-700' : 'border-gray-200')">
+            <div [class]="'w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ' + (isDarkMode ? 'bg-slate-800' : 'bg-gray-50')">
+              <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 [class]="'text-lg font-semibold mb-1 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">All caught up!</h3>
+            <p [class]="'text-sm ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">No pending meetings to approve</p>
+          </div>
+        </ng-template>
       </div>
 
-      <div [class]="'rounded-xl border p-5 ' + (isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-gray-200')">
-        <h3 class="font-semibold text-lg mb-3">Upcoming & Completed Meetings</h3>
-        <div class="space-y-3" *ngIf="getUpcomingAndCompletedMeetings().length; else noUpcoming">
-          <div *ngFor="let meeting of getUpcomingAndCompletedMeetings(); trackBy: trackByMeetingId" [class]="'rounded-lg p-4 border ' + (isDarkMode ? 'border-slate-700 bg-slate-800' : 'border-gray-200 bg-gray-50')">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="font-semibold">{{ meeting.title }}</p>
-                <p [class]="isDarkMode ? 'text-slate-400 text-sm' : 'text-gray-600 text-sm'">{{ meeting.description }}</p>
-                <p *ngIf="meeting.meetingDate" [class]="isDarkMode ? 'text-slate-400 text-xs mt-2' : 'text-gray-500 text-xs mt-2'">
-                  {{ meeting.meetingDate | date:'EEEE, MMM d, y · h:mm a' }}
+      <div class="px-8 pb-8">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-1 h-6 rounded-full bg-green-500"></div>
+            <h3 [class]="'text-lg font-semibold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+              Upcoming & Completed Meetings
+            </h3>
+          </div>
+        </div>
+
+        <div class="space-y-4" *ngIf="getUpcomingAndCompletedMeetings().length; else noUpcoming">
+          <div
+            *ngFor="let meeting of getUpcomingAndCompletedMeetings(); trackBy: trackByMeetingId"
+            [class]="'rounded-xl border p-6 transition-all ' +
+                     (isDarkMode ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-gray-200')"
+          >
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <h4 [class]="'text-lg font-semibold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+                    {{ meeting.title }}
+                  </h4>
+                  <span [class]="'px-2.5 py-0.5 text-xs font-medium rounded-full ' +
+                                (meeting.status === MeetingStatus.CONFIRMED ? 'bg-green-500/10 text-green-600' :
+                                 meeting.status === MeetingStatus.COMPLETED ? 'bg-blue-500/10 text-blue-600' :
+                                 'bg-gray-500/10 text-gray-600')">
+                    {{ meeting.status }}
+                  </span>
+                </div>
+                <p [class]="'text-sm mb-3 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">
+                  {{ meeting.description }}
                 </p>
+
+                <div *ngIf="meeting.meetingDate" class="flex items-center gap-2 mb-3">
+                  <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  <span [class]="'text-sm font-medium ' + (isDarkMode ? 'text-white' : 'text-gray-900')">
+                    {{ meeting.meetingDate | date:'EEEE, MMMM d, y · h:mm a' }}
+                  </span>
+                </div>
+
+                <div *ngIf="meeting.meetingLink" class="flex items-center gap-2 mb-3">
+                  <a
+                    [href]="meeting.meetingLink"
+                    target="_blank"
+                    [class]="'text-sm font-medium hover:underline flex items-center gap-1 ' +
+                            (meeting.isOnline ? 'text-blue-600 hover:text-blue-700' : 'text-green-600 hover:text-green-700')"
+                  >
+                    {{ meeting.isOnline ? 'Join Meeting' : 'View Location' }}
+                  </a>
+                </div>
+
+                <div *ngIf="meeting.status === MeetingStatus.COMPLETED && meeting.meetingNotes" [class]="'mt-4 p-4 rounded-lg border-l-4 border-blue-500 ' + (isDarkMode ? 'bg-blue-500/5' : 'bg-blue-50')">
+                  <p [class]="'text-xs font-semibold uppercase tracking-wider mb-2 ' + (isDarkMode ? 'text-blue-400' : 'text-blue-600')">Meeting Notes</p>
+                  <p [class]="'text-sm whitespace-pre-wrap ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">{{ meeting.meetingNotes }}</p>
+                </div>
               </div>
 
-              <div class="flex flex-col gap-2">
+              <div class="ml-4 flex flex-col gap-2">
                 <button
                   *ngIf="meeting.status === MeetingStatus.CONFIRMED"
-                  (click)="openNotesModal(meeting)"
-                  class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm"
+                  (click)="completeMeeting(meeting)"
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2"
                 >
-                  Complete
+                  Mark as Completed
                 </button>
+
                 <button
                   *ngIf="meeting.status === MeetingStatus.COMPLETED"
                   (click)="openNotesModal(meeting)"
-                  class="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm"
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2"
                 >
                   Edit Notes
                 </button>
+
                 <button
                   *ngIf="meeting.status === MeetingStatus.CONFIRMED"
                   (click)="openCancelModal(meeting)"
-                  class="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm"
+                  class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-all flex items-center gap-2"
                 >
-                  Cancel
+                  Cancel Meeting
                 </button>
               </div>
             </div>
           </div>
         </div>
+
+        <ng-template #noUpcoming>
+          <div [class]="'text-center py-16 rounded-xl border-2 border-dashed ' + (isDarkMode ? 'border-slate-700' : 'border-gray-200')">
+            <div [class]="'w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center ' + (isDarkMode ? 'bg-slate-800' : 'bg-gray-50')">
+              <svg class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 [class]="'text-lg font-semibold mb-1 ' + (isDarkMode ? 'text-white' : 'text-gray-900')">No upcoming or completed meetings</h3>
+            <p [class]="'text-sm ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">Schedule a meeting to see it here</p>
+          </div>
+        </ng-template>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-4">
+      <div class="px-8 pb-8 grid md:grid-cols-2 gap-4">
         <div [class]="'rounded-xl border p-5 ' + (isDarkMode ? 'bg-slate-800/40 border-slate-700' : 'bg-white border-gray-200')" *ngIf="getRejectedMeetings().length">
           <h3 class="font-semibold text-lg mb-3 text-orange-500">Rejected Meetings</h3>
           <div class="space-y-2">
@@ -538,12 +914,8 @@
         </div>
       </div>
 
-      <ng-template #noPending>
-        <p [class]="isDarkMode ? 'text-slate-400 text-sm' : 'text-gray-500 text-sm'">No pending meetings.</p>
-      </ng-template>
-      <ng-template #noUpcoming>
-        <p [class]="isDarkMode ? 'text-slate-400 text-sm' : 'text-gray-500 text-sm'">No upcoming or completed meetings.</p>
-      </ng-template>
+      <ng-template #noPending></ng-template>
+      <ng-template #noUpcoming></ng-template>
     </div>
   </div>
 </div>
@@ -551,118 +923,226 @@
 <!-- Create Meeting Modal -->
 <div
   *ngIf="showCreateMeetingModal"
-  class="fixed inset-0 bg-slate-950/40 backdrop-blur-md flex items-center justify-center z-[60] p-6"
+  class="fixed inset-0 bg-slate-950/40 backdrop-blur-md flex items-center justify-center z-[60] p-6 animate-fadeIn"
   (click)="showCreateMeetingModal = false"
 >
   <div
-    [class]="'rounded-2xl shadow-2xl max-w-2xl w-full ' + (isDarkMode ? 'bg-slate-900' : 'bg-white')"
+    [class]="'rounded-2xl shadow-2xl max-w-2xl w-full animate-slideUp ' +
+             (isDarkMode ? 'bg-slate-900' : 'bg-white')"
     (click)="$event.stopPropagation()"
   >
-    <div [class]="'px-6 py-4 border-b ' + (isDarkMode ? 'border-slate-800' : 'border-gray-200')">
-      <h2 class="text-xl font-semibold">Create New Meeting</h2>
+    <div [class]="'px-8 py-6 border-b ' + (isDarkMode ? 'border-slate-800' : 'border-gray-100')">
+      <div class="flex items-center gap-3">
+        <div [class]="'w-10 h-10 rounded-lg flex items-center justify-center ' + (isDarkMode ? 'bg-blue-500/10' : 'bg-blue-50')">
+          <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </div>
+        <h2 [class]="'text-xl font-semibold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">Create New Meeting</h2>
+      </div>
+
+      <div *ngIf="showValidationError && validationErrors.length > 0" class="mx-0 mt-6 bg-red-50 border-2 border-red-200 rounded-xl p-4 animate-shake">
+        <div class="flex items-start gap-3">
+          <div class="flex-shrink-0">
+            <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h3 class="text-sm font-bold text-red-900 mb-2">Please fill in the required fields:</h3>
+            <ul class="space-y-1">
+              <li *ngFor="let error of validationErrors" class="text-sm text-red-700 flex items-start gap-2">{{ error }}</li>
+            </ul>
+          </div>
+          <button (click)="closeValidationError()" class="flex-shrink-0 p-1 hover:bg-red-100 rounded-lg transition-colors">
+            <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div *ngIf="showValidationError && validationErrors.length" class="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg p-3">
-      <ul class="text-sm text-red-700 space-y-1">
-        <li *ngFor="let error of validationErrors">{{ error }}</li>
-      </ul>
-    </div>
-
-    <div class="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+    <div class="px-8 py-6 space-y-6 max-h-[60vh] overflow-y-auto elegant-scrollbar">
       <div>
-        <label class="block text-sm font-medium mb-1">Title</label>
-        <input [(ngModel)]="newMeeting.title" type="text" class="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900" />
+        <label [class]="'block text-sm font-medium mb-2 ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">Meeting Title</label>
+        <input type="text" [(ngModel)]="newMeeting.title" placeholder="e.g., Q1 Planning Session"
+               [class]="'w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ' +
+                        (isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400')" />
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-1">Description</label>
-        <textarea [(ngModel)]="newMeeting.description" rows="3" class="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900"></textarea>
+        <label [class]="'block text-sm font-medium mb-2 ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">Description</label>
+        <textarea [(ngModel)]="newMeeting.description" rows="3" placeholder="Add meeting agenda or objectives..."
+                  [class]="'w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all ' +
+                           (isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400')"></textarea>
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-2">Duration</label>
+        <label [class]="'block text-sm font-medium mb-3 ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">Duration</label>
         <div class="grid grid-cols-6 gap-2">
-          <button
-            *ngFor="let d of [15,30,45,60,90,120]"
-            (click)="newMeeting.durationMinutes = d"
-            [class]="'py-2 rounded-lg text-sm font-semibold ' + (newMeeting.durationMinutes === d ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700')"
-          >
-            {{ d }}m
+          <button *ngFor="let duration of [15, 30, 45, 60, 90, 120]" (click)="newMeeting.durationMinutes = duration"
+                  [class]="'py-2.5 rounded-lg text-sm font-medium transition-all ' +
+                           (newMeeting.durationMinutes === duration ? 'bg-blue-600 text-white shadow-md' : (isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'))">
+            {{ duration }}m
           </button>
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-1">Propose Date & Time</label>
+        <label [class]="'block text-sm font-medium mb-2 ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">Propose Date & Time</label>
         <div class="flex gap-2">
-          <input [(ngModel)]="tempDate" type="datetime-local" class="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-gray-900" />
-          <button (click)="addProposedDate()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">Add</button>
+          <input type="datetime-local" [(ngModel)]="tempDate"
+                 [class]="'flex-1 px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ' +
+                          (isDarkMode ? 'bg-slate-800 border-slate-700 text-white [color-scheme:dark]' : 'bg-white border-gray-300 text-gray-900')" />
+          <button (click)="addProposedDate()" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-all hover:shadow-lg hover:shadow-blue-500/25">Add</button>
         </div>
       </div>
 
-      <div *ngIf="newMeeting.proposedDates.length">
-        <p class="text-sm font-semibold mb-2">Proposed Dates</p>
-        <div class="space-y-2">
-          <div *ngFor="let date of newMeeting.proposedDates; let i = index" class="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-100 text-gray-800">
-            <span>{{ date | date:'EEEE, MMM d, y · h:mm a' }}</span>
-            <button (click)="removeProposedDate(i)" class="text-red-600">Remove</button>
+      <div *ngIf="newMeeting.proposedDates.length > 0">
+        <label [class]="'block text-sm font-medium mb-3 ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">Proposed Dates ({{ newMeeting.proposedDates.length }})</label>
+        <div class="space-y-2 max-h-40 overflow-y-auto elegant-scrollbar">
+          <div *ngFor="let date of newMeeting.proposedDates; let i = index" [class]="'flex items-center justify-between p-3 rounded-lg border ' + (isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-gray-50 border-gray-200')">
+            <div class="flex items-center gap-3">
+              <div [class]="'w-10 h-10 rounded-lg flex flex-col items-center justify-center text-xs ' + (isDarkMode ? 'bg-slate-700 text-white' : 'bg-white border border-gray-200 text-gray-900')">
+                <span [class]="'text-[10px] ' + (isDarkMode ? 'text-slate-400' : 'text-gray-500')">{{ date | date:'MMM' }}</span>
+                <span class="font-semibold">{{ date | date:'d' }}</span>
+              </div>
+              <div>
+                <p [class]="'text-sm font-medium ' + (isDarkMode ? 'text-white' : 'text-gray-900')">{{ date | date:'EEEE, h:mm a' }}</p>
+              </div>
+            </div>
+            <button (click)="removeProposedDate(i)" [class]="'w-8 h-8 rounded-lg flex items-center justify-center transition-colors ' + (isDarkMode ? 'hover:bg-red-500/10 text-red-400' : 'hover:bg-red-50 text-red-600')">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-2">Meeting Type</label>
-        <div class="grid grid-cols-2 gap-2">
-          <button (click)="newMeeting.isOnline = true" [class]="'py-2 rounded-lg font-semibold ' + (newMeeting.isOnline ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700')">Online</button>
-          <button (click)="newMeeting.isOnline = false" [class]="'py-2 rounded-lg font-semibold ' + (!newMeeting.isOnline ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700')">In-Person</button>
+        <label [class]="'block text-sm font-medium mb-3 ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">Meeting Type</label>
+        <div class="grid grid-cols-2 gap-3">
+          <button (click)="newMeeting.isOnline = true" [class]="'py-3 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ' + (newMeeting.isOnline ? 'bg-blue-600 text-white shadow-md' : (isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'))">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+            Online
+          </button>
+          <button (click)="newMeeting.isOnline = false" [class]="'py-3 px-4 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ' + (!newMeeting.isOnline ? 'bg-blue-600 text-white shadow-md' : (isDarkMode ? 'bg-slate-800 text-slate-400 hover:bg-slate-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'))">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            In-Person
+          </button>
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-1">{{ newMeeting.isOnline ? 'Meeting Link' : 'Location Link' }}</label>
-        <input [(ngModel)]="newMeeting.meetingLink" type="url" class="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900" />
+        <label [class]="'block text-sm font-medium mb-2 ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">
+          {{ newMeeting.isOnline ? '🔗 Meeting Link (Zoom, Google Meet, etc.)' : '📍 Location Link (Google Maps)' }}
+        </label>
+        <input type="url" [(ngModel)]="newMeeting.meetingLink" [placeholder]="newMeeting.isOnline ? 'https://zoom.us/j/123456789' : 'https://maps.google.com/...'
+               " [class]="'w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ' + (isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400')" />
       </div>
     </div>
 
-    <div [class]="'px-6 py-4 border-t flex gap-2 ' + (isDarkMode ? 'border-slate-800' : 'border-gray-200')">
-      <button (click)="showCreateMeetingModal = false" class="flex-1 px-4 py-2 rounded-lg bg-gray-200 text-gray-800">Cancel</button>
-      <button (click)="createMeeting()" class="flex-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white">Create Meeting</button>
+    <div [class]="'px-8 py-6 border-t flex gap-3 ' + (isDarkMode ? 'border-slate-800' : 'border-gray-100')">
+      <button (click)="showCreateMeetingModal = false" [class]="'flex-1 px-5 py-3 rounded-lg font-medium transition-all ' + (isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900')">Cancel</button>
+      <button (click)="createMeeting()" class="flex-1 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all hover:shadow-lg hover:shadow-blue-500/25">Create Meeting</button>
     </div>
   </div>
 </div>
 
 <!-- Notes Modal -->
-<div *ngIf="showNotesModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-[70] p-4" (click)="showNotesModal = false">
-  <div [class]="'max-w-2xl w-full rounded-xl p-6 ' + (isDarkMode ? 'bg-slate-900' : 'bg-white')" (click)="$event.stopPropagation()">
-    <h3 class="text-xl font-semibold mb-3">Meeting Notes</h3>
-    <textarea [(ngModel)]="meetingNotes" rows="10" class="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900"></textarea>
-    <div class="mt-4 flex gap-2">
-      <button (click)="showNotesModal = false" class="flex-1 px-4 py-2 rounded-lg bg-gray-200 text-gray-800">Cancel</button>
-      <button (click)="saveMeetingNotes()" class="flex-1 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white">Save</button>
+<div *ngIf="showNotesModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-md flex items-center justify-center z-[70] p-6 animate-fadeIn" (click)="showNotesModal = false">
+  <div [class]="'rounded-2xl shadow-2xl max-w-3xl w-full animate-slideUp ' + (isDarkMode ? 'bg-slate-900' : 'bg-white')" (click)="$event.stopPropagation()">
+    <div [class]="'px-8 py-6 border-b ' + (isDarkMode ? 'border-slate-800' : 'border-gray-100')">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div [class]="'w-10 h-10 rounded-lg flex items-center justify-center ' + (isDarkMode ? 'bg-blue-500/10' : 'bg-blue-50')">
+            <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          </div>
+          <div>
+            <h2 [class]="'text-xl font-semibold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">{{ selectedMeetingForNotes?.status === MeetingStatus.COMPLETED ? 'Edit Meeting Notes' : 'Complete Meeting & Add Notes' }}</h2>
+            <p [class]="'text-sm mt-0.5 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">{{ selectedMeetingForNotes?.title }}</p>
+          </div>
+        </div>
+        <button (click)="showNotesModal = false" [class]="'w-10 h-10 rounded-lg flex items-center justify-center transition-all ' + (isDarkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900')">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+    </div>
+    <div class="px-8 py-6">
+      <label [class]="'block text-sm font-medium mb-3 ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">Meeting Notes / Recap</label>
+      <textarea [(ngModel)]="meetingNotes" rows="12" placeholder="Enter meeting notes, decisions made, action items, etc..." [class]="'w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-all font-mono text-sm ' + (isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400')"></textarea>
+      <p [class]="'text-xs mt-2 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-500')">💡 Tip: These notes will be saved and accessible for future reference</p>
+    </div>
+    <div [class]="'px-8 py-6 border-t flex gap-3 ' + (isDarkMode ? 'border-slate-800' : 'border-gray-100')">
+      <button (click)="showNotesModal = false" [class]="'flex-1 px-5 py-3 rounded-lg font-medium transition-all ' + (isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900')">Cancel</button>
+      <button (click)="saveMeetingNotes()" class="flex-1 px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all hover:shadow-lg hover:shadow-blue-500/25 flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+        {{ selectedMeetingForNotes?.status === MeetingStatus.COMPLETED ? 'Update Notes' : 'Complete Meeting' }}
+      </button>
     </div>
   </div>
 </div>
 
 <!-- Cancel Meeting Modal -->
-<div *ngIf="showCancelModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-[70] p-4" (click)="showCancelModal = false">
-  <div [class]="'max-w-xl w-full rounded-xl p-6 ' + (isDarkMode ? 'bg-slate-900' : 'bg-white')" (click)="$event.stopPropagation()">
-    <h3 class="text-xl font-semibold mb-3">Cancel Meeting</h3>
-    <textarea [(ngModel)]="cancellationReason" rows="5" class="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900" placeholder="Reason"></textarea>
-    <div class="mt-4 flex gap-2">
-      <button (click)="showCancelModal = false" class="flex-1 px-4 py-2 rounded-lg bg-gray-200 text-gray-800">Back</button>
-      <button (click)="cancelMeeting()" class="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white">Confirm Cancel</button>
+<div *ngIf="showCancelModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-md flex items-center justify-center z-[70] p-6 animate-fadeIn" (click)="showCancelModal = false">
+  <div [class]="'rounded-2xl shadow-2xl max-w-2xl w-full animate-slideUp ' + (isDarkMode ? 'bg-slate-900' : 'bg-white')" (click)="$event.stopPropagation()">
+    <div [class]="'px-8 py-6 border-b ' + (isDarkMode ? 'border-slate-800' : 'border-gray-100')">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div [class]="'w-10 h-10 rounded-lg flex items-center justify-center ' + (isDarkMode ? 'bg-red-500/10' : 'bg-red-50')">
+            <svg class="w-5 h-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </div>
+          <div>
+            <h2 [class]="'text-xl font-semibold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">Cancel Meeting</h2>
+            <p [class]="'text-sm mt-0.5 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">{{ selectedMeetingForCancel?.title }}</p>
+          </div>
+        </div>
+        <button (click)="showCancelModal = false" [class]="'w-10 h-10 rounded-lg flex items-center justify-center transition-all ' + (isDarkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900')">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+    </div>
+    <div class="px-8 py-6">
+      <label [class]="'block text-sm font-medium mb-3 ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">Reason for Cancellation (Optional)</label>
+      <textarea [(ngModel)]="cancellationReason" rows="6" placeholder="e.g., Client not available, Project scope changed, etc..." [class]="'w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none transition-all ' + (isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400')"></textarea>
+      <p [class]="'text-xs mt-2 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-500')">💡 Tip: Adding a reason helps keep a record for future reference</p>
+    </div>
+    <div [class]="'px-8 py-6 border-t flex gap-3 ' + (isDarkMode ? 'border-slate-800' : 'border-gray-100')">
+      <button (click)="showCancelModal = false" [class]="'flex-1 px-5 py-3 rounded-lg font-medium transition-all ' + (isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900')">Keep Meeting</button>
+      <button (click)="cancelMeeting()" class="flex-1 px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-all hover:shadow-lg hover:shadow-red-500/25 flex items-center justify-center gap-2">Cancel Meeting</button>
     </div>
   </div>
 </div>
 
 <!-- Reject Meeting Modal -->
-<div *ngIf="showRejectModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-[70] p-4" (click)="showRejectModal = false">
-  <div [class]="'max-w-xl w-full rounded-xl p-6 ' + (isDarkMode ? 'bg-slate-900' : 'bg-white')" (click)="$event.stopPropagation()">
-    <h3 class="text-xl font-semibold mb-3">Reject Meeting</h3>
-    <textarea [(ngModel)]="rejectionReason" rows="5" class="w-full px-3 py-2 rounded-lg border border-gray-300 text-gray-900" placeholder="Reason"></textarea>
-    <div class="mt-4 flex gap-2">
-      <button (click)="showRejectModal = false" class="flex-1 px-4 py-2 rounded-lg bg-gray-200 text-gray-800">Back</button>
-      <button (click)="rejectMeeting()" class="flex-1 px-4 py-2 rounded-lg bg-orange-600 hover:bg-orange-700 text-white">Confirm Reject</button>
+<div *ngIf="showRejectModal" class="fixed inset-0 bg-slate-950/40 backdrop-blur-md flex items-center justify-center z-[70] p-6 animate-fadeIn" (click)="showRejectModal = false">
+  <div [class]="'rounded-2xl shadow-2xl max-w-2xl w-full animate-slideUp ' + (isDarkMode ? 'bg-slate-900' : 'bg-white')" (click)="$event.stopPropagation()">
+    <div [class]="'px-8 py-6 border-b ' + (isDarkMode ? 'border-slate-800' : 'border-gray-100')">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div [class]="'w-10 h-10 rounded-lg flex items-center justify-center ' + (isDarkMode ? 'bg-orange-500/10' : 'bg-orange-50')">
+            <svg class="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+          </div>
+          <div>
+            <h2 [class]="'text-xl font-semibold ' + (isDarkMode ? 'text-white' : 'text-gray-900')">Reject Meeting</h2>
+            <p [class]="'text-sm mt-0.5 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-600')">{{ selectedMeetingForReject?.title }}</p>
+          </div>
+        </div>
+        <button (click)="showRejectModal = false" [class]="'w-10 h-10 rounded-lg flex items-center justify-center transition-all ' + (isDarkMode ? 'hover:bg-slate-800 text-slate-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900')">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+    </div>
+    <div class="px-8 py-6">
+      <label [class]="'block text-sm font-medium mb-3 ' + (isDarkMode ? 'text-slate-300' : 'text-gray-700')">Reason for Rejection (Optional)</label>
+      <textarea [(ngModel)]="rejectionReason" rows="6" placeholder="e.g., Dates don't work, Different priorities, etc..." [class]="'w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none transition-all ' + (isDarkMode ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500' : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400')"></textarea>
+      <p [class]="'text-xs mt-2 ' + (isDarkMode ? 'text-slate-400' : 'text-gray-500')">💡 Tip: Explaining why helps improve future meeting proposals</p>
+    </div>
+    <div [class]="'px-8 py-6 border-t flex gap-3 ' + (isDarkMode ? 'border-slate-800' : 'border-gray-100')">
+      <button (click)="showRejectModal = false" [class]="'flex-1 px-5 py-3 rounded-lg font-medium transition-all ' + (isDarkMode ? 'bg-slate-800 hover:bg-slate-700 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900')">Keep Proposal</button>
+      <button (click)="rejectMeeting()" class="flex-1 px-5 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-all hover:shadow-lg hover:shadow-orange-500/25 flex items-center justify-center gap-2">Reject Meeting</button>
     </div>
   </div>
 </div>

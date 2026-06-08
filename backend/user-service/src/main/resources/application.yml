@@ -49,7 +49,7 @@ keycloak:
     password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
     client-id: admin-cli
   openrouter:
-    api-key: ${OPENROUTER_API_KEY:YOUR_OPENROUTER_API_KEY_HERE}
+    api-key: ${OPENROUTER_API_KEY:your-openrouter-api-key-here}
     model: arcee-ai/trinity-large-preview:free
 
 # Keycloak: validate JWT from this issuer (realm)

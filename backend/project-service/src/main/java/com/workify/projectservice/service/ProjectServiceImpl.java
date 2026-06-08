@@ -39,8 +39,13 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.setStatus(ProjectStatus.OPEN);
         project.setCreatedAt(LocalDateTime.now());
-        project.setEstimatedDuration(estimationService.estimateDuration(project));
-        project.setComplexity(estimationService.estimateComplexity(project));
+
+        if (project.getEstimatedDuration() == null) {
+            project.setEstimatedDuration(estimationService.estimateDuration(project));
+        }
+        if (project.getComplexity() == null) {
+            project.setComplexity(estimationService.estimateComplexity(project));
+        }
 
         // Sauvegarde initiale
         Project saved = projectRepository.save(project);

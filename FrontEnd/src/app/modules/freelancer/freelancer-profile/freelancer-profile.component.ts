@@ -63,14 +63,15 @@ export class FreelancerProfileComponent implements OnInit {
           responseTime: '< 1 hour', // Mock
           successRate: 98, // Mock
           completedProjects: 45, // Mock
-          avatar: this.userProfileService.getAvatarUrl(data.profilePicture),
-          dicebearAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.email || data.firstName || 'freelancer'}`,
+          // Avatar: resolve full URL; only set if profilePicture is present
+          avatar: data.profilePicture ? this.userProfileService.getAvatarUrl(data.profilePicture) : null,
+          dicebearAvatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(data.email || data.firstName || 'freelancer')}`,
           skills: data.competences?.map((c: any) => c.name) || [],
           educations: data.educations || [],
           experiences: data.experiences || [],
           cvPdfUrl: this.userProfileService.getCvPdfUrl(data.cvPdf)
         };
-        console.log('Public profile API response - cvPdf:', data.cvPdf, 'Resolved URL:', this.freelancer.cvPdfUrl);
+        console.log('Public profile: avatar=', this.freelancer.avatar, '| cvPdf=', this.freelancer.cvPdfUrl);
 
         this.hasProfilePicture = !!data.profilePicture;
 
@@ -147,5 +148,14 @@ export class FreelancerProfileComponent implements OnInit {
   get safeCvPdfUrl(): SafeResourceUrl | null {
     if (!this.freelancer?.cvPdfUrl) return null;
     return this.sanitizer.bypassSecurityTrustResourceUrl(this.freelancer.cvPdfUrl);
+  }
+
+  /** If the avatar image fails to load (404, etc.), clear it so the initials placeholder shows. */
+  onAvatarError(event: Event): void {
+    console.warn('Avatar image failed to load, falling back to initials');
+    if (this.freelancer) {
+      this.freelancer.avatar = null;
+      this.hasProfilePicture = false;
+    }
   }
 }

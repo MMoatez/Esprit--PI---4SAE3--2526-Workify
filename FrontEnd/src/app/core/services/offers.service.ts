@@ -14,8 +14,8 @@ export interface CreateOfferRequest {
 })
 export class OffersService {
 
-  private apiUrl = 'http://localhost:8082/api/offers';
-  private freelancerApiUrl = 'http://localhost:8082/api/freelancers';
+  private apiUrl = 'http://localhost:8063/api/offers';
+  private freelancerApiUrl = 'http://localhost:8063/api/freelancers';
 
   constructor(private http: HttpClient) {}
 
@@ -51,7 +51,7 @@ export class OffersService {
   offer: Partial<MyOffer>
 ) {
   return this.http.post<MyOffer>(
-    `http://localhost:8082/api/offers/project/${projectId}/freelancer/${freelancerId}`,
+    `http://localhost:8063/api/offers/project/${projectId}/freelancer/${freelancerId}`,
     offer
   );
 

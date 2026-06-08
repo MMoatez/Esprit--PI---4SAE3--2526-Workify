@@ -1028,20 +1028,26 @@ export class AuthRegisterComponent implements OnInit {
     console.log('[Signup] Stored pdfBase64, present:', !!this.storedPdfBase64, 'length:', this.storedPdfBase64?.length);
 
     // Extract skills from the OpenResume structure
-    // skills is an object: { featuredSkills: [{skill, rating}], descriptions: [string] }
     if (resumeData.skills) {
       const skills: string[] = [];
+      const addSkill = (skillText: string) => {
+        const cleanSkill = skillText.trim();
+        if (cleanSkill) {
+          // If the text is absurdly long, truncate it to avoid DB errors
+          const truncated = cleanSkill.length > 150 ? cleanSkill.substring(0, 150) + '...' : cleanSkill;
+          skills.push(truncated);
+        }
+      };
+
       if (resumeData.skills.featuredSkills && Array.isArray(resumeData.skills.featuredSkills)) {
         resumeData.skills.featuredSkills.forEach((fs: any) => {
-          if (fs.skill && fs.skill.trim()) skills.push(fs.skill.trim());
+          if (fs.skill) addSkill(fs.skill);
         });
       }
       if (resumeData.skills.descriptions && Array.isArray(resumeData.skills.descriptions)) {
         resumeData.skills.descriptions.forEach((desc: string) => {
-          if (desc && desc.trim()) {
-            desc.split(',').forEach((s: string) => {
-              if (s.trim()) skills.push(s.trim());
-            });
+          if (desc) {
+            desc.split(',').forEach((s: string) => addSkill(s));
           }
         });
       }
@@ -1098,7 +1104,7 @@ export class AuthRegisterComponent implements OnInit {
         if (this.storedResumeData && token) {
           // We have CV data and a token — save CV to backend
           console.log('[Signup] Token received, saving CV. pdfBase64 present:', !!this.storedPdfBase64);
-          this.authService.setToken(token);
+          this.authService.setSession(token, res?.refresh_token);
           this.saveCvAfterRegistration();
         } else if (this.storedResumeData && !token) {
           // CV data exists but no token — fallback to login page

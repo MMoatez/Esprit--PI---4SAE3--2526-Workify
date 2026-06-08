@@ -91,7 +91,11 @@ public class RegistrationController {
 
       if (request.getCompetences() != null) {
         request.getCompetences().forEach(name -> {
-          user.addCompetence(Competence.builder().name(name).build());
+          if (name != null && !name.isBlank()) {
+            String cleanName = name.trim();
+            cleanName = cleanName.length() > 255 ? cleanName.substring(0, 255) : cleanName;
+            user.addCompetence(Competence.builder().name(cleanName).build());
+          }
         });
       }
 
@@ -128,6 +132,7 @@ public class RegistrationController {
         ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(tokenUrl, tokenEntity, Map.class);
         if (tokenResponse.getStatusCode() == HttpStatus.OK && tokenResponse.getBody() != null) {
           responseMap.put("access_token", tokenResponse.getBody().get("access_token"));
+          responseMap.put("refresh_token", tokenResponse.getBody().get("refresh_token"));
           log.info("Auto-login token obtained for new user: {}", request.getEmail());
         }
       } catch (Exception tokenEx) {

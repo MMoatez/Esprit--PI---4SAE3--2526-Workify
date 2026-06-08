@@ -11,7 +11,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class RecommendationService {
 
-  private readonly API_URL = 'http://localhost:8082/api/recommendation';
+  private readonly API_URL = 'http://localhost:8063/api/recommendation';
   private http = inject(HttpClient);
 
   recommend(request: RecommendRequest): Observable<RecommendResponse> {

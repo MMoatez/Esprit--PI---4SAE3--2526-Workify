@@ -41,8 +41,8 @@ export enum UserType {
 
 // Helpers pour affichage
 export const DurationDisplay = {
-  ONE_MONTH: '1 month',
-  THREE_MONTHS: '3 months',
-  SIX_MONTHS: '6 months',
-  ONE_YEAR: '1 year'
+  ONE_MONTH: '1 mois',
+  THREE_MONTHS: '3 mois',
+  SIX_MONTHS: '6 mois',
+  ONE_YEAR: '1 an'
 };

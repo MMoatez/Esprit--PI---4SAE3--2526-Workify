@@ -50,7 +50,7 @@ public class EventService {
       .capacity(request.getCapacity())
       .category(request.getCategory())
       .topic(request.getTopic())
-      .status(EventStatus.DRAFT)
+      .status(EventStatus.PUBLISHED)
       .createdBy(adminId)
       .build();
     return toEventDto(eventRepository.save(event));
@@ -71,14 +71,17 @@ public class EventService {
 
   @Transactional(readOnly = true)
   public List<EventDto> getPublishedEvents() {
-    return eventRepository.findByStatus(EventStatus.PUBLISHED)
+    return eventRepository.findByStatusIn(getPubliclyVisibleStatuses())
       .stream().map(this::toEventDto).collect(Collectors.toList());
   }
 
   @Transactional(readOnly = true)
   public List<EventDto> getEventsByCategory(EventCategory category) {
     return eventRepository.findByCategory(category)
-      .stream().map(this::toEventDto).collect(Collectors.toList());
+      .stream()
+      .filter(event -> isPubliclyVisible(event.getStatus()))
+      .map(this::toEventDto)
+      .collect(Collectors.toList());
   }
 
   @Transactional
@@ -218,8 +221,8 @@ public class EventService {
     Event event = eventRepository.findById(eventId)
       .orElseThrow(() -> new RuntimeException("Event not found"));
 
-    if (event.getStatus() != EventStatus.PUBLISHED) {
-      throw new RuntimeException("Event is not published yet");
+    if (!isPubliclyVisible(event.getStatus())) {
+      throw new RuntimeException("Event is not available for registration");
     }
 
     // Check for existing registration
@@ -780,5 +783,18 @@ public class EventService {
       result.put("message", "Erreur de validation: " + e.getMessage());
       return result;
     }
+  }
+
+  private List<EventStatus> getPubliclyVisibleStatuses() {
+    return List.of(
+      EventStatus.DRAFT,
+      EventStatus.PENDING_PARTNERS,
+      EventStatus.ENRICHED,
+      EventStatus.PUBLISHED
+    );
+  }
+
+  private boolean isPubliclyVisible(EventStatus status) {
+    return status != null && getPubliclyVisibleStatuses().contains(status);
   }
 }

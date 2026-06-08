@@ -46,6 +46,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     if (this.auth.isLoggedIn()) {
+      this.auth.startSessionKeeper();
       this.feedbackNotif.connect();
       this.headerUserName = this.auth.getUserName() || this.headerUserName;
       this.headerUserInitials = this.computeInitials(this.headerUserName);

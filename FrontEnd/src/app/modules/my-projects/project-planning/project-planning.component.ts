@@ -1,10 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CdkDragDrop, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { MyProjectsService } from '../../../core/services/my-projects.service';
 import { Planning, Colonne, Tache, CreateColonneDto, CreateTacheDto } from '../../../core/models/my-project.model';
 import { MeetingService } from '../../../core/services/meeting.service';
 import { CreateMeetingDto, Meeting, MeetingProposal, MeetingStatus } from '../../../core/models/meeting.model';
+import { AuthService } from '../../../core/services/auth.service';
+
+interface CalendarDayCell {
+  date: Date;
+  dayNumber: number;
+  inCurrentMonth: boolean;
+  isToday: boolean;
+  meetings: Meeting[];
+}
 
 @Component({
   standalone: false,
@@ -60,6 +68,8 @@ export class ProjectPlanningComponent implements OnInit {
   showEditColumnModal = false;
   selectedColonne?: Colonne;
   selectedColonneForTask?: Colonne;
+  draggedTask?: Tache;
+  draggedFromColumnId?: number;
   
   // Form models
   newColumn: CreateColonneDto = {
@@ -88,11 +98,15 @@ export class ProjectPlanningComponent implements OnInit {
     { name: 'Teal', value: '#14B8A6' }
   ];
 
+  calendarViewDate = new Date();
+  readonly calendarWeekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private projectsService: MyProjectsService,
-    private meetingService: MeetingService
+    private meetingService: MeetingService,
+    private authService: AuthService
   ) {}
 
   toggleTheme(): void {
@@ -146,8 +160,14 @@ export class ProjectPlanningComponent implements OnInit {
         this.planning = this.normalizePlanning(planning);
         this.syncVisibleColonnes();
         this.newColumn.idPlanning = this.planning.id!;
+
+        if (!this.planning.colonnes.length) {
+          this.createDefaultColumns();
+          return;
+        }
+
         this.loading = false;
-        this.loadPlanning();
+        this.loadMeetings();
       },
       error: (err) => {
         console.error('Error creating planning:', err);
@@ -187,7 +207,7 @@ export class ProjectPlanningComponent implements OnInit {
           completed++;
           if (completed === defaultColumns.length) {
             this.loading = false;
-            this.loadPlanning();
+            this.loadMeetings();
           }
         },
         error: (err) => {
@@ -229,59 +249,125 @@ export class ProjectPlanningComponent implements OnInit {
   }
 
   initCurrentUserId(): void {
-    const userRaw = localStorage.getItem('currentUser');
-    if (!userRaw) {
-      this.currentUserId = 0;
+    const numericId = this.authService.getNumericUserId();
+    if (numericId) {
+      this.currentUserId = numericId;
       return;
     }
 
-    try {
-      const user = JSON.parse(userRaw);
-      this.currentUserId = Number(user?.userId || user?.id || 0);
-    } catch {
-      this.currentUserId = 0;
+    const currentUserRaw = localStorage.getItem('currentUser');
+    if (currentUserRaw) {
+      try {
+        const currentUser = JSON.parse(currentUserRaw);
+        const fallbackId = Number(currentUser?.userId || currentUser?.id || currentUser?.numericId || 0);
+        if (fallbackId) {
+          this.currentUserId = fallbackId;
+          return;
+        }
+      } catch {
+        // Ignore JSON parse errors and fall through to token-based fallback.
+      }
     }
+
+    const tokenSubject = this.authService.getUserId();
+    const parsedSubject = Number(tokenSubject);
+    this.currentUserId = Number.isFinite(parsedSubject) ? parsedSubject : 0;
+  }
+
+  get showCalendar(): boolean {
+    return this.isCalendarOpen;
+  }
+
+  get calendarTitle(): string {
+    return this.calendarViewDate.toLocaleDateString('en-US', {
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
+  get calendarWeeks(): CalendarDayCell[][] {
+    const viewYear = this.calendarViewDate.getFullYear();
+    const viewMonth = this.calendarViewDate.getMonth();
+    const firstDayOfMonth = new Date(viewYear, viewMonth, 1);
+    const calendarStart = new Date(firstDayOfMonth);
+    calendarStart.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
+
+    const today = new Date();
+    const cells: CalendarDayCell[] = [];
+
+    for (let index = 0; index < 42; index++) {
+      const cellDate = new Date(calendarStart);
+      cellDate.setDate(calendarStart.getDate() + index);
+      cells.push({
+        date: cellDate,
+        dayNumber: cellDate.getDate(),
+        inCurrentMonth: cellDate.getMonth() === viewMonth,
+        isToday: this.isSameCalendarDay(cellDate, today),
+        meetings: this.getMeetingsForDate(cellDate)
+      });
+    }
+
+    return Array.from({ length: 6 }, (_, weekIndex) => cells.slice(weekIndex * 7, weekIndex * 7 + 7));
   }
 
   // ========== DRAG & DROP ==========
-  
-  drop(event: CdkDragDrop<Tache[]>, colonneId: number): void {
-  if (event.previousContainer === event.container) {
-    // Réorganiser dans la même colonne
-    moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-  } else {
-    // Déplacer vers une autre colonne
-    const tache = event.previousContainer.data[event.previousIndex];
-    
-    transferArrayItem(
-      event.previousContainer.data,
-      event.container.data,
-      event.previousIndex,
-      event.currentIndex
-    );
 
-    // ✅ Mettre à jour dans le backend
-    if (tache.id) {
-      this.projectsService.moveTache(tache.id, colonneId).subscribe({
-        next: () => {
-          console.log('✅ Task moved successfully to column:', colonneId);
-          // Mettre à jour l'idColonne localement
-          tache.idColonne = colonneId;
-        },
-        error: (err) => {
-          console.error('❌ Error moving task:', err);
-          // En cas d'erreur, annuler le mouvement visuellement
-          transferArrayItem(
-            event.container.data,
-            event.previousContainer.data,
-            event.currentIndex,
-            event.previousIndex
-          );
-        }
-      });
-    }
+  onDragStart(tache: Tache, colonne: Colonne): void {
+    this.draggedTask = tache;
+    this.draggedFromColumnId = colonne.id;
   }
-}
+
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  onDrop(event: DragEvent, colonneId: number): void {
+    event.preventDefault();
+
+    const draggedTask = this.draggedTask;
+    const previousColumnId = this.draggedFromColumnId;
+
+    if (!draggedTask?.id) {
+      this.clearDraggedTask();
+      return;
+    }
+
+    if (previousColumnId === colonneId) {
+      this.clearDraggedTask();
+      return;
+    }
+
+    const sourceColumn = this.planning?.colonnes.find((c) => c.id === previousColumnId);
+    const targetColumn = this.planning?.colonnes.find((c) => c.id === colonneId);
+
+    if (!sourceColumn || !targetColumn) {
+      this.clearDraggedTask();
+      return;
+    }
+
+    sourceColumn.taches = (sourceColumn.taches || []).filter((task) => task.id !== draggedTask.id);
+    targetColumn.taches = [...(targetColumn.taches || []), { ...draggedTask, idColonne: colonneId }];
+    this.syncVisibleColonnes();
+
+    this.projectsService.moveTache(draggedTask.id, colonneId).subscribe({
+      next: () => {
+        this.draggedTask = undefined;
+        this.draggedFromColumnId = undefined;
+      },
+      error: (err) => {
+        console.error('❌ Error moving task:', err);
+        targetColumn.taches = (targetColumn.taches || []).filter((task) => task.id !== draggedTask.id);
+        sourceColumn.taches = [...(sourceColumn.taches || []), { ...draggedTask, idColonne: previousColumnId }];
+        this.syncVisibleColonnes();
+        this.clearDraggedTask();
+      }
+    });
+  }
+
+  private clearDraggedTask(): void {
+    this.draggedTask = undefined;
+    this.draggedFromColumnId = undefined;
+  }
 
   // ========== COLONNES ==========
   
@@ -311,11 +397,16 @@ export class ProjectPlanningComponent implements OnInit {
     this.newColumn.idPlanning = this.planning.id;
 
     this.projectsService.createColonne(this.newColumn).subscribe({
-      next: () => {
+      next: (createdColumn) => {
+        if (!this.planning!.colonnes) {
+          this.planning!.colonnes = [];
+        }
+
+        this.planning!.colonnes.push(this.normalizeColonne(createdColumn));
+        this.syncVisibleColonnes();
         this.showAddColumnModal = false;
         this.newColumn.name = '';
         this.newColumn.description = '';
-        this.loadPlanning();
       },
       error: (err) => {
         console.error('Error creating column:', err);
@@ -409,38 +500,123 @@ export class ProjectPlanningComponent implements OnInit {
     this.router.navigate(['/my-projects', this.projectId]);
   }
 
-  getConnectedLists(): string[] {
-    return this.visibleColonnes
-      .map((c) => c.id)
-      .filter((id): id is number => typeof id === 'number')
-      .map((id) => `column-${id}`);
-  }
-
   getTotalTasks(): number {
     return (this.planning?.colonnes || []).reduce((sum, c) => sum + (c.taches?.length || 0), 0);
   }
 
-  getTaskCountByColumnName(columnName: string): number {
-    const column = (this.planning?.colonnes || []).find(
-      (c) => (c.name || '').trim().toLowerCase() === columnName.trim().toLowerCase()
-    );
-    return column?.taches?.length || 0;
+  getTotalTasksCount(): number {
+    return this.getTotalTasks();
   }
 
-  getDonePercentage(): number {
-    const total = this.getTotalTasks();
+  getColumnTasksCount(columnName: string): number {
+    return this.getTaskCountByColumnName(columnName);
+  }
+
+  getColumnTasksPercentage(columnName: string): number {
+    const total = this.getTotalTasksCount();
     if (!total) {
       return 0;
     }
 
-    const done = this.getTaskCountByColumnName('Done');
-    return Math.round((done / total) * 100);
+    return Math.round((this.getColumnTasksCount(columnName) / total) * 100);
+  }
+
+  getTaskCountByColumnName(columnName: string): number {
+    const column = (this.planning?.colonnes || []).find(
+      (c) => this.normalizeColumnName(c.name) === this.normalizeColumnName(columnName)
+    );
+    return column?.taches?.length || 0;
+  }
+
+  getCompletionPercentage(): number {
+    return this.getColumnTasksPercentage('Done');
+  }
+
+  getDonePercentage(): number {
+    return this.getCompletionPercentage();
+  }
+
+  private normalizeColumnName(columnName?: string): string {
+    return (columnName || '').replace(/\s+/g, '').trim().toLowerCase();
   }
 
   toggleCalendar(): void {
     this.isCalendarOpen = !this.isCalendarOpen;
     if (this.isCalendarOpen) {
       this.loadMeetings();
+    }
+  }
+
+  navigateCalendarMonth(offset: number): void {
+    this.calendarViewDate = new Date(
+      this.calendarViewDate.getFullYear(),
+      this.calendarViewDate.getMonth() + offset,
+      1
+    );
+  }
+
+  goToToday(): void {
+    this.calendarViewDate = new Date();
+  }
+
+  private isSameCalendarDay(left: Date, right: Date): boolean {
+    return left.getFullYear() === right.getFullYear()
+      && left.getMonth() === right.getMonth()
+      && left.getDate() === right.getDate();
+  }
+
+  private getMeetingDisplayDate(meeting: Meeting): Date | null {
+    const candidateDate = meeting.meetingDate || meeting.proposals?.[0]?.proposedDate;
+    return candidateDate ? new Date(candidateDate) : null;
+  }
+
+  getMeetingsForDate(date: Date): Meeting[] {
+    return (this.meetings || []).filter((meeting) => {
+      const meetingDate = this.getMeetingDisplayDate(meeting);
+      return meetingDate ? this.isSameCalendarDay(meetingDate, date) : false;
+    });
+  }
+
+  getMeetingsForDayCount(date: Date): number {
+    return this.getMeetingsForDate(date).length;
+  }
+
+  getCalendarEventPreview(meeting: Meeting): string {
+    const status = meeting.status.replace('_', ' ').toLowerCase();
+    return `${meeting.title} · ${status}`;
+  }
+
+  getCalendarEventBadgeClass(meeting: Meeting): string {
+    switch (meeting.status) {
+      case MeetingStatus.CONFIRMED:
+        return 'bg-blue-500/10 text-blue-200 border-blue-500/20';
+      case MeetingStatus.COMPLETED:
+        return 'bg-emerald-500/10 text-emerald-200 border-emerald-500/20';
+      case MeetingStatus.PROPOSED:
+        return 'bg-amber-500/10 text-amber-200 border-amber-500/20';
+      case MeetingStatus.REJECTED:
+        return 'bg-orange-500/10 text-orange-200 border-orange-500/20';
+      case MeetingStatus.CANCELLED:
+        return 'bg-red-500/10 text-red-200 border-red-500/20';
+      default:
+        return 'bg-slate-500/10 text-slate-200 border-slate-500/20';
+    }
+  }
+
+  getCalendarEventDotClass(meeting: Meeting): string {
+    switch (meeting.status) {
+      case MeetingStatus.CONFIRMED:
+        return 'bg-blue-400';
+      case MeetingStatus.COMPLETED:
+        return 'bg-emerald-400';
+      case MeetingStatus.PROPOSED:
+        return 'bg-amber-400';
+      case MeetingStatus.REJECTED:
+        return 'bg-orange-400';
+      case MeetingStatus.CANCELLED:
+        return 'bg-red-400';
+      default:
+        return 'bg-slate-400';
     }
   }
 
@@ -458,6 +634,15 @@ export class ProjectPlanningComponent implements OnInit {
   openCreateMeetingModal(): void {
     this.resetNewMeeting();
     this.showCreateMeetingModal = true;
+  }
+
+  openCreateModal(): void {
+    this.openCreateMeetingModal();
+  }
+
+  closeValidationError(): void {
+    this.showValidationError = false;
+    this.validationErrors = [];
   }
 
   resetNewMeeting(): void {
@@ -552,6 +737,10 @@ export class ProjectPlanningComponent implements OnInit {
     return this.meetings.filter((m) => m.status === MeetingStatus.PROPOSED);
   }
 
+  getPendingMeetingsCount(): number {
+    return this.getPendingMeetings().length;
+  }
+
   getUpcomingAndCompletedMeetings(): Meeting[] {
     return this.meetings.filter(
       (m) => m.status === MeetingStatus.CONFIRMED || m.status === MeetingStatus.COMPLETED
@@ -572,6 +761,14 @@ export class ProjectPlanningComponent implements OnInit {
 
   canUserVote(meeting: Meeting): boolean {
     return meeting.createdByUserId !== this.currentUserId;
+  }
+
+  isMeetingConfirmed(meeting: Meeting): boolean {
+    return meeting.status === MeetingStatus.CONFIRMED;
+  }
+
+  completeMeeting(meeting: Meeting): void {
+    this.openNotesModal(meeting);
   }
 
   voteForProposal(proposalId: number): void {

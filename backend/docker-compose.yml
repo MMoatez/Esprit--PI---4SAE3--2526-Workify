@@ -233,7 +233,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     ports:
-      - "8083:8082" # Mapping host 8083 to container 8082 to avoid conflict with formation-service
+      - "8063:8063"
     depends_on:
       mysql:
         condition: service_healthy

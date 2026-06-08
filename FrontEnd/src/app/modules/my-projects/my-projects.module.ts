@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
-import { DragDropModule } from '@angular/cdk/drag-drop'; // ← AJOUTEZ
 
 import { MyProjectsRoutingModule } from './my-projects-routing.module';
 import { MyProjectsListComponent } from './my-projects-list/my-projects-list.component';
@@ -19,7 +18,6 @@ import { ProjectPlanningComponent } from './project-planning/project-planning.co
     CommonModule,
     FormsModule,
     HttpClientModule,
-    DragDropModule,
     MyProjectsRoutingModule
   ]
 })

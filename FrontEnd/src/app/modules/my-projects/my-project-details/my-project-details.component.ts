@@ -176,12 +176,14 @@ export class MyProjectDetailsComponent implements OnInit {
 
     this.isGeneratingTasks = true;
     this.myProjectsService.generateTasksWithAI(this.projectId).subscribe({
-      next: () => {
+      next: (response) => {
         this.isGeneratingTasks = false;
+        this.error = '';
+        alert(response?.message || 'Tasks generated successfully.');
       },
-      error: () => {
-        // Keep non-blocking because backend endpoint may be unavailable in some environments.
+      error: (err) => {
         this.isGeneratingTasks = false;
+        this.error = err?.error?.message || 'Failed to generate tasks with AI.';
       }
     });
   }

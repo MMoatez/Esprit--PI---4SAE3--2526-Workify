@@ -1,67 +1,41 @@
 package com.workify.projectservice.weeb;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import com.workify.projectservice.service.ContractPdfService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/contract")
+@RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200")
+@Slf4j
 public class ContractController {
 
-    private final RestTemplate restTemplate = new RestTemplate();
-    private final ObjectMapper objectMapper  = new ObjectMapper();
+    private final ContractPdfService contractPdfService;
 
-    @Value("${fastapi.url:http://localhost:8000}")
-    private String fastapiUrl;
-
-    /**
-     * POST /api/contract/generate
-     * Proxifie la requête vers FastAPI /generate-contract
-     * et retourne le PDF au frontend Angular.
-     */
     @PostMapping("/generate")
-    public ResponseEntity<byte[]> generateContract(
-            @RequestBody Map<String, Object> contractRequest) {
-
+    public ResponseEntity<byte[]> generateContract(@RequestBody Map<String, Object> contractRequest) {
         try {
-            String url = fastapiUrl + "/generate-contract";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            String jsonBody = objectMapper.writeValueAsString(contractRequest);
-            HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-            ResponseEntity<byte[]> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.POST,
-                    entity,
-                    byte[].class
-            );
-
-            // Récupère le nom de fichier depuis FastAPI ou en génère un
-            String contentDisposition = "attachment; filename=contrat.pdf";
-            if (response.getHeaders().getContentDisposition() != null) {
-                contentDisposition = response.getHeaders()
-                        .getFirst(HttpHeaders.CONTENT_DISPOSITION);
-            }
+            byte[] pdf = contractPdfService.generateContractPdf(contractRequest);
+            String projectId = contractRequest.getOrDefault("projet_id", "contrat").toString();
+            String filename = "contrat_" + projectId + ".pdf";
 
             return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
-                    .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS,
-                            HttpHeaders.CONTENT_DISPOSITION)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                    .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, HttpHeaders.CONTENT_DISPOSITION)
                     .contentType(MediaType.APPLICATION_PDF)
-                    .body(response.getBody());
-
+                    .body(pdf);
         } catch (Exception e) {
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(("Erreur génération contrat : " + e.getMessage()).getBytes());
+            log.error("Contract generation failed", e);
+            return ResponseEntity.internalServerError()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(("{\"error\":\"Erreur génération contrat: " + e.getMessage() + "\"}").getBytes());
         }
     }
 }
